@@ -23,7 +23,7 @@ wss.on('connection',ws=>{
    if(r.started)return send(ws,{type:'error',message:'이미 시작한 방입니다. 현재 버전은 진행 중 합류를 지원하지 않습니다.'});
    if(r.clients.size>=8||[...r.clients].some(x=>x.role===m.role||x.character===character))return send(ws,{type:'error',message:'이미 선택된 캐릭터/역할이거나 방이 가득 찼습니다.'});
    c.room=m.room;c.role=m.role;c.character=character;c.ready=false;r.clients.add(c);if(!r.host)r.host=c;
-   send(ws,{type:'joined',...state(r)});broadcast(r,state(r));return;
+   send(ws,{...state(r),type:'joined'});broadcast(r,state(r));return;
   }
   if(!c.room)return;const r=rooms.get(c.room);if(!r)return;
   if(m.type==='sync')return send(ws,state(r));
