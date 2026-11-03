@@ -119,7 +119,7 @@ body{background:#050807}.shell{max-width:1000px}.viewport{height:min(72vh,720px)
 .dollPieces button{font-size:12px}
 #dollLog{border-left:2px solid #876b6d;padding:8px 12px;min-height:64px;background:#191619;white-space:pre-line}
 @media(max-width:520px){#dollHotspot{left:27%;top:56%;width:28px;height:28px}}
-</style></head><body><main class="shell"><header class="head"><div><div class="brand">THE EIGHTH DOOR · 回明病院</div><div class="sub">회명병원 리메이크 v5.23 · 인터넷 협동 테스트</div></div><span class="tag">OFFLINE · 리메이크 알파</span></header><section id="scene" class="viewport"><div id="bg" class="bg"></div><button id="dollHotspot" type="button" aria-label="울고 있는 인형 조사" title="인형 조사" hidden></button><div id="torchBeam" aria-hidden="true"></div><div id="changedScene" aria-hidden="true">누군가 이미 다녀갔다.</div><div id="torchTip">빛을 움직여 조사하세요</div><div id="glassApparition" aria-hidden="true"></div><div class="shade"></div><div id="joltOverlay" aria-hidden="true"></div><div id="lookReticle" aria-hidden="true"></div><div id="lookInstruction">드래그해서 둘러보기 · 물체는 탭하여 조사</div><div class="grain"></div><div id="shadowFigure"></div><div id="scareShade"></div><div id="sceneNotice"></div><div id="light" class="light"></div><div class="flash"></div><div id="event" class="event"></div><div class="place" id="place">접수실 · 정면</div><button id="wardHot" class="hot" style="left:35%;top:48%;display:none" type="button">🛏️ 침대 조사</button><button id="bellHot" class="hot" style="right:8%;top:28%;display:none" type="button">🔔 호출벨</button><button id="roomHot" class="hot" style="left:18%;top:20%;display:none" type="button">🚪 208호</button><button class="hot hot1" data-action="desk">접수대</button><button class="hot hot2" data-action="door">출입문</button><button class="hot hot3" data-action="clock">벽시계</button><div id="cinematicScare" aria-hidden="true"><div class="presence"><span class="presence-head"></span><span class="presence-body"></span></div><div class="crack"></div></div><div id="interactionHand" aria-hidden="true"></div><div class="modal" id="modal"><h2 id="mt"></h2><p id="mb"></p><div id="clockPuzzle" hidden class="hmClockPuzzle" aria-label="벽시계 복원 퍼즐">
+</style></head><body><main class="shell"><header class="head"><div><div class="brand">THE EIGHTH DOOR · 回明病院</div><div class="sub">회명병원 리메이크 v5.24 · 멀티플레이 버튼 수정</div></div><span class="tag">OFFLINE · 리메이크 알파</span></header><section id="scene" class="viewport"><div id="bg" class="bg"></div><button id="dollHotspot" type="button" aria-label="울고 있는 인형 조사" title="인형 조사" hidden></button><div id="torchBeam" aria-hidden="true"></div><div id="changedScene" aria-hidden="true">누군가 이미 다녀갔다.</div><div id="torchTip">빛을 움직여 조사하세요</div><div id="glassApparition" aria-hidden="true"></div><div class="shade"></div><div id="joltOverlay" aria-hidden="true"></div><div id="lookReticle" aria-hidden="true"></div><div id="lookInstruction">드래그해서 둘러보기 · 물체는 탭하여 조사</div><div class="grain"></div><div id="shadowFigure"></div><div id="scareShade"></div><div id="sceneNotice"></div><div id="light" class="light"></div><div class="flash"></div><div id="event" class="event"></div><div class="place" id="place">접수실 · 정면</div><button id="wardHot" class="hot" style="left:35%;top:48%;display:none" type="button">🛏️ 침대 조사</button><button id="bellHot" class="hot" style="right:8%;top:28%;display:none" type="button">🔔 호출벨</button><button id="roomHot" class="hot" style="left:18%;top:20%;display:none" type="button">🚪 208호</button><button class="hot hot1" data-action="desk">접수대</button><button class="hot hot2" data-action="door">출입문</button><button class="hot hot3" data-action="clock">벽시계</button><div id="cinematicScare" aria-hidden="true"><div class="presence"><span class="presence-head"></span><span class="presence-body"></span></div><div class="crack"></div></div><div id="interactionHand" aria-hidden="true"></div><div class="modal" id="modal"><h2 id="mt"></h2><p id="mb"></p><div id="clockPuzzle" hidden class="hmClockPuzzle" aria-label="벽시계 복원 퍼즐">
 <div class="hmClockTitle">회명병원 · 야간 기록실 벽시계</div>
 <div class="hmClockFace" role="img" aria-label="조작 가능한 아날로그 벽시계"><div class="hmClockMarks" id="hmClockMarks"></div><div id="hmHourHand" class="hmClockHand hour"></div><div id="hmMinuteHand" class="hmClockHand minute"></div><span class="hmClockPin"></span></div>
 <div class="hmClockReadout" id="hmClockReadout">11:42</div>
@@ -1333,7 +1333,17 @@ setInterval(sync,1200);sync();view();update();
 #coopStatus{border-left:2px solid #8ea79d;padding:8px 11px;background:#111b1c}
 #coopBox .coopnote{font-size:11px;color:#b4aaa0}
 </style>
-<section id="coopBox" aria-label="2인 협동 실험실">
+<style id="coop-v524-visibility-fix">
+#coopLaunch{position:fixed!important;right:14px;bottom:18px;z-index:2147483000!important;border:1px solid #9cb9b0;border-radius:999px;padding:13px 18px;background:#142c2c;color:#fff;font:700 14px system-ui,sans-serif;box-shadow:0 5px 30px #000b;cursor:pointer}
+#coopBox{position:fixed!important;inset:0!important;z-index:2147483001!important;margin:0!important;padding:56px max(18px,calc((100vw - 540px)/2)) 30px!important;max-width:none!important;width:100vw!important;height:100dvh!important;overflow-y:auto!important;overscroll-behavior:contain;background:#081014f5!important;box-sizing:border-box!important}
+#coopBox[hidden]{display:none!important}
+#coopClose{position:fixed;right:16px;top:12px;z-index:2147483002;background:#25383a;color:#fff;border:1px solid #82908c;border-radius:8px;padding:9px 13px;cursor:pointer}
+#coopBox .coopline{align-items:center}
+#coopBox #coopEndpoint{width:min(370px,85vw)!important}
+</style>
+<button id="coopLaunch" type="button" aria-controls="coopBox" aria-expanded="false">👥 멀티플레이</button>
+<section id="coopBox" aria-label="2인 협동 실험실" hidden>
+<button id="coopClose" type="button" aria-label="멀티플레이 창 닫기">✕ 닫기</button>
 <h3>CH.01 · 서버 협동 실험실 <small style="font-size:11px;color:#9aada7">v5.23</small></h3>
 <p>WebSocket 서버를 배포한 뒤 서로 다른 기기에서 같은 방 코드로 접속할 수 있습니다.</p>
 <div class="coopline"><label>서버 주소 <input id="coopEndpoint" style="width:min(370px,80vw)" placeholder="wss://your-server.onrender.com" autocomplete="url" aria-label="WebSocket 서버 주소"></label></div><div class="coopline"><label>방 코드 <input id="coopRoom" maxlength="12" value="208" autocomplete="off" aria-label="방 코드"></label>
@@ -1383,6 +1393,16 @@ $('coopSignal').addEventListener('click',()=>{send('clue',{clue:clues[role]});st
 $('coopTest').addEventListener('click',()=>send('sync'));
 document.querySelectorAll('[data-doll-piece]').forEach(btn=>btn.addEventListener('click',()=>{if(joined&&!btn.disabled)send('piece',{piece:Number(btn.dataset.dollPiece)})}));
 window.addEventListener('pagehide',()=>{if(socket)socket.close()});
+})();
+</script>
+<script id="coop-v524-visibility-script">
+(()=>{
+ const panel=document.getElementById('coopBox'),launch=document.getElementById('coopLaunch'),close=document.getElementById('coopClose'),endpoint=document.getElementById('coopEndpoint');
+ if(!panel||!launch||!close)return;
+ function toggle(show){panel.hidden=!show;launch.setAttribute('aria-expanded',String(show));if(show){panel.scrollTop=0;close.focus()}else launch.focus()}
+ launch.addEventListener('click',()=>toggle(true));close.addEventListener('click',()=>toggle(false));
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!panel.hidden)toggle(false)});
+ if(endpoint&&!endpoint.value)endpoint.value='wss://hoemyeong-hospital.onrender.com';
 })();
 </script>
 </body></html>
