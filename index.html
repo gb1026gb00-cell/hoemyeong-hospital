@@ -1344,8 +1344,8 @@ setInterval(sync,1200);sync();view();update();
 <button id="coopLaunch" type="button" aria-controls="coopBox" aria-expanded="false">👥 멀티플레이</button>
 <section id="coopBox" aria-label="2인 협동 실험실" hidden>
 <button id="coopClose" type="button" aria-label="멀티플레이 창 닫기">✕ 닫기</button>
-<h3>CH.01 · 서버 협동 실험실 <small style="font-size:11px;color:#9aada7">v5.26</small></h3>
-<p>WebSocket 서버를 배포한 뒤 서로 다른 기기에서 같은 방 코드로 접속할 수 있습니다.</p>
+<h3>회명병원 · 멀티플레이 대기실 <small style="font-size:11px;color:#9aada7">v5.28</small></h3>
+<p class="coopIntro">같은 방 코드를 입력하고 서로 다른 캐릭터와 조사 역할을 선택하세요.</p>
 <div class="coopline"><label>서버 주소 <input id="coopEndpoint" style="width:min(370px,80vw)" placeholder="wss://your-server.onrender.com" autocomplete="url" aria-label="WebSocket 서버 주소"></label></div><div class="coopline"><label>방 코드 <input id="coopRoom" maxlength="12" value="208" autocomplete="off" aria-label="방 코드"></label>
 <label>조사원 <select id="coopRole" aria-label="조사원"><option value="0">A · 청각</option><option value="1">B · 표정</option><option value="2">C · 눈물</option><option value="3">D · 속삭임</option><option value="4">E · 입술</option><option value="5">F · 그림자</option><option value="6">G · 숫자</option><option value="7">H · 무감각</option></select></label>
 <button id="coopJoin" type="button">방 입장</button><button id="coopLeave" type="button" disabled>퇴장</button></div>
@@ -1371,7 +1371,7 @@ function render(){const mine=members.find(x=>x.role===role);$('coopMembers').tex
 function reset(){joined=false;ready=false;members=[];pieces=[];chat=[];started=false;$('coopJoin').disabled=false;$('coopLeave').disabled=true;$('coopReady').disabled=true;$('coopStart').disabled=true;$('coopSignal').disabled=true;$('coopTest').disabled=true;$('coopRoom').disabled=false;$('coopRole').disabled=false;$('coopCharacter').disabled=false;$('coopEndpoint').disabled=false;$('coopChatInput').disabled=true;$('coopChatSend').disabled=true;render()}
 function send(type,more={}){if(socket&&socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify({type,...more}))}
 function disconnect(){if(socket){socket.close();socket=null}reset();status('연결을 종료했습니다.')}
-function connect(){if(joined){status('이미 방에 입장했습니다. 준비 완료를 눌러 주세요.');return}if(socket&&socket.readyState!==WebSocket.CLOSED){status('연결을 시도 중입니다. 잠시 기다려 주세요.');return}const endpoint=$('coopEndpoint').value.trim();room=$('coopRoom').value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,12);role=Number($('coopRole').value);const character=Number($('coopCharacter').value);if(!/^wss:\/\//i.test(endpoint)&&!/^ws:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(endpoint)){status('서버 주소는 wss:// 로 시작해야 합니다.');return}if(!room){status('방 코드를 입력해 주세요.');return}$('coopJoin').disabled=true;status('서버 연결 중…');try{socket=new WebSocket(endpoint)}catch(e){reset();status('서버 주소 형식을 확인해 주세요.');return}const thisSocket=socket;let joinTimer=setTimeout(()=>{if(socket===thisSocket&&!joined){status('연결 응답이 없습니다. 다시 시도해 주세요.');thisSocket.close()}},15000);socket.onopen=()=>{if(socket!==thisSocket)return;status('서버 연결됨 · 방 입장 확인 중…');send('join',{room,role,character})};socket.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}if(m.type==='error'){status('서버: '+m.message);if(!joined)socket.close();return}if(m.type==='joined'){clearTimeout(joinTimer);joined=true;$('coopJoin').disabled=true;$('coopLeave').disabled=false;$('coopReady').disabled=false;$('coopSignal').disabled=false;$('coopTest').disabled=false;$('coopRoom').disabled=true;$('coopRole').disabled=true;$('coopCharacter').disabled=true;$('coopEndpoint').disabled=true;$('coopChatInput').disabled=false;$('coopChatSend').disabled=false;status('방 '+room+' 입장 성공! 캐릭터를 확인하고 준비 완료를 눌러 주세요.')}if(m.type==='state'||m.type==='joined'){members=Array.isArray(m.members)?m.members:[];pieces=Array.isArray(m.pieces)?m.pieces:[];started=!!m.started;chat=Array.isArray(m.chat)?m.chat:chat;ready=!!members.find(x=>x.role===role)?.ready;render()}if(m.type==='started'){started=true;status('모든 조사원 준비 완료. 게임이 시작되었습니다!');render();document.getElementById('coopClose')?.click()}if(m.type==='chat'){chat.push(m.item);chat=chat.slice(-25);render()}if(m.type==='clue'){lastClue=chars[m.role]+': '+m.clue;render();status('동료의 단서가 도착했습니다.')}if(m.type==='piece'){pieces=m.pieces||pieces;render();status('인형 부품 수집 기록이 갱신되었습니다.')}};socket.onerror=()=>{if(socket===thisSocket)status('WebSocket 연결 오류. 잠시 뒤 다시 시도해 주세요.')};socket.onclose=e=>{clearTimeout(joinTimer);if(socket!==thisSocket)return;socket=null;reset();status('서버 연결 종료 (코드 '+e.code+'). 다시 방 입장을 눌러 주세요.')};}
+function connect(){if(joined){status('이미 방에 입장했습니다. 준비 완료를 눌러 주세요.');return}if(socket&&socket.readyState!==WebSocket.CLOSED){status('연결을 시도 중입니다. 잠시 기다려 주세요.');return}const endpoint=$('coopEndpoint').value.trim();room=$('coopRoom').value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,12);role=Number($('coopRole').value);const character=Number($('coopCharacter').value);if(!/^wss:\/\//i.test(endpoint)&&!/^ws:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(endpoint)){status('서버 주소는 wss:// 로 시작해야 합니다.');return}if(!room){status('방 코드를 입력해 주세요.');return}$('coopJoin').disabled=true;status('서버 연결 중… (최대 60초 대기)');try{socket=new WebSocket(endpoint)}catch(e){reset();status('서버 주소 형식을 확인해 주세요.');return}const thisSocket=socket;let joinTimer=setTimeout(()=>{if(socket===thisSocket&&!joined){status('연결 응답이 없습니다. 다시 시도해 주세요.');thisSocket.close()}},60000);socket.onopen=()=>{if(socket!==thisSocket)return;status('서버 연결됨 · 방 입장 확인 중…');send('join',{room,role,character})};socket.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}if(m.type==='error'){status('서버: '+m.message);if(!joined)socket.close();return}if(m.type==='joined'){clearTimeout(joinTimer);joined=true;$('coopJoin').disabled=true;$('coopLeave').disabled=false;$('coopReady').disabled=false;$('coopSignal').disabled=false;$('coopTest').disabled=false;$('coopRoom').disabled=true;$('coopRole').disabled=true;$('coopCharacter').disabled=true;$('coopEndpoint').disabled=true;$('coopChatInput').disabled=false;$('coopChatSend').disabled=false;status('방 '+room+' 입장 성공! 캐릭터를 확인하고 준비 완료를 눌러 주세요.')}if(m.type==='state'||m.type==='joined'){members=Array.isArray(m.members)?m.members:[];pieces=Array.isArray(m.pieces)?m.pieces:[];started=!!m.started;chat=Array.isArray(m.chat)?m.chat:chat;ready=!!members.find(x=>x.role===role)?.ready;render()}if(m.type==='started'){started=true;status('모든 조사원 준비 완료. 게임이 시작되었습니다!');render();document.getElementById('coopClose')?.click()}if(m.type==='chat'){chat.push(m.item);chat=chat.slice(-25);render()}if(m.type==='clue'){lastClue=chars[m.role]+': '+m.clue;render();status('동료의 단서가 도착했습니다.')}if(m.type==='piece'){pieces=m.pieces||pieces;render();status('인형 부품 수집 기록이 갱신되었습니다.')}};socket.onerror=()=>{if(socket===thisSocket)status('WebSocket 연결 오류. 잠시 뒤 다시 시도해 주세요.')};socket.onclose=e=>{clearTimeout(joinTimer);if(socket!==thisSocket)return;socket=null;reset();status('서버 연결 종료 (코드 '+e.code+'). 다시 방 입장을 눌러 주세요.')};}
 $('coopJoin').addEventListener('click',connect);$('coopLeave').addEventListener('click',disconnect);$('coopReady').addEventListener('click',()=>send('ready',{ready:!ready}));$('coopStart').addEventListener('click',()=>send('start'));$('coopSignal').addEventListener('click',()=>send('clue',{clue:clues[role]}));$('coopTest').addEventListener('click',()=>send('sync'));function chatSend(){const el=$('coopChatInput');if(!el.value.trim())return;send('chat',{message:el.value});el.value=''}$('coopChatSend').addEventListener('click',chatSend);$('coopChatInput').addEventListener('keydown',e=>{if(e.key==='Enter')chatSend()});document.querySelectorAll('[data-doll-piece]').forEach(btn=>btn.addEventListener('click',()=>{if(joined&&!btn.disabled)send('piece',{piece:Number(btn.dataset.dollPiece)})}));window.addEventListener('pagehide',()=>{if(socket)socket.close()});render();
 })();
 </script>
@@ -1383,6 +1383,80 @@ $('coopJoin').addEventListener('click',connect);$('coopLeave').addEventListener(
  launch.addEventListener('click',()=>toggle(true));close.addEventListener('click',()=>toggle(false));
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!panel.hidden)toggle(false)});
  if(endpoint&&!endpoint.value)endpoint.value='wss://hoemyeong-hospital.onrender.com';
+})();
+</script>
+
+<style id="v528-style">
+#coopBox{background:radial-gradient(circle at 50% 0%,#2b2034 0%,#100e16 56%,#09080e 100%)!important;color:#eee7f0!important}
+#coopBox h3{font-size:22px;letter-spacing:.03em;margin:4px 0 8px;text-align:center}
+#coopBox .coopIntro{text-align:center;color:#bdb0c5;font-size:13px;margin-bottom:20px}
+#coopBox .coopline{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0}
+#coopBox input,#coopBox select{background:#211d29!important;color:#f5eefa!important;border:1px solid #5a4c63!important;border-radius:9px!important;padding:10px!important}
+#coopBox button{border-radius:9px!important;background:#403147!important;color:#f6edf6!important;border:1px solid #705e78!important;padding:11px 13px!important}
+#coopBox button:disabled{opacity:.38}
+#coopBox #coopJoin,#coopBox #coopReady{background:#705274!important}
+#coopBox #coopLobby{background:#201b29!important;border:1px solid #51435b;border-radius:12px!important;padding:16px!important;line-height:1.85}
+#coopBox #coopStatus{background:#211c29!important;border-left-color:#b99bc6!important;font-size:12px}
+#coopBox #coopChatLog{background:#17131e;border-color:#53475c!important;line-height:1.7}
+#coopBox #coopEndpoint{font-size:12px}
+#coopBox #coopMembers,#coopBox #coopSignal,#coopBox #coopTest{display:none!important}
+#v528ChatDock{position:fixed;bottom:16px;left:12px;z-index:2147482900;max-width:min(360px,calc(100vw - 24px));font:13px system-ui,sans-serif;color:#f4eaf4}
+#v528ChatToggle{background:#47334f;color:white;border:1px solid #a48bac;border-radius:999px;padding:12px 16px;box-shadow:0 4px 20px #0009;cursor:pointer}
+#v528ChatPanel{width:min(350px,calc(100vw - 24px));background:#17121eeF;border:1px solid #705e7a;border-radius:13px;padding:12px;box-shadow:0 12px 40px #000b}
+#v528ChatPanel[hidden],#v528StoryLog[hidden]{display:none}
+#v528ChatFeed{height:170px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:9px;background:#0e0c13;border-radius:8px;line-height:1.6}
+#v528ChatForm{display:flex;gap:6px;margin-top:8px}
+#v528ChatInput{min-width:0;flex:1;background:#27202f;color:white;border:1px solid #65536e;border-radius:7px;padding:9px}
+#v528ChatSend{background:#6c5073;color:white;border:0;border-radius:7px;padding:9px 12px}
+#v528StoryToggle{background:transparent;border:1px solid #68556d;color:#d7c6da;border-radius:7px;padding:6px 10px;margin-top:8px}
+#v528StoryLog{max-height:130px;overflow:auto;white-space:pre-wrap;font-size:12px;padding:8px;background:#0e0c13;margin-top:6px}
+#v528StoryToast{position:fixed;bottom:75px;left:50%;transform:translateX(-50%);width:min(550px,90vw);background:#15101deF;border:1px solid #66526d;border-radius:10px;padding:10px 14px;z-index:2147482800;color:#eee6f0;font:13px/1.6 system-ui,sans-serif;pointer-events:none}
+#v528StoryToast[hidden]{display:none}
+@media(max-width:600px){#v528ChatDock{bottom:10px;left:8px}#v528StoryToast{bottom:68px}#coopBox{padding-top:64px!important}}
+</style>
+<div id="v528ChatDock">
+<button id="v528ChatToggle" type="button">💬 게임 채팅 <span id="v528Unread"></span></button>
+<div id="v528ChatPanel" hidden>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>조사원 실시간 채팅</b><button id="v528ChatHide" type="button" style="background:none;color:white;border:0">✕</button></div>
+<div id="v528ChatFeed" role="log" aria-live="polite">방에 입장하면 팀원과 채팅할 수 있어요.</div>
+<form id="v528ChatForm"><input id="v528ChatInput" maxlength="180" placeholder="메시지 입력" autocomplete="off" aria-label="게임 중 채팅"/><button id="v528ChatSend" type="submit">전송</button></form>
+<button id="v528StoryToggle" type="button">📖 멤버 대사 기록</button>
+<div id="v528StoryLog" hidden>아직 기록된 대사가 없습니다.</div>
+</div>
+</div>
+<div id="v528StoryToast" hidden aria-live="polite"></div>
+<script id="v528-ui-script">
+(()=>{
+const $=id=>document.getElementById(id);
+const toggle=$('v528ChatToggle'),panel=$('v528ChatPanel'),feed=$('v528ChatFeed'),unread=$('v528Unread');
+let unseen=0, lastChat='',lastDialogue='',toastTimer=null;
+function refresh(){
+ const log=$('coopChatLog');
+ if(!log)return;
+ const value=log.textContent||'';
+ if(value===lastChat)return;
+ if(lastChat&&panel.hidden){unseen++;unread.textContent=' · '+unseen}
+ lastChat=value;feed.textContent=value;
+ feed.scrollTop=feed.scrollHeight;
+}
+new MutationObserver(refresh).observe($('coopChatLog'),{childList:true,subtree:true,characterData:true});refresh();
+toggle.onclick=()=>{panel.hidden=!panel.hidden;if(!panel.hidden){unseen=0;unread.textContent='';refresh();$('v528ChatInput').focus()}};
+$('v528ChatHide').onclick=()=>panel.hidden=true;
+$('v528ChatForm').onsubmit=e=>{e.preventDefault();const input=$('v528ChatInput');if(!input.value.trim())return;
+$('coopChatInput').value=input.value;$('coopChatSend').click();input.value='';};
+$('v528StoryToggle').onclick=()=>{$('v528StoryLog').hidden=!$('v528StoryLog').hidden};
+const original=$('dialogue'),history=[];
+function story(){
+ if(!original)return;
+ const s=original.innerText?.trim()||original.textContent.trim();
+ if(!s||s===lastDialogue)return;
+ lastDialogue=s;history.push(s);if(history.length>80)history.shift();
+ $('v528StoryLog').textContent=history.join('\n\n');
+ $('v528StoryLog').scrollTop=$('v528StoryLog').scrollHeight;
+ const toast=$('v528StoryToast');toast.textContent=s;toast.hidden=false;
+ clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.hidden=true,4200);
+}
+if(original){new MutationObserver(story).observe(original,{subtree:true,childList:true,characterData:true});story();}
 })();
 </script>
 </body></html>
