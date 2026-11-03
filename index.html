@@ -1344,55 +1344,35 @@ setInterval(sync,1200);sync();view();update();
 <button id="coopLaunch" type="button" aria-controls="coopBox" aria-expanded="false">👥 멀티플레이</button>
 <section id="coopBox" aria-label="2인 협동 실험실" hidden>
 <button id="coopClose" type="button" aria-label="멀티플레이 창 닫기">✕ 닫기</button>
-<h3>CH.01 · 서버 협동 실험실 <small style="font-size:11px;color:#9aada7">v5.23</small></h3>
+<h3>CH.01 · 서버 협동 실험실 <small style="font-size:11px;color:#9aada7">v5.25</small></h3>
 <p>WebSocket 서버를 배포한 뒤 서로 다른 기기에서 같은 방 코드로 접속할 수 있습니다.</p>
 <div class="coopline"><label>서버 주소 <input id="coopEndpoint" style="width:min(370px,80vw)" placeholder="wss://your-server.onrender.com" autocomplete="url" aria-label="WebSocket 서버 주소"></label></div><div class="coopline"><label>방 코드 <input id="coopRoom" maxlength="12" value="208" autocomplete="off" aria-label="방 코드"></label>
 <label>조사원 <select id="coopRole" aria-label="조사원"><option value="0">A · 청각</option><option value="1">B · 표정</option><option value="2">C · 눈물</option><option value="3">D · 속삭임</option><option value="4">E · 입술</option><option value="5">F · 그림자</option><option value="6">G · 숫자</option><option value="7">H · 무감각</option></select></label>
 <button id="coopJoin" type="button">방 입장</button><button id="coopLeave" type="button" disabled>퇴장</button></div>
+<div class="coopline"><label>캐릭터 <select id="coopCharacter" aria-label="캐릭터 선택"><option value="0">홍중</option><option value="1">성화</option><option value="2">윤호</option><option value="3">여상</option><option value="4">산</option><option value="5">민기</option><option value="6">우영</option><option value="7">종호</option></select></label></div>
+<div class="coopline"><button id="coopReady" disabled type="button">준비 완료</button><button id="coopStart" disabled type="button">게임 시작 (방장)</button></div>
+<div id="coopLobby" role="status" style="white-space:pre-line;background:#101c20;padding:10px;border-radius:8px">대기실에 입장해 주세요.</div>
+<div class="coopline"><input id="coopChatInput" maxlength="180" placeholder="팀원에게 메시지" aria-label="채팅 입력" disabled><button id="coopChatSend" type="button" disabled>전송</button></div>
+<div id="coopChatLog" role="log" aria-live="polite" style="max-height:140px;overflow:auto;white-space:pre-line;border:1px solid #465d5d;border-radius:8px;padding:9px">대기실 채팅</div>
 <div id="coopStatus" role="status">아직 입장하지 않았습니다.</div>
 <div id="coopMembers" style="margin-top:8px"></div>
 <div class="coopline"><button id="coopSignal" type="button" disabled>동료에게 단서 공유</button><button id="coopTest" type="button" disabled>공유 상태 동기화</button></div>
-<p class="coopnote">※ 서버를 별도로 실행·배포해야 합니다. 이번 버전은 방 입장, 접속자, 단서와 부품 기록의 서버 동기화만 지원합니다. 기존 퍼즐 진행 전체 동기화와 영구 저장은 아직 미구현입니다.</p>
+<p class="coopnote">※ 서버를 별도로 실행·배포해야 합니다. 이번 버전은 대기실, 캐릭터 선택, 준비, 방장 시작, 채팅, 단서와 부품 공유를 지원합니다. 진행 중 합류 및 본편 퍼즐 전체 동기화는 아직 지원하지 않습니다. 기존 퍼즐 진행 전체 동기화와 영구 저장은 아직 미구현입니다.</p>
 </section>
-<script id="coop-v523-script">
+<script id="coop-v525-script">
 (()=>{
-'use strict';
-const $=id=>document.getElementById(id);
-const names=['A','B','C','D','E','F','G','H'];
-const clues=['울음소리가 바로 귀 옆에서 들린다.','인형이 입꼬리를 올리고 있는 것처럼 보인다.','눈가에서 검은 물이 번진다.','“돌려줘…”라는 속삭임이 들린다.','인형의 입술이 아주 조금 움직였다.','인형 뒤로 작은 그림자가 지나갔다.','몸통 안쪽에 지워진 숫자가 보인다.','아무것도 이상하지 않다.'];
-const pieceNames=['왼팔','오른팔','왼다리','오른다리'];
-let socket=null,joined=false,room='',role=0,memberRoles=[],pieces=[],lastClue='';
-const originalPerspective=$('dollPerspective');
-function status(s){$('coopStatus').textContent=s}
-function render(){ $('coopMembers').textContent='접속 조사원: '+(memberRoles.length?memberRoles.map(r=>names[r]).join(', '):'없음')+'\n공유 수집: '+(pieces.length?pieces.map(i=>pieceNames[i]).join(' · '):'없음')+(lastClue?'\n최근 전달된 단서: '+lastClue:''); }
-function reset(){joined=false;memberRoles=[];pieces=[];lastClue='';$('coopJoin').disabled=false;$('coopLeave').disabled=true;$('coopSignal').disabled=true;$('coopTest').disabled=true;$('coopRoom').disabled=false;$('coopRole').disabled=false;$('coopEndpoint').disabled=false;if(originalPerspective)originalPerspective.disabled=false;render()}
+'use strict';const $=id=>document.getElementById(id);
+const roles=['청각','표정','눈물','속삭임','그림자','기록','발자국','잔상'];
+const chars=['홍중','성화','윤호','여상','산','민기','우영','종호'];
+const clues=['울음소리가 바로 귀 옆에서 들린다.','인형이 입꼬리를 올리고 있는 것처럼 보인다.','눈가에서 검은 물이 번진다.','“돌려줘…”라는 속삭임이 들린다.','그림자가 하나 더 있다.','접수 기록의 날짜가 바뀌었다.','발자국이 거꾸로 이어진다.','유리에 없는 사람이 비친다.'];
+const pieceNames=['왼팔','오른팔','왼다리','오른다리'];let socket=null,joined=false,ready=false,room='',role=0,members=[],pieces=[],lastClue='',chat=[],started=false;
+const status=s=>$('coopStatus').textContent=s;
+function render(){const mine=members.find(x=>x.role===role);$('coopMembers').textContent='접속 조사원: '+(members.length?members.map(x=>chars[x.character]+'('+String.fromCharCode(65+x.role)+')').join(', '):'없음')+'\n공유 인형 부품: '+(pieces.length?pieces.map(i=>pieceNames[i]).join(', '):'없음')+(lastClue?'\n최근 단서: '+lastClue:'');$('coopLobby').textContent=members.length?members.map(x=>(x.host?'★ 방장 ':'')+chars[x.character]+' · '+String.fromCharCode(65+x.role)+' '+roles[x.role]+' · '+(x.ready?'준비 완료':'대기 중')).join('\n')+(started?'\n\n[게임 시작됨]':''):'대기실에 입장해 주세요.';$('coopReady').textContent=ready?'준비 취소':'준비 완료';$('coopStart').disabled=!joined||!mine?.host||members.length<2||!members.every(x=>x.ready)||started;$('coopChatLog').textContent=chat.length?chat.map(x=>chars[x.character]+': '+x.message).join('\n'):'대기실 채팅';$('coopChatLog').scrollTop=$('coopChatLog').scrollHeight}
+function reset(){joined=false;ready=false;members=[];pieces=[];chat=[];started=false;$('coopJoin').disabled=false;$('coopLeave').disabled=true;$('coopReady').disabled=true;$('coopStart').disabled=true;$('coopSignal').disabled=true;$('coopTest').disabled=true;$('coopRoom').disabled=false;$('coopRole').disabled=false;$('coopCharacter').disabled=false;$('coopEndpoint').disabled=false;$('coopChatInput').disabled=true;$('coopChatSend').disabled=true;render()}
 function send(type,more={}){if(socket&&socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify({type,...more}))}
 function disconnect(){if(socket){socket.onclose=null;socket.close();socket=null}reset();status('연결을 종료했습니다.')}
-function connect(){
- const endpoint=$('coopEndpoint').value.trim();room=$('coopRoom').value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,12);role=Number($('coopRole').value);
- if(!/^wss:\/\//i.test(endpoint)&&!/^ws:\/\/localhost(?::\d+)?\/?$/i.test(endpoint)&&!/^ws:\/\/127\.0\.0\.1(?::\d+)?\/?$/i.test(endpoint)){status('서버 주소는 wss:// 로 시작해야 합니다. 로컬 개발용 ws://localhost 만 예외입니다.');return}
- if(!room){status('영문·숫자 방 코드를 입력해 주세요.');return}
- if(socket)disconnect();
- $('coopJoin').disabled=true;status('서버 연결 중…');
- try{socket=new WebSocket(endpoint)}catch(e){reset();status('주소 형식을 확인해 주세요.');return}
- socket.onopen=()=>send('join',{room,role});
- socket.onmessage=e=>{
-  let m;try{m=JSON.parse(e.data)}catch{return}
-  if(m.type==='error'){status('서버: '+m.message);if(!joined){socket.close()}return}
-  if(m.type==='joined'){joined=true;$('coopLeave').disabled=false;$('coopSignal').disabled=false;$('coopTest').disabled=false;$('coopRoom').disabled=true;$('coopRole').disabled=true;$('coopEndpoint').disabled=true;if(originalPerspective){originalPerspective.value=String(role);originalPerspective.dispatchEvent(new Event('change'));originalPerspective.disabled=true}status('방 '+room+' 입장 성공 · 조사원 '+names[role]+'\n서로 다른 기기에서 같은 방 코드로 접속할 수 있습니다.');}
-  if(m.type==='state'||m.type==='joined'){memberRoles=Array.isArray(m.roles)?m.roles:memberRoles;pieces=Array.isArray(m.pieces)?m.pieces:pieces;render()}
-  if(m.type==='clue'){lastClue=names[m.role]+': '+m.clue;render();status('동료가 새로운 단서를 전달했습니다.')}
-  if(m.type==='piece'){pieces=m.pieces||pieces;render();status('인형 부품 수집 기록이 갱신되었습니다.')}
- };
- socket.onerror=()=>status('연결 오류. 서버 주소와 실행 상태를 확인해 주세요.');
- socket.onclose=()=>{socket=null;reset();status('서버 연결이 끊어졌습니다. 다시 입장할 수 있습니다.')};
-}
-$('coopJoin').addEventListener('click',connect);
-$('coopLeave').addEventListener('click',disconnect);
-$('coopSignal').addEventListener('click',()=>{send('clue',{clue:clues[role]});status('단서를 동료에게 전송했습니다.')});
-$('coopTest').addEventListener('click',()=>send('sync'));
-document.querySelectorAll('[data-doll-piece]').forEach(btn=>btn.addEventListener('click',()=>{if(joined&&!btn.disabled)send('piece',{piece:Number(btn.dataset.dollPiece)})}));
-window.addEventListener('pagehide',()=>{if(socket)socket.close()});
+function connect(){const endpoint=$('coopEndpoint').value.trim();room=$('coopRoom').value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,12);role=Number($('coopRole').value);const character=Number($('coopCharacter').value);if(!/^wss:\/\//i.test(endpoint)&&!/^ws:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(endpoint)){status('서버 주소는 wss:// 로 시작해야 합니다.');return}if(!room){status('방 코드를 입력해 주세요.');return}if(socket)disconnect();$('coopJoin').disabled=true;status('서버 연결 중…');try{socket=new WebSocket(endpoint)}catch(e){reset();status('서버 주소 형식을 확인해 주세요.');return}socket.onopen=()=>send('join',{room,role,character});socket.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}if(m.type==='error'){status('서버: '+m.message);if(!joined)socket.close();return}if(m.type==='joined'){joined=true;$('coopLeave').disabled=false;$('coopReady').disabled=false;$('coopSignal').disabled=false;$('coopTest').disabled=false;$('coopRoom').disabled=true;$('coopRole').disabled=true;$('coopCharacter').disabled=true;$('coopEndpoint').disabled=true;$('coopChatInput').disabled=false;$('coopChatSend').disabled=false;status('방 '+room+' 입장 성공! 캐릭터를 확인하고 준비 완료를 눌러 주세요.')}if(m.type==='state'||m.type==='joined'){members=Array.isArray(m.members)?m.members:[];pieces=Array.isArray(m.pieces)?m.pieces:[];started=!!m.started;chat=Array.isArray(m.chat)?m.chat:chat;ready=!!members.find(x=>x.role===role)?.ready;render()}if(m.type==='started'){started=true;status('모든 조사원 준비 완료. 게임이 시작되었습니다!');render();document.getElementById('coopClose')?.click()}if(m.type==='chat'){chat.push(m.item);chat=chat.slice(-25);render()}if(m.type==='clue'){lastClue=chars[m.role]+': '+m.clue;render();status('동료의 단서가 도착했습니다.')}if(m.type==='piece'){pieces=m.pieces||pieces;render();status('인형 부품 수집 기록이 갱신되었습니다.')}};socket.onerror=()=>status('연결 오류. 서버 상태를 확인해 주세요.');socket.onclose=()=>{socket=null;reset();status('서버 연결이 끊겼습니다. 다시 입장할 수 있습니다.')};}
+$('coopJoin').addEventListener('click',connect);$('coopLeave').addEventListener('click',disconnect);$('coopReady').addEventListener('click',()=>send('ready',{ready:!ready}));$('coopStart').addEventListener('click',()=>send('start'));$('coopSignal').addEventListener('click',()=>send('clue',{clue:clues[role]}));$('coopTest').addEventListener('click',()=>send('sync'));function chatSend(){const el=$('coopChatInput');if(!el.value.trim())return;send('chat',{message:el.value});el.value=''}$('coopChatSend').addEventListener('click',chatSend);$('coopChatInput').addEventListener('keydown',e=>{if(e.key==='Enter')chatSend()});document.querySelectorAll('[data-doll-piece]').forEach(btn=>btn.addEventListener('click',()=>{if(joined&&!btn.disabled)send('piece',{piece:Number(btn.dataset.dollPiece)})}));window.addEventListener('pagehide',()=>{if(socket)socket.close()});render();
 })();
 </script>
 <script id="coop-v524-visibility-script">
