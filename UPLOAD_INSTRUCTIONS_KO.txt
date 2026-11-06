@@ -1,0 +1,13 @@
+회명병원 v6.0 GitHub 업로드 파일 안내
+
+기존 저장소: https://github.com/gb1026gb00-cell/hoemyeong-hospital
+
+교체: index.html, server.js, package.json
+추가: room_storage.js, render.yaml, audio/ 폴더 전체
+기존 README.md는 유지.
+
+주의: Render 서버 주소가 아직 확정되지 않아 index.html의 <meta name="hoemyeong-server" content="">는 비어 있습니다. 서버 배포 후 content 값에 wss://실제-서버.onrender.com 주소를 넣어야 팬이 주소를 입력하지 않습니다.
+
+Render의 render.yaml에는 starter 플랜과 1GB 영속 디스크 설정이 있으므로 생성 전 비용을 확인하세요. GitHub Pages는 정적 화면만 제공하며 서버는 별도로 Render 배포해야 합니다.
+
+이 파일은 테스트 배포용이며 실제 모바일/Render 실접속 검증 전입니다.

@@ -1,14 +1,36 @@
 {
-  "name": "hoemyeong-coop-prototype",
-  "version": "5.23.0",
+  "name": "hoemyeong-hospital",
+  "version": "6.0.0-test",
   "private": true,
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test:logic": "node test_ch01_mock.js && node test_ch02_mock.js && node test_chapters_mock.js && node test_full_flow_mock.js",
+    "test:static": "python test_frontend_static.py && python test_integrity.py",
+    "test:network": "python test_capacity.py",
+    "test:all-local": "python test_release.py",
+    "test:browser": "python test_browser_render.py",
+    "test:drag": "python test_drag_rotate.py",
+    "test:image": "python test_image_coverage.py",
+    "test:ui": "python test_ui_interaction.py",
+    "test:navigation": "python test_navigation_browser.py",
+    "test:reconnect": "node test_reconnect_mock.js",
+    "test:dropout": "node test_dropout_mock.js",
+    "test:sense-failover": "node test_sense_failover_mock.js",
+    "test:clue-failover": "node test_clue_failover_mock.js",
+    "test:progress": "node test_progress_persistence_mock.js",
+    "test:storage": "node test_disk_save.js",
+    "test:recovery": "node test_corrupt_recovery.js",
+    "test:expiry": "node test_live_expiry.js",
+    "test:restart": "node test_restart_integration.js",
+    "test:tcp-ws": "python test_real_tcp_ws.py",
+    "test:multiroom": "python test_multiroom_tcp_ws.py",
+    "test:load": "python test_load_benchmark.py",
+    "test:concurrent": "python test_concurrent_puzzles.py",
+    "test:audio": "python test_audio_assets.py",
+    "test:spatial-audio": "python test_spatial_audio.py",
+    "test:chapter-audio": "python test_chapter_audio.py"
   },
   "dependencies": {
     "ws": "^8.18.0"
-  },
-  "engines": {
-    "node": ">=20"
   }
 }
