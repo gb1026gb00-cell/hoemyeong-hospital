@@ -119,7 +119,17 @@ body{background:#050807}.shell{max-width:1000px}.viewport{height:min(72vh,720px)
 .dollPieces button{font-size:12px}
 #dollLog{border-left:2px solid #876b6d;padding:8px 12px;min-height:64px;background:#191619;white-space:pre-line}
 @media(max-width:520px){#dollHotspot{left:27%;top:56%;width:28px;height:28px}}
-</style><meta name="game-build" content="5.93"></head><body><main class="shell"><header class="head"><div><div class="brand">THE EIGHTH DOOR · 回明病院</div><div class="sub">야간 조사 · 출입 허가자 외 접근 금지</div></div><span class="tag">회명병원 · 야간 조사</span></header><section id="scene" class="viewport"><div id="bg" class="bg"></div><button id="dollHotspot" type="button" aria-label="울고 있는 인형 조사" title="인형 조사" hidden></button><div id="torchBeam" aria-hidden="true"></div><div id="changedScene" aria-hidden="true">누군가 이미 다녀갔다.</div><div id="torchTip">빛을 움직여 조사하세요</div><div id="glassApparition" aria-hidden="true"></div><div class="shade"></div><div id="joltOverlay" aria-hidden="true"></div><div id="lookReticle" aria-hidden="true"></div><div id="lookInstruction">드래그해서 둘러보기 · 물체는 탭하여 조사</div><div class="grain"></div><div id="shadowFigure"></div><div id="scareShade"></div><div id="sceneNotice"></div><div id="light" class="light"></div><div class="flash"></div><div id="event" class="event"></div><div class="place" id="place">접수실 · 정면</div><button id="wardHot" class="hot" style="left:35%;top:48%;display:none" type="button">🛏️ 침대 조사</button><button id="bellHot" class="hot" style="right:8%;top:28%;display:none" type="button">🔔 호출벨</button><button id="roomHot" class="hot" style="left:18%;top:20%;display:none" type="button">🚪 208호</button><button class="hot hot1" data-action="desk">접수대</button><button class="hot hot2" data-action="door">출입문</button><button class="hot hot3" data-action="clock">벽시계</button><div id="cinematicScare" aria-hidden="true"><div class="presence"><span class="presence-head"></span><span class="presence-body"></span></div><div class="crack"></div></div><div id="interactionHand" aria-hidden="true"></div><div class="modal" id="modal"><h2 id="mt"></h2><p id="mb"></p><div id="clockPuzzle" hidden class="hmClockPuzzle" aria-label="벽시계 복원 퍼즐">
+</style><meta name="game-build" content="5.93">
+<style id="hm-fear-mobile-accessibility-fix">
+/* Keep horror settings above the scene overlays and accessible on touch devices. */
+#fearSettings{position:fixed!important;top:calc(env(safe-area-inset-top, 0px) + 10px)!important;left:10px!important;z-index:2147483000!important;max-width:min(260px,calc(100vw - 20px))!important;pointer-events:auto!important;touch-action:manipulation!important;box-shadow:0 6px 24px #000b}
+#fearSettings summary{display:list-item;min-height:40px;padding:10px 6px;cursor:pointer;touch-action:manipulation;position:relative;z-index:1}
+#fearSettings[open]{padding-bottom:12px;max-height:min(75dvh,520px);overflow-y:auto;background:#120d19f5!important}
+#fearSettings select,#fearSettings input,#fearSettings label{pointer-events:auto!important;touch-action:manipulation}
+#fearSettings select{min-height:42px;font-size:16px}
+@media(max-width:600px){#fearSettings{top:calc(env(safe-area-inset-top, 0px) + 6px)!important;left:6px!important;font-size:12px!important}}
+</style>
+</head><body><main class="shell"><header class="head"><div><div class="brand">THE EIGHTH DOOR · 回明病院</div><div class="sub">야간 조사 · 출입 허가자 외 접근 금지</div></div><span class="tag">회명병원 · 야간 조사</span></header><section id="scene" class="viewport"><div id="bg" class="bg"></div><button id="dollHotspot" type="button" aria-label="울고 있는 인형 조사" title="인형 조사" hidden></button><div id="torchBeam" aria-hidden="true"></div><div id="changedScene" aria-hidden="true">누군가 이미 다녀갔다.</div><div id="torchTip">빛을 움직여 조사하세요</div><div id="glassApparition" aria-hidden="true"></div><div class="shade"></div><div id="joltOverlay" aria-hidden="true"></div><div id="lookReticle" aria-hidden="true"></div><div id="lookInstruction">드래그해서 둘러보기 · 물체는 탭하여 조사</div><div class="grain"></div><div id="shadowFigure"></div><div id="scareShade"></div><div id="sceneNotice"></div><div id="light" class="light"></div><div class="flash"></div><div id="event" class="event"></div><div class="place" id="place">접수실 · 정면</div><button id="wardHot" class="hot" style="left:35%;top:48%;display:none" type="button">🛏️ 침대 조사</button><button id="bellHot" class="hot" style="right:8%;top:28%;display:none" type="button">🔔 호출벨</button><button id="roomHot" class="hot" style="left:18%;top:20%;display:none" type="button">🚪 208호</button><button class="hot hot1" data-action="desk">접수대</button><button class="hot hot2" data-action="door">출입문</button><button class="hot hot3" data-action="clock">벽시계</button><div id="cinematicScare" aria-hidden="true"><div class="presence"><span class="presence-head"></span><span class="presence-body"></span></div><div class="crack"></div></div><div id="interactionHand" aria-hidden="true"></div><div class="modal" id="modal"><h2 id="mt"></h2><p id="mb"></p><div id="clockPuzzle" hidden class="hmClockPuzzle" aria-label="벽시계 복원 퍼즐">
 <div class="hmClockTitle">회명병원 · 야간 기록실 벽시계</div>
 <div class="hmClockFace" role="img" aria-label="조작 가능한 아날로그 벽시계"><div class="hmClockMarks" id="hmClockMarks"></div><div id="hmHourHand" class="hmClockHand hour"></div><div id="hmMinuteHand" class="hmClockHand minute"></div><span class="hmClockPin"></span></div>
 <div class="hmClockReadout" id="hmClockReadout">11:42</div>
@@ -1959,4 +1969,27 @@ const Old=window.WebSocket;window.WebSocket=class extends Old{constructor(...arg
  if(label)label.hidden=true;
 })();
 </script>
+
+<style id="hm-mobile-viewport-hotfix-20261106">
+/* Mobile scene hotfix: remove inherited overscan and excessive scene zoom.
+   Preserve scene controls, scripts, multiplayer state, and desktop rendering. */
+@media (max-width: 600px) and (orientation: portrait) {
+  html, body { width:100%; max-width:100%; overflow-x:hidden; }
+  #scene.viewport { width:100%; max-width:100%; overflow:hidden; }
+  #scene.viewport .bg {
+    inset:0 !important;
+    background-size:contain !important;
+    background-position:center center !important;
+    background-repeat:no-repeat !important;
+    transform:translate3d(var(--look-x,0px),var(--look-y,0px),0) !important;
+  }
+  #scene.viewport.near .bg {
+    transform:scale(1.12) translate3d(var(--look-x,0px),var(--look-y,0px),0) !important;
+  }
+  #nodeNav { max-width:calc(100% - 12px); }
+  #nodeNav button { min-width:0; overflow-wrap:anywhere; }
+  .control { max-width:calc(100% - 20px); }
+  .control button { min-width:0; flex:1; }
+}
+</style>
 </body></html>
