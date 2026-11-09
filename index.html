@@ -1,205 +1,5 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>THE EIGHTH DOOR : 회명병원</title><style>
-*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#0d0a13;color:#eee4f4;font-family:system-ui,-apple-system,sans-serif}button{font:inherit;cursor:pointer;color:inherit}#app{height:100dvh;max-width:480px;margin:auto;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 9px) 12px calc(env(safe-area-inset-bottom) + 8px);gap:9px;background:linear-gradient(#1e1526,#0d0a13)}header{display:flex;justify-content:space-between;align-items:center;min-height:42px}header strong{font-size:16px}header small{display:block;font-size:11px;color:#b5a3c5}header button{background:none;border:0;font-size:20px}.scene{position:relative;flex:1;min-height:0;overflow:hidden;border:1px solid #675371;border-radius:13px;background:#201a27}.scene img{width:100%;height:100%;object-fit:cover;object-position:center center;display:block;filter:brightness(.82)}.hot{position:absolute;border:1px solid #a989c9;background:#160e21b8;border-radius:20px;padding:6px 9px;font-size:12px;box-shadow:0 0 12px #b06ce755;touch-action:manipulation;min-height:34px}.hot:focus-visible{outline:3px solid #fff}.desk{right:3%;bottom:3%;width:44%;max-width:168px;min-height:42px;z-index:6;text-align:center}.mirror{left:42%;top:32%}.phone{left:5%;top:58%}.ledger{left:42%;top:66%}.cabinet{right:4%;top:47%}.narrative{background:#21192c;border:1px solid #594566;border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.45;min-height:54px}nav{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}nav button{background:#2c2138;border:1px solid #6c557c;border-radius:10px;min-height:53px;font-size:12px}nav b{display:block;font-size:18px}dialog{border:1px solid #8b70a4;border-radius:15px;background:#1b1425;color:#f4eafa;width:min(92vw,410px);max-height:75dvh;overflow:auto;padding:20px;box-shadow:0 10px 70px #000}dialog::backdrop{background:#000b}dialog h2{font-size:19px;margin:0 0 14px}dialog p{line-height:1.65;font-size:14px}.close{width:100%;padding:12px;background:#463153;border:1px solid #80628d;border-radius:9px}input{background:#0d0a13;color:white;border:1px solid #86649b;padding:10px;width:100%;font-size:18px;letter-spacing:5px}.note{font-size:11px;color:#b9a8c8}
-
-/* V126: Canvas / Cinematic Overlay (No native controls/fullscreen) */
-#gameMediaLayer{position:fixed;inset:0;z-index:1001;display:none;background:#08060a;overflow:hidden;touch-action:none;overscroll-behavior:contain}
-#gameMediaLayer.active{display:block}
-#gameMediaLayer #introPlayer{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important;object-fit:contain!important;object-position:center center!important;z-index:1!important;pointer-events:none!important}
-#mediaTouchShield{position:absolute;inset:0;z-index:2;background:transparent;pointer-events:auto;touch-action:none}
-#introCover{position:fixed;inset:0;background:#09060e;z-index:1002;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;padding:16px}
-#introCover h1{font-size:28px;letter-spacing:4px;margin:0}
-#introCover button{padding:14px 36px;background:#5a3c6e;border:1px solid #a58ab9;border-radius:12px;font-size:17px;color:#fff}
-#introCover p{font-size:12px;color:#b5a3c5;text-align:center}
-#introCover.hidden{display:none}
-
-/* V128 Coop Style UI */
-#hmCoopOpen{position:fixed;z-index:40;top:calc(12px + env(safe-area-inset-top));right:12px;background:#21172be8;color:#f6eafa;border:1px solid #a38bb7;border-radius:12px;padding:8px 12px;font:600 13px system-ui;box-shadow:0 3px 16px #0008}
-#hmCoopPanel{position:fixed;z-index:200;inset:0;background:#100e16f5;color:#f1e9f4;overflow:auto;padding:calc(25px + env(safe-area-inset-top)) 16px calc(25px + env(safe-area-inset-bottom));box-sizing:border-box;font:14px/1.55 system-ui}
-#hmCoopPanel[hidden]{display:none!important}
-#hmCoopPanel .wrap{max-width:470px;margin:auto}
-#hmCoopPanel h2{font-size:21px;margin:0 0 8px}
-#hmCoopPanel label{display:block;margin:12px 0 5px}
-#hmCoopPanel input,#hmCoopPanel select{box-sizing:border-box;width:100%;min-height:42px;background:#251d2d;color:#fff;border:1px solid #786483;border-radius:9px;padding:8px}
-#hmCoopPanel button{border:1px solid #786483;background:#382846;color:white;border-radius:10px;padding:10px 13px;margin:6px 4px 6px 0;font:600 13px system-ui}
-#hmCoopPanel button:disabled{opacity:.45}
-#hmCoopPanel .two{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-#hmCoopPanel .info{white-space:pre-line;background:#201b29;padding:12px;border-radius:10px;margin:10px 0;min-height:34px}
-#hmCoopPanel .sub{font-size:12px;color:#b7a7c2}
-#hmCoopPanel .head{display:flex;justify-content:space-between;align-items:center}
-
-/* Scene event container */
-.scene{isolation:isolate}
-.scene video#sceneEvent{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:12;display:none;pointer-events:none;background:#08060a}
-.scene.event-active video#sceneEvent{display:block}
-.scene.event-active .hot{visibility:hidden}
-#sceneDark{position:absolute;inset:0;z-index:11;background:#08060a;opacity:0;pointer-events:none;transition:opacity .12s}
-.scene.event-active #sceneDark{opacity:1}
-</style></head><body>
-
-<button id="hmCoopOpen" type="button">👥 방 만들기·입장</button>
-<section id="hmCoopPanel" hidden><div class="wrap">
-  <div class="head"><h2>THE EIGHTH DOOR · 회명병원</h2><button id="hmCoopClose" type="button">닫기 ✕</button></div>
-  <p class="sub">2~8인 멀티플레이 협동 · 실사형 방탈출</p>
-  <label for="hmEndpoint">웹소켓 서버 주소 (wss://)</label><input id="hmEndpoint" autocomplete="url" value="wss://hoemyeong-hospital.onrender.com"/>
-  <div class="two">
-    <div><label for="hmRoom">방 코드</label><input id="hmRoom" maxlength="12" value="208" autocomplete="off"/></div>
-    <div><label for="hmCapacity">인원 (2~8인)</label><select id="hmCapacity"><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></div>
-  </div>
-  <label for="hmCharacter">조사원 선택</label><select id="hmCharacter">
-    <option value="0">홍중</option><option value="1">성화</option><option value="2">윤호</option><option value="3">여상</option>
-    <option value="4">산</option><option value="5">민기</option><option value="6">우영</option><option value="7">종호</option>
-  </select>
-  <button id="hmJoin" type="button">방 입장</button>
-  <button id="hmLeave" type="button" disabled>퇴장</button>
-  <button id="hmReady" type="button" disabled>준비 완료</button>
-  <button id="hmStart" type="button" disabled>게임 시작</button>
-  <div id="hmCoopStatus" class="info">서버 대기 중...</div>
-  <div id="hmCoopMembers" class="info">참가자 없음</div>
-  <div id="hmCoopChat" class="info" style="max-height:100px;overflow:auto">실시간 채팅</div>
-  <div class="two"><input id="hmCoopText" maxlength="180" placeholder="동료와 단서 공유" disabled/><button id="hmCoopSend" disabled type="button">전송</button></div>
-</div></section>
-
-<div id="introCover">
-  <h1>回明病院</h1>
-  <p>THE EIGHTH DOOR · 회명병원</p>
-  <button id="startIntro" type="button">병원에 들어가기</button>
-  <p>인트로 6초 · 건너뛰기 없음</p>
-</div>
-
-<div id="app">
-  <header>
-    <div><strong id="sceneTitle">CH.01 · 접수실</strong><small id="roleDisplay">역할 미배정</small></div>
-    <button id="audioToggle" type="button" aria-label="음소거">🔊</button>
-  </header>
-
-  <div class="scene" id="mainScene">
-    <img id="sceneImage" src="ward208.webp" alt="병원 내부"/>
-    <div id="sceneDark"></div>
-    <video id="sceneEvent" playsinline webkit-playsinline></video>
-    
-    <!-- 실사형 조사 지점 핫스팟 -->
-    <button class="hot desk" data-action="desk">접수대 조사</button>
-    <button class="hot mirror" data-action="mirror" style="left:42%;top:32%">거울</button>
-    <button class="hot phone" data-action="intercom" style="left:5%;top:58%">내선 전화</button>
-    <button class="hot cabinet" style="right:4%;top:47%">서류함</button>
-  </div>
-
-  <div class="narrative" id="line">안내 방송에 따라 조사원을 기다리십시오. 사물을 직접 터치하여 단서를 찾으세요.</div>
-
-  <nav>
-    <button type="button" id="tabInspect"><b>🔍</b>조사</button>
-    <button type="button" id="tabInventory"><b>🎒</b>소지품</button>
-    <button type="button" id="tabHint"><b>💡</b>공동 수사판</button>
-    <button type="button" id="tabMove"><b>🚪</b>이동</button>
-  </nav>
-</div>
-
-<!-- 비디오 재생 레이어 (Canvas/Layer 방식 보존) -->
-<div id="gameMediaLayer" aria-hidden="true">
-  <video id="introPlayer" playsinline webkit-playsinline disablepictureinpicture disableremoteplayback preload="auto"></video>
-  <div id="mediaTouchShield"></div>
-</div>
-
-<script>
-// 인수인계 원칙 및 WebSocket 멀티플레이 / 미디어 큐 제어 스크립트
-(function(){
-  const coopOpen=document.getElementById('hmCoopOpen'), coopPanel=document.getElementById('hmCoopPanel'), coopClose=document.getElementById('hmCoopClose');
-  const hmEndpoint=document.getElementById('hmEndpoint'), hmRoom=document.getElementById('hmRoom'), hmCapacity=document.getElementById('hmCapacity');
-  const hmCharacter=document.getElementById('hmCharacter'), hmJoin=document.getElementById('hmJoin'), hmLeave=document.getElementById('hmLeave');
-  const hmReady=document.getElementById('hmReady'), hmStart=document.getElementById('hmStart'), coopStatus=document.getElementById('hmCoopStatus');
-  const coopMembers=document.getElementById('hmCoopMembers'), coopChat=document.getElementById('hmCoopChat'), coopText=document.getElementById('hmCoopText'), coopSend=document.getElementById('hmCoopSend');
-  
-  let ws=null, token=localStorage.getItem('hm-token')||null, currentRoom='', myRole=null, isHost=false;
-  const charNames=['홍중','성화','윤호','여상','산','민기','우영','종호'];
-
-  coopOpen.onclick=()=>coopPanel.hidden=false;
-  coopClose.onclick=()=>coopPanel.hidden=true;
-
-  function setStatus(msg){ coopStatus.textContent=msg; }
-
-  hmJoin.onclick=()=>{
-    const url=hmEndpoint.value.trim(), room=hmRoom.value.trim(), cap=parseInt(hmCapacity.value,10), charIdx=parseInt(hmCharacter.value,10);
-    if(!url || !room) return alert('서버 주소와 방 코드를 확인하세요.');
-    
-    ws=new WebSocket(url);
-    ws.onopen=()=>{
-      setStatus('서버에 연결되었습니다. 입장 중...');
-      ws.send(JSON.stringify({ type:'join', room, role:charIdx, character:charIdx, capacity:cap, token }));
-    };
-    ws.onmessage=e=>{
-      try{
-        const data=JSON.parse(e.data);
-        if(data.type==='error') return alert(data.message);
-        if(data.type==='joined' || data.type==='state'){
-          if(data.token){ token=data.token; localStorage.setItem('hm-token', token); }
-          currentRoom=room; myRole=data.yourRole??myRole; isHost=!!data.isHost;
-          if(data.members){
-            coopMembers.textContent=data.members.map(m=>`[${charNames[m.character]||'조사원'}] ${m.ready?'준비완료':'대기중'}${m.host?' (방장)':''}`).join('\n');
-            hmReady.disabled=false; hmStart.disabled=!isHost; hmLeave.disabled=false; coopText.disabled=false; coopSend.disabled=false;
-          }
-          setStatus(`방 입장 완료 (역할: ${charNames[myRole]||myRole})`);
-          document.getElementById('roleDisplay').textContent=`담당: ${charNames[myRole]||'조사원'}`;
-        }
-        if(data.type==='chat'){
-          const item=data.item;
-          coopChat.textContent += `\n[${charNames[item.character]||'동료'}]: ${item.message}`;
-          coopChat.scrollTop=coopChat.scrollHeight;
-        }
-        if(data.type==='started'){
-          alert('게임이 시작되었습니다. 병원 조사를 개시합니다.');
-          coopPanel.hidden=true;
-        }
-        if(data.type==='horror_video'){
-          playHorrorVideo(data.id);
-        }
-      }catch(err){console.error(err);}
-    };
-    ws.onerror=()=>setStatus('웹소켓 연결 오류가 발생했습니다.');
-    ws.onclose=()=>setStatus('서버 연결이 종료되었습니다.');
-  };
-
-  hmReady.onclick=()=>{ if(ws) ws.send(JSON.stringify({ type:'ready', ready:true })); };
-  hmStart.onclick=()=>{ if(ws && isHost) ws.send(JSON.stringify({ type:'start' })); };
-  hmLeave.onclick=()=>{ if(ws) ws.close(); location.reload(); };
-
-  coopSend.onclick=()=>{
-    const text=coopText.value.trim();
-    if(text && ws) { ws.send(JSON.stringify({ type:'chat', message:text })); coopText.value=''; }
-  };
-
-  // 인트로 자동 재생 제어
-  document.getElementById('startIntro').onclick=()=>{
-    document.getElementById('introCover').classList.add('hidden');
-    const layer=document.getElementById('gameMediaLayer'), player=document.getElementById('introPlayer');
-    layer.classList.add('active');
-    player.src='intro_only.mp4';
-    player.play().catch(()=>{});
-    player.onended=()=>{ layer.classList.remove('active'); player.src=''; };
-  };
-
-  function playHorrorVideo(id){
-    const scene=document.getElementById('mainScene'), video=document.getElementById('sceneEvent');
-    scene.classList.add('event-active');
-    video.src=id+'.mp4';
-    video.play().catch(()=>{});
-    video.onended=()=>{ scene.classList.remove('event-active'); video.src=''; };
-  }
-
-  // 핫스팟 사물 직접 터치 조사 연결
-  document.querySelectorAll('.hot').forEach(btn=>{
-    btn.onclick=()=>{
-      const action=btn.dataset.action;
-      if(ws && ws.readyState===WebSocket.OPEN){
-        ws.send(JSON.stringify({ type:'chapter', action:'inspect', object:action }));
-      } else {
-        alert('멀티플레이 서버에 먼저 접속해 주세요.');
-      }
-    };
-  });
-})();
-</script></body></html>
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>THE EIGHTH DOOR : 회명병원 (CH.01-03)</title><style>
-*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#0d0a13;color:#eee4f4;font-family:system-ui,-apple-system,sans-serif}button{font:inherit;cursor:pointer;color:inherit}#app{height:100dvh;max-width:480px;margin:auto;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 9px) 12px calc(env(safe-area-inset-bottom) + 8px);gap:9px;background:linear-gradient(#1e1526,#0d0a13)}header{display:flex;justify-content:space-between;align-items:center;min-height:42px}header strong{font-size:16px}header small{display:block;font-size:11px;color:#b5a3c5}.scene{position:relative;flex:1;min-height:0;overflow:hidden;border:1px solid #675371;border-radius:13px;background:#201a27}.scene img{width:100%;height:100%;object-fit:cover;object-position:center center;display:block;filter:brightness(.82)}.hot{position:absolute;border:1px solid #a989c9;background:#160e21b8;border-radius:20px;padding:6px 9px;font-size:12px;box-shadow:0 0 12px #b06ce755;touch-action:manipulation;min-height:34px;cursor:pointer}.hot:focus-visible{outline:3px solid #fff}.narrative{background:#21192c;border:1px solid #594566;border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.45;min-height:54px}nav{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}nav button{background:#2c2138;border:1px solid #6c557c;border-radius:10px;min-height:53px;font-size:12px}nav b{display:block;font-size:18px}dialog{border:1px solid #8b70a4;border-radius:15px;background:#1b1425;color:#f4eafa;width:min(92vw,410px);max-height:75dvh;overflow:auto;padding:20px;box-shadow:0 10px 70px #000}dialog::backdrop{background:#000b}input{background:#0d0a13;color:white;border:1px solid #86649b;padding:10px;width:100%;font-size:18px;letter-spacing:5px}
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#0d0a13;color:#eee4f4;font-family:system-ui,-apple-system,sans-serif}button{font:inherit;cursor:pointer;color:inherit}#app{height:100dvh;max-width:480px;margin:auto;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 9px) 12px calc(env(safe-area-inset-bottom) + 8px);gap:9px;background:linear-gradient(#1e1526,#0d0a13)}header{display:flex;justify-content:space-between;align-items:center;min-height:42px}header strong{font-size:16px}header small{display:block;font-size:11px;color:#b5a3c5}.scene{position:relative;flex:1;min-height:0;overflow:hidden;border:1px solid #675371;border-radius:13px;background:#201a27}.scene img{width:100%;height:100%;object-fit:cover;object-position:center center;display:block;filter:brightness(.82)}.hot{position:absolute;border:1px solid #a989c9;background:#160e21b8;border-radius:20px;padding:6px 9px;font-size:12px;box-shadow:0 0 12px #b06ce755;touch-action:manipulation;min-height:34px;cursor:pointer}.hot:focus-visible{outline:3px solid #fff}.narrative{background:#21192c;border:1px solid #594566;border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.45;min-height:54px}nav{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}nav button{background:#2c2138;border:1px solid #6c557c;border-radius:10px;min-height:53px;font-size:12px}nav b{display:block;font-size:18px}input{background:#0d0a13;color:white;border:1px solid #86649b;padding:10px;width:100%;font-size:18px;letter-spacing:5px}
 
 /* 멀티플레이 대기실 스타일 */
 #hmCoopOpen{position:fixed;z-index:40;top:calc(12px + env(safe-area-inset-top));right:12px;background:#21172be8;color:#f6eafa;border:1px solid #a38bb7;border-radius:12px;padding:8px 12px;font:600 13px system-ui;box-shadow:0 3px 16px #0008}
@@ -213,11 +13,10 @@
 #hmCoopPanel .info{white-space:pre-line;background:#201b29;padding:12px;border-radius:10px;margin:10px 0;min-height:34px}
 #hmCoopPanel .head{display:flex;justify-content:space-between;align-items:center}
 
-/* Canvas 공포 영상 레이어 (기본 네이티브 컨트롤 숨김 보존) */
+/* Canvas 공포 영상 레이어 */
 #gameMediaLayer{position:fixed;inset:0;z-index:1001;display:none;background:#08060a;overflow:hidden;touch-action:none}
 #gameMediaLayer.active{display:block}
 #gameMediaLayer #introPlayer{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important;object-fit:contain!important;z-index:1!important}
-#mediaTouchShield{position:absolute;inset:0;z-index:2;background:transparent;pointer-events:auto}
 #introCover{position:fixed;inset:0;background:#09060e;z-index:1002;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;padding:16px}
 #introCover h1{font-size:28px;letter-spacing:4px;margin:0}
 #introCover button{padding:14px 36px;background:#5a3c6e;border:1px solid #a58ab9;border-radius:12px;font-size:17px;color:#fff}
@@ -243,7 +42,7 @@
   <button id="hmLeave" type="button" disabled>퇴장</button>
   <button id="hmReady" type="button" disabled>준비 완료</button>
   <button id="hmStart" type="button" disabled>게임 시작 (방장)</button>
-  <div id="hmCoopStatus" class="info">서버에 연결되지 않았습니다.</div>
+  <div id="hmCoopStatus" class="info">서버 대기 중...</div>
   <div id="hmCoopMembers" class="info">참가자 없음</div>
   <div id="hmCoopChat" class="info" style="max-height:90px;overflow:auto">채팅 로그</div>
   <div class="two"><input id="hmCoopText" maxlength="180" placeholder="동료와 대화" disabled/><button id="hmCoopSend" disabled type="button">전송</button></div>
@@ -266,7 +65,7 @@
     <img id="sceneImage" src="ward208.webp" alt="현장 화면"/>
     <video id="sceneEvent" playsinline webkit-playsinline></video>
     
-    <!-- CH.01 주요 사물 핫스팟 -->
+    <!-- 주요 사물 핫스팟 -->
     <button class="hot" data-action="desk" style="left:36%;top:84%">접수대</button>
     <button class="hot" data-action="mirror" style="left:42%;top:32%">거울</button>
     <button class="hot" data-action="intercom" style="left:5%;top:58%">내선전화</button>
@@ -374,21 +173,52 @@
     audio.play().catch(()=>{});
   }
 
+  // CH.01 ~ CH.06 전체 페이즈 및 화면 전환 핸들러 통합
   function updateChapterPhase(ch){
+    const title=document.getElementById('sceneTitle'), img=document.getElementById('sceneImage'), line=document.getElementById('line');
     if(ch.phase==='ch02'){
       currentChapter='ch02';
-      document.getElementById('sceneTitle').textContent='CH.02 · 병동 (208호)';
-      document.getElementById('sceneImage').src='ward208.webp';
-      document.getElementById('line').textContent='병동 내 침대와 서랍을 조사하여 압력 밸브 단서를 찾으세요.';
+      title.textContent='CH.02 · 병동 (208호)';
+      img.src='ward208.webp';
+      line.textContent='병동 내 침대와 서랍을 조사하여 압력 밸브 단서를 찾으세요.';
     } else if(ch.phase==='ch03'){
       currentChapter='ch03';
-      document.getElementById('sceneTitle').textContent='CH.03 · 엘리베이터';
-      document.getElementById('sceneImage').src='elevator_hall.webp';
-      document.getElementById('line').textContent='엘리베이터 비상 패널의 답(417)을 복원하세요.';
+      title.textContent='CH.03 · 엘리베이터';
+      img.src='elevator_hall.webp';
+      line.textContent='엘리베이터 비상 패널의 답(417)을 복원하세요.';
+    } else if(ch.phase==='ch04'){
+      currentChapter='ch04';
+      title.textContent='CH.04 · 기록보관실';
+      img.src='archive.webp';
+      line.textContent='기록보관실 4대 기록을 대조하고 2인 사건 재구성을 완료하세요.';
+    } else if(ch.phase==='ch05'){
+      currentChapter='ch05';
+      title.textContent='CH.05 · 격리실';
+      img.src='isolation.webp';
+      line.textContent='격리실 압력 밸브를 교차 조작(1→4→2)하여 정상 압력을 맞추세요.';
+    } else if(ch.phase==='ch06'){
+      currentChapter='ch06';
+      title.textContent='CH.06 · 제0유물실';
+      img.src='artifact_room.webp';
+      line.textContent='5개의 균열 파편을 순서(20413)대로 복원하고 최종 문을 여세요.';
+    } else if(ch.phase==='finished'){
+      currentChapter='finished';
+      title.textContent='END · 귀환';
+      img.src='ward208.webp';
+      line.textContent='여덟 번째 문이 열렸다. 회명병원 접수실로의 귀환. 수고하셨습니다.';
+      alert('THE EIGHTH DOOR : 회명병원 탈출에 성공했습니다! (END)');
     }
   }
 
-  // 사물 터치 및 액션 라우팅 (CH.01~CH.03 전반부 연동)
+  window.sendGameAction = function(actionType, extraData = {}) {
+    if(ws && ws.readyState===WebSocket.OPEN){
+      ws.send(JSON.stringify({ type:'chapter', action:actionType, ...extraData }));
+    } else {
+      alert('서버 연결을 확인해주세요.');
+    }
+  };
+
+  // 사물 터치 및 액션 라우팅
   document.querySelectorAll('.hot').forEach(btn=>{
     btn.onclick=()=>{
       const action=btn.dataset.action;
@@ -403,47 +233,3 @@
   });
 })();
 </script></body></html>
-  // CH.04 ~ CH.06 챕터별 페이즈 및 화면 전환 핸들러 확장
-  function updateChapterPhase(ch){
-    if(ch.phase==='ch02'){
-      currentChapter='ch02';
-      document.getElementById('sceneTitle').textContent='CH.02 · 병동 (208호)';
-      document.getElementById('sceneImage').src='ward208.webp';
-      document.getElementById('line').textContent='병동 내 침대와 서랍을 조사하여 압력 밸브 단서를 찾으세요.';
-    } else if(ch.phase==='ch03'){
-      currentChapter='ch03';
-      document.getElementById('sceneTitle').textContent='CH.03 · 엘리베이터';
-      document.getElementById('sceneImage').src='elevator_hall.webp';
-      document.getElementById('line').textContent='엘리베이터 비상 패널의 답(417)을 복원하세요.';
-    } else if(ch.phase==='ch04'){
-      currentChapter='ch04';
-      document.getElementById('sceneTitle').textContent='CH.04 · 기록보관실';
-      document.getElementById('sceneImage').src='archive.webp';
-      document.getElementById('line').textContent='기록보관실 4대 기록을 대조하고 2인 사건 재구성을 완료하세요.';
-    } else if(ch.phase==='ch05'){
-      currentChapter='ch05';
-      document.getElementById('sceneTitle').textContent='CH.05 · 격리실';
-      document.getElementById('sceneImage').src='isolation.webp';
-      document.getElementById('line').textContent='격리실 압력 밸브를 교차 조작(1→4→2)하여 정상 압력을 맞추세요.';
-    } else if(ch.phase==='ch06'){
-      currentChapter='ch06';
-      document.getElementById('sceneTitle').textContent='CH.06 · 제0유물실';
-      document.getElementById('sceneImage').src='artifact_room.webp';
-      document.getElementById('line').textContent='5개의 균열 파편을 순서(20413)대로 복원하고 최종 문을 여세요.';
-    } else if(ch.phase==='finished'){
-      currentChapter='finished';
-      document.getElementById('sceneTitle').textContent='END · 귀환';
-      document.getElementById('sceneImage').src='ward208.webp';
-      document.getElementById('line').textContent='여덟 번째 문이 열렸다. 회명병원 접수실로의 귀환. 수고하셨습니다.';
-      alert('THE EIGHTH DOOR : 회명병원 탈출에 성공했습니다! (END)');
-    }
-  }
-
-  // CH.04~06 추가 액션 전송 헬퍼 (필요 시 버튼이나 입력창에 바인딩)
-  window.sendGameAction = function(actionType, extraData = {}) {
-    if(ws && ws.readyState===WebSocket.OPEN){
-      ws.send(JSON.stringify({ type:'chapter', action:actionType, ...extraData }));
-    } else {
-      alert('서버 연결을 확인해주세요.');
-    }
-  };
