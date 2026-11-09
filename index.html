@@ -97,7 +97,24 @@
       <button type="button" data-ch01="inspect" data-object="cabinet">잠긴 보관함 조사</button>
       <button type="button" data-ch01="inspect" data-object="mirror">거울 조사</button>
       <button type="button" data-ch01="solve">담당 제어판 해제</button>
+      <button type="button" data-ch01="fragment_search" data-site="reception_crack">균열 파편 조사</button>
       <button type="button" data-ch01="ch02_enter">다음 구역 이동 (방장)</button>
+    </div>
+    <div style="display:grid;gap:6px;margin-top:9px">
+      <label>감각 번호 (0~7)<input id="senseIndex" type="number" min="0" max="7" value="0" style="width:100%;min-height:40px"></label>
+      <label>장치 조작 순서<input id="senseSequence" placeholder="관찰한 조작 순서" style="width:100%;min-height:40px"></label>
+      <button type="button" data-ch01="sense_interaction">감각 장치 조작</button>
+      <label>해독 답<input id="senseAnswer" placeholder="감각 문제의 답" style="width:100%;min-height:40px"></label>
+      <label>다른 감각의 교차 열쇠<input id="senseCrossKey" placeholder="다른 조사원이 알려준 열쇠" style="width:100%;min-height:40px"></label>
+      <button type="button" data-ch01="sense_challenge">감각 문제 해독</button>
+      <label>획득한 숫자 조각<input id="senseDigit" type="number" min="1" max="9" style="width:100%;min-height:40px"></label>
+      <button type="button" data-ch01="sense_submit">숫자 조각 등록</button>
+      <label>증거 번호 (0~2)<input id="evidenceIndex" type="number" min="0" max="2" value="0" style="width:100%;min-height:40px"></label>
+      <button type="button" data-ch01="evidence_inspect">증거 수집</button>
+      <label>모순의 병실 번호<input id="evidenceAnswer" inputmode="numeric" style="width:100%;min-height:40px"></label>
+      <button type="button" data-ch01="evidence_submit">공동 수사판 판정</button>
+      <label>8자리 심전도 복원 배열<input id="ecgAnswer" inputmode="numeric" maxlength="8" style="width:100%;min-height:40px"></label>
+      <button type="button" data-ch01="ecg_submit">심전도 복원</button>
     </div>
   </section>
   <div class="narrative" id="line">접수실 호출벨을 누르거나 사물을 조사해 조사를 시작하세요.</div>
@@ -155,7 +172,7 @@
   const ch01Panel = document.getElementById("ch01PuzzlePanel");
   const ch01Result = document.getElementById("ch01Result");
   function chapterSend(action, extra={}) { if(!ws || ws.readyState!==WebSocket.OPEN || !started) { ch01Result.textContent="게임 시작 후 조사할 수 있어요."; return; } ws.send(JSON.stringify({type:"chapter",action,...extra})); }
-  ch01Panel.addEventListener("click", e => { const btn=e.target.closest("[data-ch01]"); if(!btn)return; chapterSend(btn.dataset.ch01,btn.dataset.object?{object:btn.dataset.object}:{}); });
+  ch01Panel.addEventListener("click", e => { const btn=e.target.closest("[data-ch01]"); if(!btn)return; const action=btn.dataset.ch01; const val=id=>document.getElementById(id)?.value.trim()||""; const extra=btn.dataset.object?{object:btn.dataset.object}:btn.dataset.site?{site:btn.dataset.site}:{}; if(["sense_interaction","sense_challenge","sense_submit"].includes(action))extra.index=Number(val("senseIndex")); if(action==="sense_interaction")extra.sequence=val("senseSequence"); if(action==="sense_challenge"){extra.answer=val("senseAnswer");extra.crossKey=val("senseCrossKey");} if(action==="sense_submit")extra.digit=Number(val("senseDigit")); if(action==="evidence_inspect")extra.index=Number(val("evidenceIndex")); if(action==="evidence_submit")extra.answer=val("evidenceAnswer"); if(action==="ecg_submit")extra.answer=val("ecgAnswer"); chapterSend(action,extra); });
   const charNames = ['홍중','성화','윤호','여상','산','민기','우영','종호'];
 
   if(hmJoin) {
@@ -207,6 +224,7 @@
             coopStatus.textContent = `${started?'진행 중':'입장 성공'} · ${charNames[myRole]||myRole} · ${data.members?.filter(m=>m.online!==false).length||0}명 연결`;
             document.getElementById('roleDisplay').textContent = `담당: ${charNames[myRole]||'조사원'}`;
           }
+          if(['sense_interaction_result','sense_challenge_result','sense_result','evidence_result','evidence_verdict','ecg_result'].includes(data.type)) ch01Result.textContent=(data.message||'')+(data.digit?'\n획득 숫자: '+data.digit:'')+(data.text?'\n'+data.text:'');
           if(data.type === 'inspection') { ch01Result.textContent = (data.room?data.room+'\n':'')+(data.description||'')+(data.clue?'\n전달할 암호: '+data.clue.code+' → 조사원 '+data.clue.target:''); }
           if(data.type === 'chapter_result' || data.type === 'fragment_result' || data.type === 'ch02_result') ch01Result.textContent = data.message || JSON.stringify(data);
           if(data.type === 'chapter_event') ch01Result.textContent = data.event==='blackout'?'정전 발생. 조사원들이 각 조사실로 분리되었습니다.':data.event==='escape'?'모든 조사실 봉인 해제 완료. 파편을 확보한 뒤 다음 구역으로 이동하세요.':(data.message||'새로운 사건 발생');
