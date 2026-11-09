@@ -355,7 +355,7 @@
             if(data.chapter && typeof data.chapter.phase === 'string') {
               currentPhase = data.chapter.phase;
               syncChapterVisual(currentPhase);
-              const phaseStarted=started || data.started === true;
+              const phaseStarted=data.started === true;
               ch01Panel.hidden = !phaseStarted || !['separated','escaped'].includes(currentPhase);
               ch02Panel.hidden = !phaseStarted || !['ch02','ch02_cleared'].includes(currentPhase);
               ch03Panel.hidden = !phaseStarted || !['ch03','ch03_cleared'].includes(currentPhase);
@@ -390,7 +390,7 @@
             }
             if(data.token){ token = data.token; try{localStorage.setItem('hm-token:'+hmRoom.value.trim().toUpperCase(), token);}catch(_){} }
             myRole = data.yourRole ?? myRole;
-            if(data.type === 'joined') { joined = true; isHost = !!data.isHost; hmJoin.disabled=true; }
+            if(data.type === 'joined') { joined = true; isHost = !!data.isHost; hmJoin.disabled=true; coopPanel.hidden=!!data.started; if(!data.started){lastStarted=false;started=false;} }
             if(data.started) started=true;
             if(data.members) {
               if(data.type === 'state') isHost = data.members.some(m => m.role === myRole && m.host === true);
@@ -445,7 +445,7 @@
         } catch(err){ console.error(err); }
       };
       ws.onerror = () => coopStatus.textContent = '웹소켓 연결 실패 · 서버 상태를 확인해 주세요.';
-      ws.onclose = () => { ch01Panel.hidden=true; ch02Panel.hidden=true; ch03Panel.hidden=true; ch04Panel.hidden=true; ch05Panel.hidden=true; ch06Panel.hidden=true; dollPanel.hidden=true; joined=false; started=false; lastStarted=false; isHost=false; hmCapacity.disabled=false; hmCharacter.disabled=false; hmJoin.disabled=false; hmReady.disabled=true; hmStart.disabled=true; hmLeave.disabled=true; coopStatus.textContent='연결 종료 · 다시 입장해 주세요.'; };
+      ws.onclose = () => { ch01Panel.hidden=true; ch02Panel.hidden=true; ch03Panel.hidden=true; ch04Panel.hidden=true; ch05Panel.hidden=true; ch06Panel.hidden=true; dollPanel.hidden=true; coopPanel.hidden=false; document.getElementById('senseDisplay').textContent='담당 감각 배정 대기'; joined=false; started=false; lastStarted=false; isHost=false; hmCapacity.disabled=false; hmCharacter.disabled=false; hmJoin.disabled=false; hmReady.disabled=true; hmStart.disabled=true; hmLeave.disabled=true; coopStatus.textContent='연결 종료 · 다시 입장해 주세요.'; };
     };
   }
 
