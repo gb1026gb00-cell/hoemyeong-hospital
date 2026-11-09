@@ -19,7 +19,23 @@ async function check(label,fn){await fn();checks.push(label);console.log('PASS',
  await check('two investigators join separate roles',async()=>{send(a,{type:'join',room,role:0,character:0,capacity:2});const x=await wait(a,m=>m.type==='joined');token=x.token;assert.equal(x.yourRole,0);send(b,{type:'join',room,role:1,character:1});assert.equal((await wait(b,m=>m.type==='joined')).yourRole,1)});
  await check('two investigators ready and host starts',async()=>{send(a,{type:'ready',ready:true});send(b,{type:'ready',ready:true});await wait(a,m=>m.type==='state'&&m.members?.length===2&&m.members.every(x=>x.ready));send(a,{type:'start'});await wait(a,m=>m.type==='state'&&m.started===true);await wait(b,m=>m.type==='state'&&m.started===true)});
  await check('shared chat reaches both investigators',async()=>{send(a,{type:'chat',text:'V160 협동 테스트'});await wait(b,m=>m.type==='chat'||(m.type==='state'&&m.chat?.some(x=>JSON.stringify(x).includes('V160 협동 테스트'))))});
- await check('reconnect requires original token',async()=>{a.ws.close();await sleep(200);const c=client();await connect(c);send(c,{type:'join',room,role:0,character:0,token});const x=await wait(c,m=>m.type==='joined');assert.equal(x.resumed,true);assert.equal(x.yourRole,0)});
+ await check('one disconnected investigator pauses cooperation',async()=>{
+   a.ws.close();
+   const paused=await wait(b,m=>m.type==='state'&&m.cooperationPaused===true);
+   assert.equal(paused.members.filter(x=>x.online!==false).length,1);
+   await wait(b,m=>m.type==='sense_assignment'&&Array.isArray(m.senses)&&m.senses.length===0);
+   send(b,{type:'chapter',action:'inspect',object:'desk'});
+   const denied=await wait(b,m=>m.type==='error'&&m.message?.includes('최소 2명'));
+   assert.ok(denied.message);
+ });
+ await check('reconnect restores assigned role and cooperation',async()=>{
+   const c=client();await connect(c);send(c,{type:'join',room,role:0,character:0,token});
+   const x=await wait(c,m=>m.type==='joined');assert.equal(x.resumed,true);assert.equal(x.yourRole,0);
+   const resumed=await wait(b,m=>m.type==='state'&&m.cooperationPaused===false);
+   assert.equal(resumed.members.filter(x=>x.online!==false).length,2);
+   const reassigned=await wait(b,m=>m.type==='sense_assignment'&&m.senses?.length>0);
+   assert.ok(reassigned.senses.length>0);
+ });
  console.log('RESULT',checks.length,'passed');fs.writeFileSync(__dirname+'/V160_RUNTIME_RESULT.json',JSON.stringify({status:'passed',checks},null,2));
  }catch(e){console.error('FAIL',e.stack);fs.writeFileSync(__dirname+'/V160_RUNTIME_RESULT.json',JSON.stringify({status:'failed',checks,error:String(e)},null,2));process.exitCode=1}
  finally{for(const c of clients)try{c.ws?.close()}catch{}server.kill('SIGTERM');setTimeout(()=>server.kill('SIGKILL'),500).unref()}
