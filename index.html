@@ -75,7 +75,7 @@
 
 <div id="app">
   <header>
-    <div><strong id="sceneTitle">CH.01 · 접수실</strong><small id="roleDisplay">역할 미배정</small></div>
+    <div><strong id="sceneTitle">CH.01 · 접수실</strong><small id="roleDisplay">역할 미배정</small><small id="senseDisplay" style="display:block;color:#cfb4db;font-size:11px">담당 감각 배정 대기</small></div>
     <button id="audioToggle" type="button">🔊</button>
   </header>
 
@@ -344,6 +344,12 @@
               target.textContent=message;
             }
             return;
+          }
+          if(data.type==='sense_assignment'&&Array.isArray(data.senses)){
+            document.getElementById('senseDisplay').textContent='담당 감각: '+(data.senses.length?data.senses.join(' · '):'재배정 대기');
+          }
+          if(data.type === 'joined' && Array.isArray(data.senses)){
+            document.getElementById('senseDisplay').textContent='담당 감각: '+(data.senses.length?data.senses.join(' · '):'재배정 대기');
           }
           if(data.type === 'joined' || data.type === 'state') {
             if(data.chapter && typeof data.chapter.phase === 'string') {
