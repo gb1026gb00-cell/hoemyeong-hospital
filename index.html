@@ -214,7 +214,7 @@
     </div>
   </section>
   <section id="dollPanel" hidden style="background:#21192c;border:1px solid #675371;border-radius:10px;padding:8px;font-size:12px">
-    <strong>인형 조립 · 팀 공동 수집</strong><span id="dollStatus">0 / 4</span>
+    <strong>인형 조립 · 팀 공동 수집</strong><span id="dollStatus">0 / 4</span><div id="artifactProgress" role="status" aria-live="polite" style="margin-top:5px;color:#d4bbdf">제0유물 파편 · 0 / 5</div>
     <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px">
       <button type="button" data-piece="0">부품 1</button><button type="button" data-piece="1">부품 2</button>
       <button type="button" data-piece="2">부품 3</button><button type="button" data-piece="3">부품 4</button>
@@ -357,7 +357,18 @@
               ch05Panel.hidden = !phaseStarted || !['ch05','ch05_cleared'].includes(currentPhase);
               ch06Panel.hidden = !phaseStarted || currentPhase !== 'ch06';
               dollPanel.hidden = !phaseStarted || !['ch02_cleared','ch03','ch03_cleared','ch04','ch04_cleared','ch05','ch05_cleared','ch06'].includes(currentPhase);
-              if(Array.isArray(data.pieces))document.getElementById('dollStatus').textContent=' '+data.pieces.length+' / 4';
+              if(Array.isArray(data.pieces)){
+                document.getElementById('dollStatus').textContent=' '+data.pieces.length+' / 4';
+                dollPanel.querySelectorAll('[data-piece]').forEach(btn=>{
+                  const collected=data.pieces.map(Number).includes(Number(btn.dataset.piece));
+                  btn.disabled=collected;
+                  btn.setAttribute('aria-label','인형 부품 '+(Number(btn.dataset.piece)+1)+(collected?' 수집 완료':' 수집'));
+                });
+              }
+              if(Array.isArray(data.artifactFragments)){
+                const found=data.artifactFragments.map(Number);
+                document.getElementById('artifactProgress').textContent='제0유물 파편 · '+found.length+' / 5';
+              }
               document.getElementById('sceneTitle').textContent = '회명병원 · '+currentPhase;
               if(Array.isArray(data.chapter.solved)) document.getElementById('line').textContent = '서버 동기화 · 진행 단계: '+currentPhase+' · 완료한 퍼즐: '+data.chapter.solved.length;
             }
