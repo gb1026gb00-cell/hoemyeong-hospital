@@ -10,7 +10,7 @@ for(let i=0;i<scriptBlocks.length;i++){
  catch(e){test('inline JS '+(i+1),false,e.message)}
 }
 for(const f of ['server.js','room_storage.js'])try{new vm.Script(fs.readFileSync(path.join(root,f),'utf8'),{filename:f});test(f+' parse',true)}catch(e){test(f+' parse',false,e.message)}
-for(const id of ['hmPlaySheet','hmFinal06','hmFinalScene','hmArchiveScene','hmIsolation05','hmElevator03','hmWard02']){
+for(const id of ['ch01PuzzlePanel','ch02PuzzlePanel','ch03PuzzlePanel','ch04PuzzlePanel','ch05PuzzlePanel','ch06PuzzlePanel','artifactProgress','dollPanel']){
  test('UI '+id,html.includes(id));
 }
 for(let i=1;i<=6;i++)test('voice CH'+i,fs.existsSync(path.join(root,'voice_ch'+String(i).padStart(2,'0')+'.mp3')));
