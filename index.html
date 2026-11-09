@@ -15,6 +15,7 @@
   header small { display: block; font-size: 11px; color: #b5a3c5; }
   
   .scene { position: relative; flex: 1; min-height: 0; overflow: hidden; border: 1px solid #675371; border-radius: 13px; background: #201a27; }
+  [hidden] { display:none !important; }
   .scene img { width: 100%; height: 100%; object-fit: cover; display: block; filter: brightness(.82); }
   
   .hot { position: absolute; border: 1px solid #a989c9; background: #160e21b8; border-radius: 20px; padding: 6px 9px; font-size: 12px; box-shadow: 0 0 12px #b06ce755; cursor: pointer; }
@@ -271,6 +272,25 @@
   let ws = null, token = null, myRole = null, isHost = false, joined = false, started = false;
   let currentPhase = 'reception';
   let lastStarted = false;
+  const sceneImage=document.getElementById('sceneImage');
+  const chapterVisuals={
+    ch02:{src:'ward208.webp',alt:'회명병원 208호 병동'},
+    ch03:{src:'elevator_hall.webp',alt:'회명병원 엘리베이터'},
+    ch04:{src:'archive_room.webp',alt:'회명병원 기록보관실'},
+    ch05:{src:'isolation05.webp',alt:'회명병원 격리실'},
+    ch06:{src:'artifact_room.webp',alt:'회명병원 제0유물과 마지막 문'}
+  };
+  let visualChapter='';
+  function syncChapterVisual(phase){
+    const match=String(phase).match(/^ch0[2-6]/);
+    const chapter=match?match[0]:'ch01';
+    if(visualChapter===chapter)return;
+    visualChapter=chapter;
+    document.querySelectorAll('#mainScene .hot').forEach(button=>button.hidden=chapter!=='ch01');
+    const item=chapterVisuals[chapter];
+    if(item){sceneImage.onerror=()=>{sceneImage.alt=item.alt+' (이미지 로드 실패)';};sceneImage.src='https://gb1026gb00-cell.github.io/hoemyeong-hospital/'+item.src;sceneImage.alt=item.alt;}
+    // CH01 approved reception image is not present in main media tree; do not substitute another scene.
+  }
   const ch01Panel = document.getElementById("ch01PuzzlePanel");
   const ch06Panel=document.getElementById("ch06PuzzlePanel"),ch06Result=document.getElementById("ch06Result");
   const dollPanel=document.getElementById("dollPanel");
@@ -316,6 +336,7 @@
           if(data.type === 'joined' || data.type === 'state') {
             if(data.chapter && typeof data.chapter.phase === 'string') {
               currentPhase = data.chapter.phase;
+              syncChapterVisual(currentPhase);
               ch01Panel.hidden = !started || !['separated','escaped'].includes(currentPhase);
               ch02Panel.hidden = !started || !['ch02','ch02_cleared'].includes(currentPhase);
               ch03Panel.hidden = !started || !['ch03','ch03_cleared'].includes(currentPhase);
@@ -396,7 +417,7 @@
   });
 })();
 </script>
-<div id="hmMediaOverlay" hidden style="position:fixed;inset:0;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;pointer-events:none"><video id="hmHorrorVideo" playsinline preload="none" style="width:100%;height:100%;object-fit:contain"></video></div>
+<div id="hmMediaOverlay" hidden style="position:fixed;inset:0;z-index:9999;background:#000;display:none;align-items:center;justify-content:center;pointer-events:none"><video id="hmHorrorVideo" playsinline preload="none" style="width:100%;height:100%;object-fit:contain"></video></div>
 <div id="hmSoundControl" style="position:fixed;right:8px;top:env(safe-area-inset-top,8px);z-index:9000;background:#17121fe6;padding:5px 8px;border-radius:8px;font-size:12px">
 <label><input id="hmSoundEnabled" type="checkbox" checked> 소리</label>
 <input id="hmSoundVolume" aria-label="소리 크기" type="range" min="0" max="100" value="65" style="width:75px;vertical-align:middle">
