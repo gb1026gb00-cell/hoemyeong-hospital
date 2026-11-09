@@ -103,7 +103,7 @@ const SENSE_MESSAGES=[
  '서랍 손잡이에만 최근에 남은 손자국이 있다.',
  '처음 들어왔을 때 없던 그림자가 거울에 남아 있다.'
 ];
-function assignedSenses(r,role){const online=[...r.clients].filter(x=>x.ws&&x.ws.readyState===WebSocket.OPEN).map(x=>x.role).sort((a,b)=>a-b);const roles=r.started&&online.length>=2?online:(r.senseRoles||[...r.clients].map(x=>x.role).sort((a,b)=>a-b)),idx=roles.indexOf(role);
+function assignedSenses(r,role){const online=[...r.clients].filter(x=>x.ws&&x.ws.readyState===WebSocket.OPEN).map(x=>x.role).sort((a,b)=>a-b);if(r.started&&online.length<2&&!r.devSolo)return [];const roles=r.started?online:(r.senseRoles||[...r.clients].map(x=>x.role).sort((a,b)=>a-b)),idx=roles.indexOf(role);
  return idx<0?[]:SENSES.map((sense,i)=>({sense,object:SENSE_OBJECTS[i],message:SENSE_MESSAGES[i]})).filter((_,i)=>i%roles.length===idx);
 }
 const ECG_ORDER=[3,0,6,2,7,4,1,5];
