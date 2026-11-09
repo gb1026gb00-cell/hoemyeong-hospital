@@ -89,6 +89,17 @@
     <button class="hot" data-action="bell" style="left:52%;top:65%;background:#501b1bb8">호출벨</button>
   </div>
 
+  <section id="ch01PuzzlePanel" hidden aria-label="접수실 협동 조사" style="max-height:34dvh;overflow:auto;background:#21192c;border:1px solid #675371;border-radius:10px;padding:10px;font-size:13px;">
+    <strong>CH.01 · 분리 조사</strong><p id="ch01Result" style="white-space:pre-wrap;line-height:1.5">각 조사실의 기록을 확인하세요.</p>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;">
+      <button type="button" data-ch01="inspect" data-object="intercom">내선 기록 조사</button>
+      <button type="button" data-ch01="inspect" data-object="desk">기록 재조사</button>
+      <button type="button" data-ch01="inspect" data-object="cabinet">잠긴 보관함 조사</button>
+      <button type="button" data-ch01="inspect" data-object="mirror">거울 조사</button>
+      <button type="button" data-ch01="solve">담당 제어판 해제</button>
+      <button type="button" data-ch01="ch02_enter">다음 구역 이동 (방장)</button>
+    </div>
+  </section>
   <div class="narrative" id="line">접수실 호출벨을 누르거나 사물을 조사해 조사를 시작하세요.</div>
 
   <nav>
@@ -141,6 +152,10 @@
   let ws = null, token = null, myRole = null, isHost = false, joined = false, started = false;
   let currentPhase = 'reception';
   let lastStarted = false;
+  const ch01Panel = document.getElementById("ch01PuzzlePanel");
+  const ch01Result = document.getElementById("ch01Result");
+  function chapterSend(action, extra={}) { if(!ws || ws.readyState!==WebSocket.OPEN || !started) { ch01Result.textContent="게임 시작 후 조사할 수 있어요."; return; } ws.send(JSON.stringify({type:"chapter",action,...extra})); }
+  ch01Panel.addEventListener("click", e => { const btn=e.target.closest("[data-ch01]"); if(!btn)return; chapterSend(btn.dataset.ch01,btn.dataset.object?{object:btn.dataset.object}:{}); });
   const charNames = ['홍중','성화','윤호','여상','산','민기','우영','종호'];
 
   if(hmJoin) {
@@ -165,12 +180,14 @@
           if(data.type === 'joined' || data.type === 'state') {
             if(data.chapter && typeof data.chapter.phase === 'string') {
               currentPhase = data.chapter.phase;
+              ch01Panel.hidden = !started || !['separated','escaped'].includes(currentPhase);
               document.getElementById('sceneTitle').textContent = '회명병원 · '+currentPhase;
               if(Array.isArray(data.chapter.solved)) document.getElementById('line').textContent = '서버 동기화 · 진행 단계: '+currentPhase+' · 완료한 퍼즐: '+data.chapter.solved.length;
             }
             if(data.started === true) {
               started = true;
               if(!lastStarted) { lastStarted = true; coopPanel.hidden = true; }
+              ch01Panel.hidden = !['separated','escaped'].includes(currentPhase);
             }
             if(data.token){ token = data.token; localStorage.setItem('hm-token', token); }
             myRole = data.yourRole ?? myRole;
@@ -190,6 +207,9 @@
             coopStatus.textContent = `${started?'진행 중':'입장 성공'} · ${charNames[myRole]||myRole} · ${data.members?.filter(m=>m.online!==false).length||0}명 연결`;
             document.getElementById('roleDisplay').textContent = `담당: ${charNames[myRole]||'조사원'}`;
           }
+          if(data.type === 'inspection') { ch01Result.textContent = (data.room?data.room+'\n':'')+(data.description||'')+(data.clue?'\n전달할 암호: '+data.clue.code+' → 조사원 '+data.clue.target:''); }
+          if(data.type === 'chapter_result' || data.type === 'fragment_result' || data.type === 'ch02_result') ch01Result.textContent = data.message || JSON.stringify(data);
+          if(data.type === 'chapter_event') ch01Result.textContent = data.event==='blackout'?'정전 발생. 조사원들이 각 조사실로 분리되었습니다.':data.event==='escape'?'모든 조사실 봉인 해제 완료. 파편을 확보한 뒤 다음 구역으로 이동하세요.':(data.message||'새로운 사건 발생');
           if(data.type === 'started') {
             started=true; lastStarted=true; coopStatus.textContent='게임 시작 신호 수신';
             hmReady.disabled=true; hmStart.disabled=true;
@@ -198,7 +218,7 @@
         } catch(err){ console.error(err); }
       };
       ws.onerror = () => coopStatus.textContent = '웹소켓 연결 실패 · 서버 상태를 확인해 주세요.';
-      ws.onclose = () => { joined=false; started=false; lastStarted=false; isHost=false; hmCapacity.disabled=false; hmCharacter.disabled=false; hmJoin.disabled=false; hmReady.disabled=true; hmStart.disabled=true; hmLeave.disabled=true; coopStatus.textContent='연결 종료 · 다시 입장해 주세요.'; };
+      ws.onclose = () => { ch01Panel.hidden=true; joined=false; started=false; lastStarted=false; isHost=false; hmCapacity.disabled=false; hmCharacter.disabled=false; hmJoin.disabled=false; hmReady.disabled=true; hmStart.disabled=true; hmLeave.disabled=true; coopStatus.textContent='연결 종료 · 다시 입장해 주세요.'; };
     };
   }
 
