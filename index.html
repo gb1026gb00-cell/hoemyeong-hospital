@@ -303,7 +303,14 @@
   const ch02Result = document.getElementById("ch02Result");
   ch02Panel.addEventListener("click",e=>{const b=e.target.closest("[data-ch02]");if(!b)return;const action=b.dataset.ch02;const extra={};if(b.dataset.object)extra.object=b.dataset.object;if(b.dataset.station)extra.station=b.dataset.station;if(b.dataset.site)extra.site=b.dataset.site;if(b.dataset.valve)extra.valve=Number(b.dataset.valve);if(action==="ch02_unlock")extra.answer=document.getElementById("ch02Answer").value.trim();chapterSend(action,extra);});
   const ch01Result = document.getElementById("ch01Result");
-  function chapterSend(action, extra={}) { if(!ws || ws.readyState!==WebSocket.OPEN || !started) { ch01Result.textContent="게임 시작 후 조사할 수 있어요."; return; } ws.send(JSON.stringify({type:"chapter",action,...extra})); }
+  function chapterSend(action, extra={}) {
+    if(!ws || ws.readyState!==WebSocket.OPEN || !started) {
+      const result=({ch02:ch02Result,ch03:ch03Result,ch04:ch04Result,ch05:ch05Result,ch06:ch06Result})[currentPhase.replace('_cleared','')]||ch01Result;
+      result.textContent="서버 연결과 게임 시작 상태를 확인해 주세요.";
+      return;
+    }
+    ws.send(JSON.stringify({type:"chapter",action,...extra}));
+  }
   ch01Panel.addEventListener("click", e => { const btn=e.target.closest("[data-ch01]"); if(!btn)return; const action=btn.dataset.ch01; const val=id=>document.getElementById(id)?.value.trim()||""; const extra=btn.dataset.object?{object:btn.dataset.object}:btn.dataset.site?{site:btn.dataset.site}:{}; if(["sense_interaction","sense_challenge","sense_submit"].includes(action))extra.index=Number(val("senseIndex")); if(action==="sense_interaction")extra.sequence=val("senseSequence"); if(action==="sense_challenge"){extra.answer=val("senseAnswer");extra.crossKey=val("senseCrossKey");} if(action==="sense_submit")extra.digit=Number(val("senseDigit")); if(action==="evidence_inspect")extra.index=Number(val("evidenceIndex")); if(action==="evidence_submit")extra.answer=val("evidenceAnswer"); if(action==="ecg_submit")extra.answer=val("ecgAnswer"); if(action==="solve")extra.answer=val("panelAnswer"); chapterSend(action,extra); });
   const charNames = ['홍중','성화','윤호','여상','산','민기','우영','종호'];
 
@@ -328,7 +335,16 @@
         try {
           const data = JSON.parse(e.data);
           window.hmMedia?.handle(data);
-          if(data.type === 'error') { coopStatus.textContent='오류: '+data.message; return; }
+          if(data.type === 'error') {
+            const message='오류: '+(data.message||'요청을 처리하지 못했습니다.');
+            coopStatus.textContent=message;
+            if(started){
+              const key=currentPhase.replace('_cleared','');
+              const target=({ch02:ch02Result,ch03:ch03Result,ch04:ch04Result,ch05:ch05Result,ch06:ch06Result})[key]||ch01Result;
+              target.textContent=message;
+            }
+            return;
+          }
           if(data.type === 'joined' || data.type === 'state') {
             if(data.chapter && typeof data.chapter.phase === 'string') {
               currentPhase = data.chapter.phase;
