@@ -3,11 +3,10 @@
 #scene #dollHotspot{left:51%!important;top:67%!important;width:30px!important;height:30px!important;min-width:30px!important;min-height:30px!important;z-index:24!important;border-color:#d9b7d9!important;background:#2b142e99!important;touch-action:manipulation!important}
 #scene .hot1[data-action="desk"]{left:22%!important;top:55%!important;z-index:20!important}
 #scene #dollHotspot::after{background:#f1d5f2!important}
-/* The original stage-based torso/limb SVG must remain visible. V116 replaced it with a face-only photograph, contradicting the puzzle text. */
-#dollVisual{background:radial-gradient(ellipse at 50% 30%,#25202b 0%,#09080d 72%)!important;min-height:0!important;max-width:430px!important;aspect-ratio:420 / 390!important}
-#dollVisual svg{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important}
-#dollVisual::before{background:linear-gradient(180deg,transparent 65%,#070509a8 100%)!important}
-/* Replace only the doll's face, while preserving the body and stage-dependent missing limbs. */
-#dollVisual::after{content:"";position:absolute;left:39%;top:13%;width:22%;height:27%;border-radius:42% 42% 48% 48%;background:url("../assets/images/doll_horror.webp") center 32% / 260% auto no-repeat;filter:brightness(.78) saturate(.62);mix-blend-mode:luminosity;pointer-events:none;opacity:.83;z-index:1;clip-path:ellipse(49% 48% at 50% 50%)}
+/* CH.01: one continuous photographic doll body, no SVG/cartoon overlay. */
+#dollVisual{position:relative!important;min-height:0!important;aspect-ratio:675 / 550!important;max-width:650px!important;background:#0b090e url("../assets/images/doll_body.webp") center center / cover no-repeat!important;overflow:hidden!important}
+#dollVisual svg{display:none!important}
+#dollVisual::after{content:none!important;display:none!important}
+#dollVisual::before{background:linear-gradient(180deg,transparent 60%,#09060ec9 100%)!important}
 #dollVisualCaption{z-index:3!important;background:#0b0810d9!important;padding:7px 9px!important;border-radius:5px!important;bottom:8px!important}
 @media(max-width:650px){#scene #dollHotspot{left:52%!important;top:68%!important}#scene .hot1[data-action="desk"]{left:22%!important;top:56%!important}#dollVisual{min-height:0!important}}

@@ -430,7 +430,7 @@ main.shell { height:auto!important; min-height:100dvh!important; max-height:none
 <path d="M176 90 Q176 53 208 52 Q246 53 248 89" fill="none" stroke="#332e34" stroke-linecap="round" stroke-width="13"></path><path d="M186 106 Q194 102 200 107 M221 107 Q229 102 237 108" fill="none" stroke="#242127" stroke-linecap="round" stroke-width="5"></path><path class="hm-doll-mouth" d="M197 125 Q211 135 226 125" fill="none" stroke="#40323b" stroke-width="3"></path><path d="M210 63 l-9 25 14 10 -8 15 9 14" fill="none" stroke="#55494d" stroke-width="1.8"></path><path d="M181 85 l10 16 -8 18 M241 84 l-12 16 7 16" fill="none" stroke="#54484b" stroke-width="1.4"></path>
 <g class="hm-doll-seams" fill="none" stroke="#d0ad9a" stroke-dasharray="4 7" stroke-width="3"><path d="M146 174 Q160 185 169 201 M260 201 Q276 186 291 179 M168 284 Q187 294 204 292 M224 292 Q247 291 266 280"></path></g>
 <text fill="#a9a0a8" font-size="11" letter-spacing="2" text-anchor="middle" x="210" y="380">SPECIMEN 00 — RECOVERED PARTS</text>
-</svg><p id="dollVisualCaption">접수대 아래 · 훼손된 몸통</p></div>
+</svg><p id="dollVisualCaption">접수대 아래 · 훼손된 인형</p></div>
 <div aria-live="polite" id="dollTornDetail" role="status" style="padding:12px;margin:10px 0;background:#160f18;border-left:3px solid #806779;color:#e4d4de;font-size:13px;line-height:1.75;white-space:pre-line"></div>
 <p id="dollCount">수집: 몸통 + 0/4 부품</p><div aria-live="polite" id="dollLog">…흐윽. 누군가 울고 있다.</div>
 <button id="dollClose">조사 닫기</button>
@@ -1678,7 +1678,7 @@ const torn=['접수대 아래. 팔과 다리가 뜯겨 나간 인형의 몸통�
 '오른팔까지 붙자 인형의 몸이 한쪽으로 기운다. 두 팔의 연결 부위는 서로 다르게 찢겨 있다. 잠시 울음이 끊긴다.',
 '왼다리가 붙은 뒤에도 골반의 천이 뒤틀려 있다. 다리 끝이 자연스럽지 않은 방향을 향한다. 보이지 않는 곳에서 작은 웃음이 섞인다.',
 '마지막 다리가 억지로 끼워진다. 솜이 밖으로 밀려나오고 봉제선이 어긋난다. 울음이 멎는다. 금 간 얼굴의 입꼬리가 아주 조금 올라간다.\n\n조립이 완료되었습니다. 원래의 모습과 일치하지 않습니다.'];
-$('dollVisual').dataset.stage=String(found.size);$('dollVisualCaption').textContent=['접수대 아래 · 훼손된 몸통','왼팔 복원 · 뒤틀린 어깨','오른팔 복원 · 균형을 잃은 몸통','왼다리 복원 · 비뚤어진 봉제선','조립 완료 · 원래의 모습과 일치하지 않음'][found.size];$('dollTornDetail').textContent=torn[found.size];if(found.size===4){$('dollLog').textContent='…흐윽. …\n\n히히히.\n\n“마지막 문 앞에서, 누가 먼저 들어왔는지 확인해.”';if(!complete){complete=true;document.dispatchEvent(new CustomEvent('hoemyeong-doll-complete'))}}else{$('dollLog').textContent=['…흐윽. 누군가 울고 있다.','울음이 조금 커졌다.','울음이 갑자기 끊겼다.','흐느낌 사이에 웃음이 섞인다.'][found.size]}}
+$('dollVisual').dataset.stage=String(found.size);$('dollVisualCaption').textContent=['접수대 아래 · 훼손된 인형','왼팔 복원 · 뒤틀린 어깨','오른팔 복원 · 균형을 잃은 몸통','왼다리 복원 · 비뚤어진 봉제선','조립 완료 · 원래의 모습과 일치하지 않음'][found.size];$('dollTornDetail').textContent=torn[found.size];if(found.size===4){$('dollLog').textContent='…흐윽. …\n\n히히히.\n\n“마지막 문 앞에서, 누가 먼저 들어왔는지 확인해.”';if(!complete){complete=true;document.dispatchEvent(new CustomEvent('hoemyeong-doll-complete'))}}else{$('dollLog').textContent=['…흐윽. 누군가 울고 있다.','울음이 조금 커졌다.','울음이 갑자기 끊겼다.','흐느낌 사이에 웃음이 섞인다.'][found.size]}}
 hot.addEventListener('click',()=>{panel.hidden=false;dollOpens++;view();render();
  const visual=$('dollVisual');
  if(found.size===0 && dollOpens>=2){visual.classList.add('hm-doll-turned');$('dollVisualCaption').textContent='접수대 아래 · 인형의 고개가 처음과 다른 방향이다';}
