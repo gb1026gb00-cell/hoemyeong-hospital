@@ -1,5 +1,5 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>THE EIGHTH DOOR : 회명병원</title><style>
-*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#0d0a13;color:#eee4f4;font-family:system-ui,-apple-system,sans-serif}button{font:inherit;cursor:pointer;color:inherit}#app{height:100dvh;max-width:480px;margin:auto;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 9px) 12px calc(env(safe-area-inset-bottom) + 8px);gap:9px;background:linear-gradient(#1e1526,#0d0a13)}header{display:flex;justify-content:space-between;align-items:center;min-height:42px}header strong{font-size:16px}header small{display:block;font-size:11px;color:#b5a3c5}.scene{position:relative;flex:1;min-height:0;overflow:hidden;border:1px solid #675371;border-radius:13px;background:#201a27}.scene img{width:100%;height:100%;object-fit:cover;object-position:center center;display:block;filter:brightness(.82)}.hot{position:absolute;border:1px solid #a989c9;background:#160e21b8;border-radius:20px;padding:6px 9px;font-size:12px;box-shadow:0 0 12px #b06ce755;touch-action:manipulation;min-height:34px;cursor:pointer}.hot:focus-visible{outline:3px solid #fff}.narrative{background:#21192c;border:1px solid #594566;border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.45;min-height:54px}nav{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}nav button{background:#2c2138;border:1px solid #6c557c;border-radius:10px;min-height:53px;font-size:12px}nav b{display:block;font-size:18px}input{background:#0d0a13;color:white;border:1px solid #86649b;padding:10px;width:100%;font-size:18px;letter-spacing:5px}
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#0d0a13;color:#eee4f4;font-family:system-ui,-apple-system,sans-serif}button{font:inherit;cursor:pointer;color:inherit}#app{height:100dvh;max-width:480px;margin:auto;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 9px) 12px calc(env(safe-area-inset-bottom) + 8px);gap:9px;background:linear-gradient(#1e1526,#0d0a13)}header{display:flex;justify-content:space-between;align-items:center;min-height:42px}header strong{font-size:16px}header small{display:block;font-size:11px;color:#b5a3c5}.scene{position:relative;flex:1;min-height:0;overflow:hidden;border:1px solid #675371;border-radius:13px;background:#201a27;isolation:isolate}.scene img{width:100%;height:100%;object-fit:cover;object-position:center center;display:block;filter:brightness(.82)}.hot{position:absolute;border:1px solid #a989c9;background:#160e21b8;border-radius:20px;padding:6px 9px;font-size:12px;box-shadow:0 0 12px #b06ce755;touch-action:manipulation;min-height:34px;cursor:pointer}.hot:focus-visible{outline:3px solid #fff}.narrative{background:#21192c;border:1px solid #594566;border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.45;min-height:54px}nav{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}nav button{background:#2c2138;border:1px solid #6c557c;border-radius:10px;min-height:53px;font-size:12px}nav b{display:block;font-size:18px}input{background:#0d0a13;color:white;border:1px solid #86649b;padding:10px;width:100%;font-size:18px;letter-spacing:5px}
 
 /* 멀티플레이 대기실 스타일 */
 #hmCoopOpen{position:fixed;z-index:40;top:calc(12px + env(safe-area-inset-top));right:12px;background:#21172be8;color:#f6eafa;border:1px solid #a38bb7;border-radius:12px;padding:8px 12px;font:600 13px system-ui;box-shadow:0 3px 16px #0008}
@@ -13,22 +13,28 @@
 #hmCoopPanel .info{white-space:pre-line;background:#201b29;padding:12px;border-radius:10px;margin:10px 0;min-height:34px}
 #hmCoopPanel .head{display:flex;justify-content:space-between;align-items:center}
 
-/* Canvas 공포 영상 레이어 */
-#gameMediaLayer{position:fixed;inset:0;z-index:1001;display:none;background:#08060a;overflow:hidden;touch-action:none}
+/* V126: 비디오/시네마틱 레이어 원천 차단 (건너뛰기·확대·컨트롤러 없음) */
+#gameMediaLayer{position:fixed;inset:0;z-index:1001;display:none;background:#08060a;overflow:hidden;touch-action:none;overscroll-behavior:contain}
 #gameMediaLayer.active{display:block}
-#gameMediaLayer #introPlayer{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important;object-fit:contain!important;z-index:1!important}
+#gameMediaLayer #introPlayer,#gameMediaLayer video#sceneEvent{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important;object-fit:cover!important;object-position:center center!important;z-index:1!important;pointer-events:none!important}
+#mediaTouchShield{position:absolute;inset:0;z-index:2;background:transparent;pointer-events:auto;touch-action:none}
 
-/* 인트로 6초 규격 화면 (한자 3초 + 병원외관 3초) */
+/* 네이티브 플레이어 컨트롤 숨김 강제 적용 */
+video::-webkit-media-controls,video::-webkit-media-controls-panel,video::-webkit-media-controls-enclosure,video::-webkit-media-controls-overlay-play-button,video::-webkit-media-controls-fullscreen-button{display:none!important;opacity:0!important;visibility:hidden!important}
+
+/* 인트로 6초 규격 화면 (한자 3초 + 병원 외관 3초 자동 진행) */
 #introCover{position:fixed;inset:0;background:#09060e;z-index:1002;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;padding:16px;text-align:center}
-#introCover h1{font-size:36px;letter-spacing:6px;margin:0;color:#f3e3fa;text-shadow:0 0 20px #b06ce755}
+#introCover h1{font-size:38px;letter-spacing:6px;margin:0;color:#f3e3fa;text-shadow:0 0 20px #b06ce755}
 #introCover p{font-size:13px;color:#b5a3c5}
 #introCover img.intro-bg{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:-1;opacity:0.4;display:none}
 #introCover.exterior h1{display:none}
 #introCover.exterior img.intro-bg{display:block}
 #introCover.hidden{display:none}
 
-.scene video#sceneEvent{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:12;display:none;background:#08060a}
+/* 인게임 내 이벤트 영상 레이어 */
+.scene video#sceneEvent{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:12;display:none;pointer-events:none;background:#08060a}
 .scene.event-active video#sceneEvent{display:block}
+.scene.event-active .hot{visibility:hidden}
 </style></head><body>
 
 <button id="hmCoopOpen" type="button">👥 멀티플레이 대기실</button>
@@ -53,7 +59,7 @@
   <div class="two"><input id="hmCoopText" maxlength="180" placeholder="동료와 대화" disabled/><button id="hmCoopSend" disabled type="button">전송</button></div>
 </div></section>
 
-<!-- 인트로 6초 규격 (한자 3초 + 외관 3초 자동 진행) -->
+<!-- 인트로 6초 규격 (한자 3초 + 외관 3초 자동 진행, 건너뛰기 없음) -->
 <div id="introCover">
   <img src="hospital_exterior.webp" class="intro-bg" alt="병원 외관"/>
   <div id="introTextWrap">
@@ -71,9 +77,9 @@
   <div class="scene" id="mainScene">
     <!-- 정석 기획서 기준: 접수실 배경 이미지 적용 -->
     <img id="sceneImage" src="reception.webp" alt="접수실 전경"/>
-    <video id="sceneEvent" playsinline webkit-playsinline></video>
+    <video id="sceneEvent" playsinline webkit-playsinline muted></video>
     
-    <!-- 접수실(CH.01) 올바른 핫스팟 위치 -->
+    <!-- 접수실(CH.01) 핫스팟 -->
     <button class="hot" data-action="desk" style="left:35%;top:75%">접수대</button>
     <button class="hot" data-action="mirror" style="left:45%;top:25%">거울</button>
     <button class="hot" data-action="intercom" style="left:15%;top:60%">내선전화</button>
@@ -91,19 +97,20 @@
   </nav>
 </div>
 
+<!-- V126: 터치 차단막이 포함된 게임 미디어 오버레이 레이어 -->
 <div id="gameMediaLayer" aria-hidden="true">
-  <video id="introPlayer" playsinline webkit-playsinline></video>
+  <video id="introPlayer" playsinline webkit-playsinline muted></video>
   <div id="mediaTouchShield"></div>
 </div>
 
 <script>
 (function(){
-  // 인트로 6초 자동 시퀀스 (한자 3초 -> 병원 외관 3초 -> 자동 진입)
+  // 인트로 6초 자동 시퀀스 (한자 3초 -> 병원 외관 3초 -> 자동 진입, 건너뛰기 불가)
   const cover=document.getElementById('introCover');
   setTimeout(()=>{
     cover.classList.add('exterior'); // 3초 후 병원 외관 전환
     setTimeout(()=>{
-      cover.classList.add('hidden'); // 총 6초 후 커버 제거
+      cover.classList.add('hidden'); // 총 6초 후 커버 제거 및 게임 진입
     }, 3000);
   }, 3000);
 
@@ -168,12 +175,16 @@
     if(text && ws) { ws.send(JSON.stringify({ type:'chat', message:text })); coopText.value=''; }
   };
 
+  // V126: 오버레이 레이어를 통한 공포 영상 재생 (컨트롤러, 건너뛰기, 확대 원천 차단)
   function playHorrorVideo(id){
-    const scene=document.getElementById('mainScene'), video=document.getElementById('sceneEvent');
-    scene.classList.add('event-active');
-    video.src=id+'.mp4';
-    video.play().catch(()=>{});
-    video.onended=()=>{ scene.classList.remove('event-active'); video.src=''; };
+    const layer=document.getElementById('gameMediaLayer'), player=document.getElementById('introPlayer');
+    layer.classList.add('active');
+    player.src=id+'.mp4';
+    player.play().catch(()=>{});
+    player.onended=()=>{
+      layer.classList.remove('active');
+      player.src='';
+    };
   }
 
   function playChapterVoice(chNum){
@@ -181,7 +192,7 @@
     audio.play().catch(()=>{});
   }
 
-  // CH.01 ~ CH.06 전체 페이즈 및 화면 배경 전환 (접수실, 병동, 엘리베이터 등 올바른 이미지 매핑)
+  // CH.01 ~ CH.06 전체 페이즈 및 화면 배경 전환
   function updateChapterPhase(ch){
     const title=document.getElementById('sceneTitle'), img=document.getElementById('sceneImage'), line=document.getElementById('line');
     if(ch.phase==='ch02'){
