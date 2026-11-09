@@ -50,11 +50,13 @@ async function check(label,fn){await fn();checks.push(label);console.log('PASS',
    await wait(team[0],m=>m.type==='state'&&m.members?.length===4&&m.members.every(x=>x.ready));
    send(team[0],{type:'start'});
    await wait(team[0],m=>m.type==='state'&&m.started===true);
+   team[0].messages.length=0; // Discard startup assignments before measuring post-disconnect redistribution.
    team[3].ws.close();
    const reduced=await wait(team[0],m=>m.type==='state'&&m.started&&m.members?.filter(x=>x.online!==false).length===3);
    assert.equal(reduced.cooperationPaused,false);
    const senses3=await wait(team[0],m=>m.type==='sense_assignment'&&m.senses?.length>=2);
    assert.ok(senses3.senses.length>=2);
+   team[0].messages.length=0; // Only compare assignments emitted after the reconnect.
    const back=client();await connect(back);
    send(back,{type:'join',room:room4,role:3,character:3,token:tokens[3]});
    assert.equal((await wait(back,m=>m.type==='joined')).resumed,true);
