@@ -13,14 +13,13 @@
 #hmCoopPanel .info{white-space:pre-line;background:#201b29;padding:12px;border-radius:10px;margin:10px 0;min-height:34px}
 #hmCoopPanel .head{display:flex;justify-content:space-between;align-items:center}
 
-/* V126: 비디오/시네마틱 레이어 원천 차단 (건너뛰기·확대·컨트롤러 없음) */
-#gameMediaLayer{position:fixed;inset:0;z-index:1001;display:none;background:#08060a;overflow:hidden;touch-action:none;overscroll-behavior:contain}
+/* V126: 시네마틱 오버레이 레이어 (평소엔 숨김) */
+#gameMediaLayer{position:fixed;inset:0;z-index:1001;display:none;background:#08060a;overflow:hidden;touch-action:none}
 #gameMediaLayer.active{display:block}
-#gameMediaLayer #introPlayer,#gameMediaLayer video#sceneEvent{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important;object-fit:cover!important;object-position:center center!important;z-index:1!important;pointer-events:none!important}
-#mediaTouchShield{position:absolute;inset:0;z-index:2;background:transparent;pointer-events:auto;touch-action:none}
+#gameMediaLayer #introPlayer{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important;object-fit:cover!important;z-index:1!important}
 
-/* 네이티브 플레이어 컨트롤 숨김 강제 적용 */
-video::-webkit-media-controls,video::-webkit-media-controls-panel,video::-webkit-media-controls-enclosure,video::-webkit-media-controls-overlay-play-button,video::-webkit-media-controls-fullscreen-button{display:none!important;opacity:0!important;visibility:hidden!important}
+/* 네이티브 플레이어 컨트롤 강제 숨김 */
+video::-webkit-media-controls{display:none!important}
 
 /* 인트로 6초 규격 화면 (한자 3초 + 병원 외관 3초 자동 진행) */
 #introCover{position:fixed;inset:0;background:#09060e;z-index:1002;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;padding:16px;text-align:center}
@@ -31,10 +30,8 @@ video::-webkit-media-controls,video::-webkit-media-controls-panel,video::-webkit
 #introCover.exterior img.intro-bg{display:block}
 #introCover.hidden{display:none}
 
-/* 인게임 내 이벤트 영상 레이어 */
-.scene video#sceneEvent{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:12;display:none;pointer-events:none;background:#08060a}
+.scene video#sceneEvent{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:12;display:none;background:#08060a}
 .scene.event-active video#sceneEvent{display:block}
-.scene.event-active .hot{visibility:hidden}
 </style></head><body>
 
 <button id="hmCoopOpen" type="button">👥 멀티플레이 대기실</button>
@@ -59,7 +56,7 @@ video::-webkit-media-controls,video::-webkit-media-controls-panel,video::-webkit
   <div class="two"><input id="hmCoopText" maxlength="180" placeholder="동료와 대화" disabled/><button id="hmCoopSend" disabled type="button">전송</button></div>
 </div></section>
 
-<!-- 인트로 6초 규격 (한자 3초 + 외관 3초 자동 진행, 건너뛰기 없음) -->
+<!-- 인트로 6초 규격 (한자 3초 + 외관 3초 자동 진행) -->
 <div id="introCover">
   <img src="hospital_exterior.webp" class="intro-bg" alt="병원 외관"/>
   <div id="introTextWrap">
@@ -75,11 +72,10 @@ video::-webkit-media-controls,video::-webkit-media-controls-panel,video::-webkit
   </header>
 
   <div class="scene" id="mainScene">
-    <!-- 정석 기획서 기준: 접수실 배경 이미지 적용 -->
     <img id="sceneImage" src="reception.webp" alt="접수실 전경"/>
     <video id="sceneEvent" playsinline webkit-playsinline muted></video>
     
-    <!-- 접수실(CH.01) 핫스팟 -->
+    <!-- 접수실(CH.01) 올바른 핫스팟 -->
     <button class="hot" data-action="desk" style="left:35%;top:75%">접수대</button>
     <button class="hot" data-action="mirror" style="left:45%;top:25%">거울</button>
     <button class="hot" data-action="intercom" style="left:15%;top:60%">내선전화</button>
@@ -97,20 +93,18 @@ video::-webkit-media-controls,video::-webkit-media-controls-panel,video::-webkit
   </nav>
 </div>
 
-<!-- V126: 터치 차단막이 포함된 게임 미디어 오버레이 레이어 -->
 <div id="gameMediaLayer" aria-hidden="true">
   <video id="introPlayer" playsinline webkit-playsinline muted></video>
-  <div id="mediaTouchShield"></div>
 </div>
 
 <script>
 (function(){
-  // 인트로 6초 자동 시퀀스 (한자 3초 -> 병원 외관 3초 -> 자동 진입, 건너뛰기 불가)
+  // 인트로 6초 자동 시퀀스 (한자 3초 -> 병원 외관 3초 -> 자동 진입)
   const cover=document.getElementById('introCover');
   setTimeout(()=>{
-    cover.classList.add('exterior'); // 3초 후 병원 외관 전환
+    cover.classList.add('exterior');
     setTimeout(()=>{
-      cover.classList.add('hidden'); // 총 6초 후 커버 제거 및 게임 진입
+      cover.classList.add('hidden');
     }, 3000);
   }, 3000);
 
@@ -175,7 +169,6 @@ video::-webkit-media-controls,video::-webkit-media-controls-panel,video::-webkit
     if(text && ws) { ws.send(JSON.stringify({ type:'chat', message:text })); coopText.value=''; }
   };
 
-  // V126: 오버레이 레이어를 통한 공포 영상 재생 (컨트롤러, 건너뛰기, 확대 원천 차단)
   function playHorrorVideo(id){
     const layer=document.getElementById('gameMediaLayer'), player=document.getElementById('introPlayer');
     layer.classList.add('active');
@@ -192,7 +185,6 @@ video::-webkit-media-controls,video::-webkit-media-controls-panel,video::-webkit
     audio.play().catch(()=>{});
   }
 
-  // CH.01 ~ CH.06 전체 페이즈 및 화면 배경 전환
   function updateChapterPhase(ch){
     const title=document.getElementById('sceneTitle'), img=document.getElementById('sceneImage'), line=document.getElementById('line');
     if(ch.phase==='ch02'){
@@ -237,7 +229,6 @@ video::-webkit-media-controls,video::-webkit-media-controls-panel,video::-webkit
     }
   };
 
-  // 사물 터치 및 액션 라우팅
   document.querySelectorAll('.hot').forEach(btn=>{
     btn.onclick=()=>{
       const action=btn.dataset.action;
