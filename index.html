@@ -17,9 +17,14 @@
 #gameMediaLayer{position:fixed;inset:0;z-index:1001;display:none;background:#08060a;overflow:hidden;touch-action:none}
 #gameMediaLayer.active{display:block}
 #gameMediaLayer #introPlayer{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important;object-fit:contain!important;z-index:1!important}
-#introCover{position:fixed;inset:0;background:#09060e;z-index:1002;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;padding:16px}
-#introCover h1{font-size:28px;letter-spacing:4px;margin:0}
-#introCover button{padding:14px 36px;background:#5a3c6e;border:1px solid #a58ab9;border-radius:12px;font-size:17px;color:#fff}
+
+/* 인트로 6초 규격 화면 (한자 3초 + 병원외관 3초) */
+#introCover{position:fixed;inset:0;background:#09060e;z-index:1002;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;padding:16px;text-align:center}
+#introCover h1{font-size:36px;letter-spacing:6px;margin:0;color:#f3e3fa;text-shadow:0 0 20px #b06ce755}
+#introCover p{font-size:13px;color:#b5a3c5}
+#introCover img.intro-bg{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;z-index:-1;opacity:0.4;display:none}
+#introCover.exterior h1{display:none}
+#introCover.exterior img.intro-bg{display:block}
 #introCover.hidden{display:none}
 
 .scene video#sceneEvent{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:12;display:none;background:#08060a}
@@ -48,11 +53,13 @@
   <div class="two"><input id="hmCoopText" maxlength="180" placeholder="동료와 대화" disabled/><button id="hmCoopSend" disabled type="button">전송</button></div>
 </div></section>
 
+<!-- 인트로 6초 규격 (한자 3초 + 외관 3초 자동 진행) -->
 <div id="introCover">
-  <h1>回明病院</h1>
-  <p>THE EIGHTH DOOR · 회명병원</p>
-  <button id="startIntro" type="button">병원에 들어가기</button>
-  <p>인트로 6초 · 건너뛰기 없음</p>
+  <img src="hospital_exterior.webp" class="intro-bg" alt="병원 외관"/>
+  <div id="introTextWrap">
+    <h1>回明病院</h1>
+    <p>THE EIGHTH DOOR · 회명병원 입구</p>
+  </div>
 </div>
 
 <div id="app">
@@ -62,18 +69,19 @@
   </header>
 
   <div class="scene" id="mainScene">
-    <img id="sceneImage" src="ward208.webp" alt="현장 화면"/>
+    <!-- 정석 기획서 기준: 접수실 배경 이미지 적용 -->
+    <img id="sceneImage" src="reception.webp" alt="접수실 전경"/>
     <video id="sceneEvent" playsinline webkit-playsinline></video>
     
-    <!-- 주요 사물 핫스팟 -->
-    <button class="hot" data-action="desk" style="left:36%;top:84%">접수대</button>
-    <button class="hot" data-action="mirror" style="left:42%;top:32%">거울</button>
-    <button class="hot" data-action="intercom" style="left:5%;top:58%">내선전화</button>
-    <button class="hot" data-action="cabinet" style="right:4%;top:47%">서류함</button>
-    <button class="hot" data-action="bell" style="left:50%;top:50%;background:#501b1bb8">호출벨</button>
+    <!-- 접수실(CH.01) 올바른 핫스팟 위치 -->
+    <button class="hot" data-action="desk" style="left:35%;top:75%">접수대</button>
+    <button class="hot" data-action="mirror" style="left:45%;top:25%">거울</button>
+    <button class="hot" data-action="intercom" style="left:15%;top:60%">내선전화</button>
+    <button class="hot" data-action="cabinet" style="right:10%;top:45%">서류함</button>
+    <button class="hot" data-action="bell" style="left:52%;top:65%;background:#501b1bb8">호출벨</button>
   </div>
 
-  <div class="narrative" id="line">사물을 직접 터치하여 단서를 확보하고 동료와 공유하세요.</div>
+  <div class="narrative" id="line">접수실 호출벨을 누르거나 사물을 조사해 조사를 시작하세요.</div>
 
   <nav>
     <button type="button" id="tabInspect"><b>🔍</b>조사</button>
@@ -90,6 +98,15 @@
 
 <script>
 (function(){
+  // 인트로 6초 자동 시퀀스 (한자 3초 -> 병원 외관 3초 -> 자동 진입)
+  const cover=document.getElementById('introCover');
+  setTimeout(()=>{
+    cover.classList.add('exterior'); // 3초 후 병원 외관 전환
+    setTimeout(()=>{
+      cover.classList.add('hidden'); // 총 6초 후 커버 제거
+    }, 3000);
+  }, 3000);
+
   const coopOpen=document.getElementById('hmCoopOpen'), coopPanel=document.getElementById('hmCoopPanel'), coopClose=document.getElementById('hmCoopClose');
   const hmEndpoint=document.getElementById('hmEndpoint'), hmRoom=document.getElementById('hmRoom'), hmCapacity=document.getElementById('hmCapacity');
   const hmCharacter=document.getElementById('hmCharacter'), hmJoin=document.getElementById('hmJoin'), hmLeave=document.getElementById('hmLeave');
@@ -151,15 +168,6 @@
     if(text && ws) { ws.send(JSON.stringify({ type:'chat', message:text })); coopText.value=''; }
   };
 
-  document.getElementById('startIntro').onclick=()=>{
-    document.getElementById('introCover').classList.add('hidden');
-    const layer=document.getElementById('gameMediaLayer'), player=document.getElementById('introPlayer');
-    layer.classList.add('active');
-    player.src='intro_only.mp4';
-    player.play().catch(()=>{});
-    player.onended=()=>{ layer.classList.remove('active'); player.src=''; };
-  };
-
   function playHorrorVideo(id){
     const scene=document.getElementById('mainScene'), video=document.getElementById('sceneEvent');
     scene.classList.add('event-active');
@@ -173,7 +181,7 @@
     audio.play().catch(()=>{});
   }
 
-  // CH.01 ~ CH.06 전체 페이즈 및 화면 전환 핸들러 통합
+  // CH.01 ~ CH.06 전체 페이즈 및 화면 배경 전환 (접수실, 병동, 엘리베이터 등 올바른 이미지 매핑)
   function updateChapterPhase(ch){
     const title=document.getElementById('sceneTitle'), img=document.getElementById('sceneImage'), line=document.getElementById('line');
     if(ch.phase==='ch02'){
@@ -204,7 +212,7 @@
     } else if(ch.phase==='finished'){
       currentChapter='finished';
       title.textContent='END · 귀환';
-      img.src='ward208.webp';
+      img.src='reception.webp';
       line.textContent='여덟 번째 문이 열렸다. 회명병원 접수실로의 귀환. 수고하셨습니다.';
       alert('THE EIGHTH DOOR : 회명병원 탈출에 성공했습니다! (END)');
     }
