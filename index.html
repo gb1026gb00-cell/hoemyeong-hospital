@@ -84,7 +84,7 @@
     <!-- 접수실(CH.01) 핫스팟 -->
     <button class="hot" data-action="desk" style="left:35%;top:75%">접수대</button>
     <button class="hot" data-action="mirror" style="left:45%;top:25%">거울</button>
-    <button class="hot" data-action="intercom" style="left:15%;top:60%">내선전화</button>
+    <!-- CH.01 전화 비활성: G15는 CH.04 원무과 이벤트 전용 -->
     <button class="hot" data-action="cabinet" style="right:10%;top:45%">서류함</button>
     <button class="hot" data-action="bell" style="left:52%;top:65%;background:#501b1bb8">호출벨</button>
   </div>
@@ -138,17 +138,20 @@
   const coopStatus = document.getElementById('hmCoopStatus');
   const coopMembers = document.getElementById('hmCoopMembers');
 
-  let ws = null, token = localStorage.getItem('hm-token')||null, myRole = null, isHost = false;
+  let ws = null, token = null, myRole = null, isHost = false, joined = false, started = false;
   const charNames = ['홍중','성화','윤호','여상','산','민기','우영','종호'];
 
   if(hmJoin) {
     hmJoin.onclick = () => {
       const url = hmEndpoint.value.trim();
-      const room = hmRoom.value.trim();
+      const room = hmRoom.value.trim().toUpperCase();
       const cap = parseInt(hmCapacity.value, 10);
       const charIdx = parseInt(hmCharacter.value, 10);
 
-      ws = new WebSocket(url);
+      if(ws && ws.readyState <= WebSocket.OPEN) return;
+      if(!/^wss:\/\//.test(url) || !/^[A-Z0-9_-]{1,12}$/.test(room)){ coopStatus.textContent='서버 주소 또는 방 코드를 확인해 주세요.'; return; }
+      coopStatus.textContent='서버 연결 중...';
+      try { ws = new WebSocket(url); } catch(e) { coopStatus.textContent='연결 주소 오류: '+e.message; return; }
       ws.onopen = () => {
         coopStatus.textContent = "서버 연결됨. 입장 중...";
         ws.send(JSON.stringify({ type:'join', room, role:charIdx, character:charIdx, capacity:cap, token }));
@@ -156,32 +159,35 @@
       ws.onmessage = e => {
         try {
           const data = JSON.parse(e.data);
-          if(data.type === 'error') return alert(data.message);
+          if(data.type === 'error') { coopStatus.textContent='오류: '+data.message; return; }
           if(data.type === 'joined' || data.type === 'state') {
             if(data.token){ token = data.token; localStorage.setItem('hm-token', token); }
             myRole = data.yourRole ?? myRole;
-            isHost = !!data.isHost;
+            if(data.type === 'joined') { joined = true; isHost = !!data.isHost; hmJoin.disabled=true; }
+            if(data.started) started=true;
             if(data.members) {
               coopMembers.textContent = data.members.map(m => `[${charNames[m.character]||'조사원'}] ${m.ready?'준비완료':'대기중'}${m.host?' (방장)':''}`).join('\n');
-              hmReady.disabled = false;
-              hmStart.disabled = !isHost;
+              hmReady.disabled = started;
+              hmStart.disabled = !isHost || started;
               hmLeave.disabled = false;
             }
-            coopStatus.textContent = `입장 성공 (역할: ${charNames[myRole]||myRole})`;
+            coopStatus.textContent = `${started?'진행 중':'입장 성공'} · ${charNames[myRole]||myRole} · ${data.members?.filter(m=>m.online!==false).length||0}명 연결`;
             document.getElementById('roleDisplay').textContent = `담당: ${charNames[myRole]||'조사원'}`;
           }
           if(data.type === 'started') {
-            alert('게임이 시작되었습니다.');
+            started=true; coopStatus.textContent='게임 시작 신호 수신';
+            hmReady.disabled=true; hmStart.disabled=true;
             coopPanel.hidden = true;
           }
         } catch(err){ console.error(err); }
       };
-      ws.onerror = () => coopStatus.textContent = "웹소켓 연결 실패";
+      ws.onerror = () => coopStatus.textContent = '웹소켓 연결 실패 · 서버 상태를 확인해 주세요.';
+      ws.onclose = () => { joined=false; started=false; isHost=false; hmJoin.disabled=false; hmReady.disabled=true; hmStart.disabled=true; hmLeave.disabled=true; coopStatus.textContent='연결 종료 · 다시 입장해 주세요.'; };
     };
   }
 
-  if(hmReady) hmReady.onclick = () => { if(ws) ws.send(JSON.stringify({ type:'ready', ready:true })); };
-  if(hmStart) hmStart.onclick = () => { if(ws && isHost) ws.send(JSON.stringify({ type:'start' })); };
+  if(hmReady) hmReady.onclick = () => { if(joined && ws?.readyState===WebSocket.OPEN) ws.send(JSON.stringify({ type:'ready', ready:true })); };
+  if(hmStart) hmStart.onclick = () => { if(joined && isHost && ws?.readyState===WebSocket.OPEN) ws.send(JSON.stringify({ type:'start' })); };
   if(hmLeave) hmLeave.onclick = () => { if(ws) ws.close(); location.reload(); };
 
   // 핫스팟 터치
