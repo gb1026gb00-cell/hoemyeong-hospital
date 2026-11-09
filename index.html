@@ -381,8 +381,22 @@
               document.getElementById('sceneTitle').textContent = '회명병원 · '+currentPhase;
               // Periodic state broadcasts must not erase an active clue or narrative.
               // Only a genuine chapter transition or reconnection needs a restore notice.
-              if((chapterChanged || (data.type==='joined' && data.resumed)) && Array.isArray(data.chapter.solved))
-                document.getElementById('line').textContent = '진행 복원 · '+currentPhase+' · 완료한 퍼즐 '+data.chapter.solved.length+'개';
+              if((chapterChanged || (data.type==='joined' && data.resumed)) && Array.isArray(data.chapter.solved)){
+                const ch=data.chapter;
+                const restored=[
+                  '완료 퍼즐 '+ch.solved.length+'개',
+                  ch.evidenceFound?.length ? '접수실 증거 '+ch.evidenceFound.length+'개' : '',
+                  ch.sensoryDone?.length ? '감각 조사 '+ch.sensoryDone.length+'/8' : '',
+                  ch.ch02?.explored?.length ? 'CH.02 조사 '+ch.ch02.explored.length+'곳' : '',
+                  ch.ch03?.inspected?.length ? 'CH.03 조사 '+ch.ch03.inspected.length+'곳' : '',
+                  ch.ch04?.inspected?.length ? 'CH.04 조사 '+ch.ch04.inspected.length+'곳' : '',
+                  ch.ch05?.inspected?.length ? 'CH.05 조사 '+ch.ch05.inspected.length+'곳' : '',
+                  ch.ch06?.inspected?.length ? 'CH.06 조사 '+ch.ch06.inspected.length+'곳' : '',
+                  Array.isArray(data.pieces) ? '인형 부품 '+data.pieces.length+'/4' : '',
+                  Array.isArray(data.artifactFragments) ? '제0유물 '+data.artifactFragments.length+'/5' : ''
+                ].filter(Boolean);
+                document.getElementById('line').textContent = '진행 복원 · '+currentPhase+' · '+restored.join(' · ');
+              }
             }
             if(data.started === true) {
               started = true;
