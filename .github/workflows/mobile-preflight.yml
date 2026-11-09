@@ -1,0 +1,30 @@
+name: Mobile release preflight
+
+on:
+  push:
+    branches:
+      - dev/coop-v172-preserve-approved-ui
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out game
+        uses: actions/checkout@v4
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install WebSocket dependency
+        run: npm install --no-audit --no-fund
+      - name: Run preservation, video, and script checks
+        run: npm test
+      - name: Run real multiplayer reconnect checks
+        run: npm run test:network
+      - name: Verify server syntax
+        run: node --check server.js
