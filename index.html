@@ -68,9 +68,9 @@
 </section>
 
 <!-- 인트로 6초 커버 (한자 3초 -> 외관 3초 후 사라짐) -->
-<div id="introCover">
-  <h1 id="introTitle">回明病院</h1>
-  <p id="introSub">THE EIGHTH DOOR · 회명병원</p>
+<div id="introCover" style="background:#000">
+  <video id="introVideo" src="https://gb1026gb00-cell.github.io/hoemyeong-hospital/intro_only.mp4" autoplay muted playsinline preload="auto" style="width:100%;height:100%;object-fit:contain"></video>
+  <button id="introStart" type="button" hidden style="position:absolute;bottom:15%;padding:14px 22px;border-radius:12px;background:#2b1935;color:#fff;border:1px solid #bfa3cb;z-index:2">화면을 눌러 입장 영상 재생</button>
 </div>
 
 <div id="app">
@@ -232,22 +232,16 @@
 
 <script>
 (function(){
-  // 인트로 6초 타이머 (3초 후 텍스트 변경 또는 외관 전환 -> 3초 후 커버 제거)
-  setTimeout(()=>{
-    const title = document.getElementById('introTitle');
-    const sub = document.getElementById('introSub');
-    if(title && sub) {
-      title.textContent = "回明病院 입구";
-      sub.textContent = "안개 자욱한 병원 외관";
-    }
-    setTimeout(()=>{
-      const cover = document.getElementById('introCover');
-      if(cover) {
-        cover.classList.add('fade-out');
-        setTimeout(()=> cover.remove(), 500);
-      }
-    }, 3000);
-  }, 3000);
+  // Original uploaded intro video; no replacement with a timed text animation.
+  (()=>{
+    const cover=document.getElementById('introCover'),intro=document.getElementById('introVideo'),start=document.getElementById('introStart');
+    let finished=false;
+    const finish=()=>{if(finished)return;finished=true;cover.classList.add('fade-out');setTimeout(()=>cover.remove(),500);};
+    intro.addEventListener('ended',finish,{once:true});
+    intro.addEventListener('error',()=>{start.hidden=false;start.textContent='영상 로드 실패 · 다시 시도';});
+    start.addEventListener('click',()=>{start.hidden=true;intro.play().catch(()=>{start.hidden=false;});});
+    intro.play().catch(()=>{start.hidden=false;});
+  })();
 
   // 대기실 제어
   const coopOpen = document.getElementById('hmCoopOpen');
