@@ -40,6 +40,17 @@ jobs:
           echo "Static checks: ${{ steps.static_checks.outcome }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Multiplayer checks: ${{ steps.network_checks.outcome }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Server syntax: ${{ steps.syntax_checks.outcome }}" >> "$GITHUB_STEP_SUMMARY"
-          test "${{ steps.static_checks.outcome }}" = success
-          test "${{ steps.network_checks.outcome }}" = success
-          test "${{ steps.syntax_checks.outcome }}" = success
+          failed=0
+          if [ "${{ steps.static_checks.outcome }}" != success ]; then
+            echo "::error title=Static preflight failed::Preservation, media, or inline-script checks failed."
+            failed=1
+          fi
+          if [ "${{ steps.network_checks.outcome }}" != success ]; then
+            echo "::error title=Multiplayer smoke test failed::Check the 2-player and 4-player reconnect test output."
+            failed=1
+          fi
+          if [ "${{ steps.syntax_checks.outcome }}" != success ]; then
+            echo "::error title=Server syntax failed::Check server.js syntax."
+            failed=1
+          fi
+          exit "$failed"
