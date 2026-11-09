@@ -331,13 +331,14 @@
             if(data.chapter && typeof data.chapter.phase === 'string') {
               currentPhase = data.chapter.phase;
               syncChapterVisual(currentPhase);
-              ch01Panel.hidden = !started || !['separated','escaped'].includes(currentPhase);
-              ch02Panel.hidden = !started || !['ch02','ch02_cleared'].includes(currentPhase);
-              ch03Panel.hidden = !started || !['ch03','ch03_cleared'].includes(currentPhase);
-              ch04Panel.hidden = !started || !['ch04','ch04_cleared'].includes(currentPhase);
-              ch05Panel.hidden = !started || !['ch05','ch05_cleared'].includes(currentPhase);
-              ch06Panel.hidden = !started || currentPhase !== 'ch06';
-              dollPanel.hidden = !started || !['ch02_cleared','ch03','ch03_cleared','ch04','ch04_cleared','ch05','ch05_cleared','ch06'].includes(currentPhase);
+              const phaseStarted=started || data.started === true;
+              ch01Panel.hidden = !phaseStarted || !['separated','escaped'].includes(currentPhase);
+              ch02Panel.hidden = !phaseStarted || !['ch02','ch02_cleared'].includes(currentPhase);
+              ch03Panel.hidden = !phaseStarted || !['ch03','ch03_cleared'].includes(currentPhase);
+              ch04Panel.hidden = !phaseStarted || !['ch04','ch04_cleared'].includes(currentPhase);
+              ch05Panel.hidden = !phaseStarted || !['ch05','ch05_cleared'].includes(currentPhase);
+              ch06Panel.hidden = !phaseStarted || currentPhase !== 'ch06';
+              dollPanel.hidden = !phaseStarted || !['ch02_cleared','ch03','ch03_cleared','ch04','ch04_cleared','ch05','ch05_cleared','ch06'].includes(currentPhase);
               if(Array.isArray(data.pieces))document.getElementById('dollStatus').textContent=' '+data.pieces.length+' / 4';
               document.getElementById('sceneTitle').textContent = '회명병원 · '+currentPhase;
               if(Array.isArray(data.chapter.solved)) document.getElementById('line').textContent = '서버 동기화 · 진행 단계: '+currentPhase+' · 완료한 퍼즐: '+data.chapter.solved.length;
@@ -376,14 +377,20 @@
           if(data.type === 'ch04_event' || data.type === 'ch04_result') ch04Result.textContent = data.message || '기록보관실 조사 상태가 변경됐습니다.';
           if(data.type === 'ch05_event' || data.type === 'ch05_result') ch05Result.textContent = data.message || '격리실 조사 상태가 변경됐습니다.';
           if(['ch06_event','ch06_result','artifact_result','doll_event'].includes(data.type))ch06Result.textContent=data.message||'마지막 문 조사 상태가 변경됐습니다.';
-          if(data.type === 'chapter_voice') coopStatus.textContent='CH.'+String(data.chapter).padStart(2,'0')+' 음성 재생 신호 수신 · 실제 음성 파일 연결 대기';
+          if(data.type === 'chapter_voice') coopStatus.textContent='CH.'+String(data.chapter).padStart(2,'0')+' 음성 재생 요청';
           if(data.type === 'inspection') { ch01Result.textContent = (data.room?data.room+'\n':'')+(data.description||'')+(data.clue?'\n전달할 암호: '+data.clue.code+' → 조사원 '+data.clue.target:''); }
-          if(data.type === 'chapter_result' || data.type === 'fragment_result' || data.type === 'ch02_result') ch01Result.textContent = data.message || JSON.stringify(data);
+          if(data.type === 'chapter_result' || data.type === 'fragment_result') ch01Result.textContent = data.message || JSON.stringify(data);
           if(data.type === 'chapter_event') ch01Result.textContent = ({blackout:'정전 발생. 조사원들이 각 조사실로 분리되었습니다.',escape:'모든 조사실 봉인 해제 완료. 접수실 서류함에서 제0유물 파편을 찾아 다음 구역으로 이동하세요.',sense_locked:'심전도 복원을 먼저 완료해야 합니다.',wrong:'제어판 암호가 틀렸습니다. 전달받은 숫자와 담당 조사실 규칙을 다시 확인하세요.',solved:'제어판 봉인이 해제되었습니다. 다른 조사원의 해제를 기다리세요.'})[data.event] || data.message || '새로운 사건 발생';
           if(data.type === 'started') {
             started=true; lastStarted=true; coopStatus.textContent='게임 시작 신호 수신';
             hmReady.disabled=true; hmStart.disabled=true;
             coopPanel.hidden = true;
+            ch01Panel.hidden = !['separated','escaped'].includes(currentPhase);
+            ch02Panel.hidden = !['ch02','ch02_cleared'].includes(currentPhase);
+            ch03Panel.hidden = !['ch03','ch03_cleared'].includes(currentPhase);
+            ch04Panel.hidden = !['ch04','ch04_cleared'].includes(currentPhase);
+            ch05Panel.hidden = !['ch05','ch05_cleared'].includes(currentPhase);
+            ch06Panel.hidden = currentPhase !== 'ch06';
           }
         } catch(err){ console.error(err); }
       };
