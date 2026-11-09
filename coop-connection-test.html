@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>회명병원 · 2인 연결 진단</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#110d18;color:#f0e7f6;font:15px system-ui;padding:20px;max-width:560px;margin:auto}h1{font-size:22px}label{display:block;margin:13px 0 5px}input,select,button{font:inherit;background:#261d31;color:white;border:1px solid #7e648d;border-radius:9px;padding:12px;width:100%}button{margin-top:9px}button:disabled{opacity:.4}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#1e1728;padding:12px;border-radius:9px;min-height:65px}.ok{color:#9fe5bd}.warn{color:#ffd19c}small{color:#c4b4cc}</style></head>
+<body><h1>回明病院 · 두 폰 연결 진단</h1><p>기존 게임과 퍼즐은 변경하지 않는 연결 전용 화면입니다.</p>
+<label>멀티플레이 서버</label><input id="url" value="wss://hoemyeong-hospital.onrender.com">
+<label>방 코드 (두 폰에서 동일하게)</label><input id="room" value="TEST208">
+<label>인원</label><select id="capacity"><option value="2">2명</option><option value="3">3명</option><option value="4">4명</option><option value="5">5명</option><option value="6">6명</option><option value="7">7명</option><option value="8">8명</option></select>
+<label>조사원 (두 폰에서 서로 다르게)</label><select id="character"><option value="0">홍중</option><option value="1">성화</option><option value="2">윤호</option><option value="3">여상</option><option value="4">산</option><option value="5">민기</option><option value="6">우영</option><option value="7">종호</option></select>
+<button id="join">방 입장</button><button id="ready" disabled>준비 완료</button><button id="start" disabled>게임 시작 (방장)</button><button id="sync" disabled>상태 다시 확인</button><button id="leave" disabled>연결 종료</button>
+<h3>연결 상태</h3><pre id="status" aria-live="polite">대기 중</pre><h3>참가자</h3><pre id="members">없음</pre><h3>게임 상태</h3><pre id="state">시작 전</pre><h3>서버 응답 기록</h3><pre id="log"></pre><small>이 화면에서는 실제 퍼즐을 진행하지 않습니다. 연결·준비·시작·상태 동기화만 검증합니다.</small>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id), names=['홍중','성화','윤호','여상','산','민기','우영','종호'];let ws=null,host=false,joined=false;
+const status=s=>$('status').textContent=s,log=s=>{$('log').textContent=(new Date().toLocaleTimeString()+' '+s+'\n'+$('log').textContent).slice(0,2500)};
+const send=x=>{if(ws?.readyState===WebSocket.OPEN)ws.send(JSON.stringify(x));else status('연결되지 않았습니다.')};
+$('join').onclick=()=>{if(ws&&ws.readyState<=1)return;const url=$('url').value.trim(),room=$('room').value.trim().toUpperCase(),role=Number($('character').value),capacity=Number($('capacity').value);if(!/^wss:\/\//.test(url)){status('WSS 서버 주소를 확인해 주세요.');return}if(!/^[A-Z0-9_-]{1,12}$/.test(room)){status('방 코드는 영문 대문자·숫자 1~12자로 입력해 주세요.');return}status('서버 연결 중…');try{ws=new WebSocket(url)}catch(e){status('주소 오류: '+e.message);return}
+ws.onopen=()=>{status('연결됨 · 방 입장 요청 중');send({type:'join',room,role,character:role,capacity,token:null})};
+ws.onmessage=e=>{let d;try{d=JSON.parse(e.data)}catch{return}log('수신: '+d.type+(d.message?' / '+d.message:''));if(d.type==='error'){status('오류: '+d.message);return}if(d.type==='joined'){joined=true;host=!!d.isHost;$('ready').disabled=false;$('start').disabled=!host;$('sync').disabled=false;$('leave').disabled=false;$('join').disabled=true;status('입장 완료 · '+names[d.yourRole]+' · '+(host?'방장':'참가자'))}
+if(Array.isArray(d.members)){$('members').textContent=d.members.map(m=>(names[m.character]||m.character)+' · '+(m.ready?'준비 완료':'대기')+(m.host?' · 방장':'')+(m.online===false?' · 연결 끊김':'')).join('\n')||'없음';}
+if(d.type==='started')status('게임 시작 신호 수신! 두 폰 모두 확인해 주세요.');
+if(d.started===true||d.chapter){$('state').textContent=JSON.stringify({started:d.started,phase:d.chapter?.phase,solved:d.chapter?.solved,players:d.members?.length},null,2)}
+};
+ws.onerror=()=>status('연결 오류 · 서버 주소와 Render 상태 확인');ws.onclose=e=>{joined=false;host=false;$('join').disabled=false;$('ready').disabled=true;$('start').disabled=true;$('sync').disabled=true;$('leave').disabled=true;log('연결 종료: '+e.code);status('서버 연결 종료 ('+e.code+')')};};
+$('ready').onclick=()=>send({type:'ready',ready:true});$('start').onclick=()=>send({type:'start'});$('sync').onclick=()=>send({type:'sync'});$('leave').onclick=()=>ws?.close();
+})();
+</script></body></html>
