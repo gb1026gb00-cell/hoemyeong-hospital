@@ -140,6 +140,7 @@
 
   let ws = null, token = null, myRole = null, isHost = false, joined = false, started = false;
   let currentPhase = 'reception';
+  let lastStarted = false;
   const charNames = ['홍중','성화','윤호','여상','산','민기','우영','종호'];
 
   if(hmJoin) {
@@ -167,13 +168,19 @@
               document.getElementById('sceneTitle').textContent = '회명병원 · '+currentPhase;
               if(Array.isArray(data.chapter.solved)) document.getElementById('line').textContent = '서버 동기화 · 진행 단계: '+currentPhase+' · 완료한 퍼즐: '+data.chapter.solved.length;
             }
-            if(data.started === true) { started = true; }
+            if(data.started === true) {
+              started = true;
+              if(!lastStarted) { lastStarted = true; coopPanel.hidden = true; }
+            }
             if(data.token){ token = data.token; localStorage.setItem('hm-token', token); }
             myRole = data.yourRole ?? myRole;
             if(data.type === 'joined') { joined = true; isHost = !!data.isHost; hmJoin.disabled=true; }
             if(data.started) started=true;
             if(data.members) {
               if(data.type === 'state') isHost = data.members.some(m => m.role === myRole && m.host === true);
+              hmCapacity.value = String(data.capacity || hmCapacity.value);
+              hmCapacity.disabled = true;
+              hmCharacter.disabled = true;
               coopMembers.style.whiteSpace = 'pre-line';
               coopMembers.textContent = data.members.map(m => `[${charNames[m.character]||'조사원'}] ${m.ready?'준비완료':'대기중'}${m.host?' (방장)':''}`).join('\n');
               hmReady.disabled = started;
@@ -184,14 +191,14 @@
             document.getElementById('roleDisplay').textContent = `담당: ${charNames[myRole]||'조사원'}`;
           }
           if(data.type === 'started') {
-            started=true; coopStatus.textContent='게임 시작 신호 수신';
+            started=true; lastStarted=true; coopStatus.textContent='게임 시작 신호 수신';
             hmReady.disabled=true; hmStart.disabled=true;
             coopPanel.hidden = true;
           }
         } catch(err){ console.error(err); }
       };
       ws.onerror = () => coopStatus.textContent = '웹소켓 연결 실패 · 서버 상태를 확인해 주세요.';
-      ws.onclose = () => { joined=false; started=false; isHost=false; hmJoin.disabled=false; hmReady.disabled=true; hmStart.disabled=true; hmLeave.disabled=true; coopStatus.textContent='연결 종료 · 다시 입장해 주세요.'; };
+      ws.onclose = () => { joined=false; started=false; lastStarted=false; isHost=false; hmCapacity.disabled=false; hmCharacter.disabled=false; hmJoin.disabled=false; hmReady.disabled=true; hmStart.disabled=true; hmLeave.disabled=true; coopStatus.textContent='연결 종료 · 다시 입장해 주세요.'; };
     };
   }
 
