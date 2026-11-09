@@ -118,6 +118,27 @@
       <button type="button" data-ch01="ecg_submit">심전도 복원</button>
     </div>
   </section>
+  <section id="ch02PuzzlePanel" hidden aria-label="208호 협동 조사" style="max-height:38dvh;overflow:auto;background:#21192c;border:1px solid #675371;border-radius:10px;padding:10px;font-size:13px;">
+    <strong>CH.02 · 208호</strong><p id="ch02Result" style="white-space:pre-wrap;line-height:1.5">환자 기록과 병실을 조사하세요.</p>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">
+      <button type="button" data-ch02="ch02_explore" data-object="bed">침대 조사</button>
+      <button type="button" data-ch02="ch02_explore" data-object="drawer">서랍 조사</button>
+      <button type="button" data-ch02="ch02_explore" data-object="monitor">모니터 조사</button>
+      <button type="button" data-ch02="ch02_inspect" data-station="chart">환자 차트</button>
+      <button type="button" data-ch02="ch02_inspect" data-station="camera">CCTV 기록</button>
+      <button type="button" data-ch02="ch02_corridor">복도 확인</button>
+      <button type="button" data-ch02="ch02_room302">302호 문틈</button>
+      <button type="button" data-ch02="ch02_wheelchair">휠체어</button>
+      <label style="grid-column:1/-1">퇴실 기록 암호<input id="ch02Answer" inputmode="numeric" style="width:100%;min-height:40px"></label>
+      <button type="button" data-ch02="ch02_unlock">병실 잠금 해제</button>
+      <button type="button" data-ch02="ch02_switch">안전장치 고정</button>
+      <button type="button" data-ch02="ch02_pressure" data-valve="1">밸브 1</button>
+      <button type="button" data-ch02="ch02_pressure" data-valve="2">밸브 2</button>
+      <button type="button" data-ch02="ch02_pressure" data-valve="3">밸브 3</button>
+      <button type="button" data-ch02="fragment_search" data-site="drawer">서랍의 제0유물 파편</button>
+      <button type="button" data-ch02="ch03_enter">CH.03 이동 (방장)</button>
+    </div>
+  </section>
   <div class="narrative" id="line">접수실 호출벨을 누르거나 사물을 조사해 조사를 시작하세요.</div>
 
   <nav>
@@ -171,6 +192,9 @@
   let currentPhase = 'reception';
   let lastStarted = false;
   const ch01Panel = document.getElementById("ch01PuzzlePanel");
+  const ch02Panel = document.getElementById("ch02PuzzlePanel");
+  const ch02Result = document.getElementById("ch02Result");
+  ch02Panel.addEventListener("click",e=>{const b=e.target.closest("[data-ch02]");if(!b)return;const action=b.dataset.ch02;const extra={};if(b.dataset.object)extra.object=b.dataset.object;if(b.dataset.station)extra.station=b.dataset.station;if(b.dataset.site)extra.site=b.dataset.site;if(b.dataset.valve)extra.valve=Number(b.dataset.valve);if(action==="ch02_unlock")extra.answer=document.getElementById("ch02Answer").value.trim();chapterSend(action,extra);});
   const ch01Result = document.getElementById("ch01Result");
   function chapterSend(action, extra={}) { if(!ws || ws.readyState!==WebSocket.OPEN || !started) { ch01Result.textContent="게임 시작 후 조사할 수 있어요."; return; } ws.send(JSON.stringify({type:"chapter",action,...extra})); }
   ch01Panel.addEventListener("click", e => { const btn=e.target.closest("[data-ch01]"); if(!btn)return; const action=btn.dataset.ch01; const val=id=>document.getElementById(id)?.value.trim()||""; const extra=btn.dataset.object?{object:btn.dataset.object}:btn.dataset.site?{site:btn.dataset.site}:{}; if(["sense_interaction","sense_challenge","sense_submit"].includes(action))extra.index=Number(val("senseIndex")); if(action==="sense_interaction")extra.sequence=val("senseSequence"); if(action==="sense_challenge"){extra.answer=val("senseAnswer");extra.crossKey=val("senseCrossKey");} if(action==="sense_submit")extra.digit=Number(val("senseDigit")); if(action==="evidence_inspect")extra.index=Number(val("evidenceIndex")); if(action==="evidence_submit")extra.answer=val("evidenceAnswer"); if(action==="ecg_submit")extra.answer=val("ecgAnswer"); if(action==="solve")extra.answer=val("panelAnswer"); chapterSend(action,extra); });
@@ -199,6 +223,7 @@
             if(data.chapter && typeof data.chapter.phase === 'string') {
               currentPhase = data.chapter.phase;
               ch01Panel.hidden = !started || !['separated','escaped'].includes(currentPhase);
+              ch02Panel.hidden = !started || !['ch02','ch02_cleared'].includes(currentPhase);
               document.getElementById('sceneTitle').textContent = '회명병원 · '+currentPhase;
               if(Array.isArray(data.chapter.solved)) document.getElementById('line').textContent = '서버 동기화 · 진행 단계: '+currentPhase+' · 완료한 퍼즐: '+data.chapter.solved.length;
             }
@@ -206,6 +231,7 @@
               started = true;
               if(!lastStarted) { lastStarted = true; coopPanel.hidden = true; }
               ch01Panel.hidden = !['separated','escaped'].includes(currentPhase);
+              ch02Panel.hidden = !['ch02','ch02_cleared'].includes(currentPhase);
             }
             if(data.token){ token = data.token; localStorage.setItem('hm-token', token); }
             myRole = data.yourRole ?? myRole;
@@ -226,6 +252,7 @@
             document.getElementById('roleDisplay').textContent = `담당: ${charNames[myRole]||'조사원'}`;
           }
           if(['sense_interaction_result','sense_challenge_result','sense_result','evidence_result','evidence_verdict','ecg_result'].includes(data.type)) ch01Result.textContent=(data.message||'')+(data.digit?'\n획득 숫자: '+data.digit:'')+(data.text?'\n'+data.text:'');
+          if(data.type === 'ch02_event' || data.type === 'ch02_result') ch02Result.textContent = data.message || '208호 조사 상태가 변경됐습니다.';
           if(data.type === 'inspection') { ch01Result.textContent = (data.room?data.room+'\n':'')+(data.description||'')+(data.clue?'\n전달할 암호: '+data.clue.code+' → 조사원 '+data.clue.target:''); }
           if(data.type === 'chapter_result' || data.type === 'fragment_result' || data.type === 'ch02_result') ch01Result.textContent = data.message || JSON.stringify(data);
           if(data.type === 'chapter_event') ch01Result.textContent = ({blackout:'정전 발생. 조사원들이 각 조사실로 분리되었습니다.',escape:'모든 조사실 봉인 해제 완료. 접수실 서류함에서 제0유물 파편을 찾아 다음 구역으로 이동하세요.',sense_locked:'심전도 복원을 먼저 완료해야 합니다.',wrong:'제어판 암호가 틀렸습니다. 전달받은 숫자와 담당 조사실 규칙을 다시 확인하세요.',solved:'제어판 봉인이 해제되었습니다. 다른 조사원의 해제를 기다리세요.'})[data.event] || data.message || '새로운 사건 발생';
@@ -237,7 +264,7 @@
         } catch(err){ console.error(err); }
       };
       ws.onerror = () => coopStatus.textContent = '웹소켓 연결 실패 · 서버 상태를 확인해 주세요.';
-      ws.onclose = () => { ch01Panel.hidden=true; joined=false; started=false; lastStarted=false; isHost=false; hmCapacity.disabled=false; hmCharacter.disabled=false; hmJoin.disabled=false; hmReady.disabled=true; hmStart.disabled=true; hmLeave.disabled=true; coopStatus.textContent='연결 종료 · 다시 입장해 주세요.'; };
+      ws.onclose = () => { ch01Panel.hidden=true; ch02Panel.hidden=true; joined=false; started=false; lastStarted=false; isHost=false; hmCapacity.disabled=false; hmCharacter.disabled=false; hmJoin.disabled=false; hmReady.disabled=true; hmStart.disabled=true; hmLeave.disabled=true; coopStatus.textContent='연결 종료 · 다시 입장해 주세요.'; };
     };
   }
 
