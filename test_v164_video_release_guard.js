@@ -6,7 +6,7 @@ for(const id of required){const file=path.join(root,id+'.mp4');const good=fs.exi
 for(const id of ['G13','G14','G15','G16','G17','G18','H01','H03','H04']){
  if(!server.includes("id:'"+id+"'")){failed++;console.error('FAIL server mapping',id)}
 }
-for(const token of ["hm:horror-inspect","HMCanvasHorror?.enqueue","hmHorrorCanvas","hm-horror-site"]){
+for(const token of ["data-ch04=\"horror_inspect\"","data-ch05=\"horror_inspect\"","window.hmMedia?.handle(data)","data.type==='horror_video'","function playVideo(id)"]){
  if(!html.includes(token)){failed++;console.error('FAIL client bridge',token)}
 }
 try{new vm.Script(server,{filename:'server.js'})}catch(e){failed++;console.error('FAIL server syntax',e.message)}
