@@ -23,8 +23,23 @@ jobs:
       - name: Install WebSocket dependency
         run: npm install --no-audit --no-fund
       - name: Run preservation, video, and script checks
+        id: static_checks
+        continue-on-error: true
         run: npm test
       - name: Run real multiplayer reconnect checks
+        id: network_checks
+        continue-on-error: true
         run: npm run test:network
       - name: Verify server syntax
+        id: syntax_checks
+        continue-on-error: true
         run: node --check server.js
+      - name: Summarize release blockers
+        if: always()
+        run: |
+          echo "Static checks: ${{ steps.static_checks.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Multiplayer checks: ${{ steps.network_checks.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Server syntax: ${{ steps.syntax_checks.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          test "${{ steps.static_checks.outcome }}" = success
+          test "${{ steps.network_checks.outcome }}" = success
+          test "${{ steps.syntax_checks.outcome }}" = success
