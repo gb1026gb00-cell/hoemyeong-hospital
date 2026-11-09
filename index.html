@@ -354,6 +354,7 @@
           }
           if(data.type === 'joined' || data.type === 'state') {
             if(data.chapter && typeof data.chapter.phase === 'string') {
+              const chapterChanged = currentPhase !== data.chapter.phase;
               currentPhase = data.chapter.phase;
               syncChapterVisual(currentPhase);
               const phaseStarted=data.started === true;
@@ -378,7 +379,10 @@
                 document.getElementById('artifactProgress').textContent='제0유물 파편 · '+found.length+' / 5';
               }
               document.getElementById('sceneTitle').textContent = '회명병원 · '+currentPhase;
-              if(Array.isArray(data.chapter.solved)) document.getElementById('line').textContent = '서버 동기화 · 진행 단계: '+currentPhase+' · 완료한 퍼즐: '+data.chapter.solved.length;
+              // Periodic state broadcasts must not erase an active clue or narrative.
+              // Only a genuine chapter transition or reconnection needs a restore notice.
+              if((chapterChanged || (data.type==='joined' && data.resumed)) && Array.isArray(data.chapter.solved))
+                document.getElementById('line').textContent = '진행 복원 · '+currentPhase+' · 완료한 퍼즐 '+data.chapter.solved.length+'개';
             }
             if(data.started === true) {
               started = true;
