@@ -60,7 +60,7 @@ function recovery(ch){
  const found=flags.filter(Boolean).length,percent=found*5;
  return {percent,found,total:20,tier:percent===100?3:percent>=80?2:percent>=50?1:0};
 }
-const state=r=>({type:'state',artifactFragments:[...(r.artifactFragments||[])].sort(),dollComplete:r.pieces.size===4,clueOwners:clueOwners(r),roles:members(r).map(x=>x.role),members:members(r),pieces:[...r.pieces].sort(),started:r.started,capacity:r.capacity||2,devSolo:!!r.devSolo,chat:r.chat.slice(-25),chapter:publicChapter(r.chapter),recovery:recovery(r.chapter)});
+const state=r=>({type:'state',cooperationPaused:!!r.started&&[...r.clients].filter(c=>c.ws&&c.ws.readyState===WebSocket.OPEN).length<2,artifactFragments:[...(r.artifactFragments||[])].sort(),dollComplete:r.pieces.size===4,clueOwners:clueOwners(r),roles:members(r).map(x=>x.role),members:members(r),pieces:[...r.pieces].sort(),started:r.started,capacity:r.capacity||2,devSolo:!!r.devSolo,chat:r.chat.slice(-25),chapter:publicChapter(r.chapter),recovery:recovery(r.chapter)});
 function chapterVoiceOnce(r,index){if(!r.chapter||!Number.isInteger(index)||index<1||index>6)return;const ch=r.chapter;if(!Array.isArray(ch.voicePlayed))ch.voicePlayed=[];if(ch.voicePlayed.includes(index))return;ch.voicePlayed.push(index);broadcast(r,state(r));broadcast(r,{type:'chapter_voice',chapter:index});}
 function broadcast(r,o){if(o.type==='state'){
  if([...r.clients].some(c=>c.ws&&c.ws.readyState===WebSocket.OPEN))r.lastActiveAt=Date.now();
