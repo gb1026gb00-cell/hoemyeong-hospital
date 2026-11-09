@@ -311,6 +311,7 @@
       ws.onmessage = e => {
         try {
           const data = JSON.parse(e.data);
+          window.hmMedia?.handle(data);
           if(data.type === 'error') { coopStatus.textContent='오류: '+data.message; return; }
           if(data.type === 'joined' || data.type === 'state') {
             if(data.chapter && typeof data.chapter.phase === 'string') {
@@ -393,6 +394,31 @@
       }
     };
   });
+})();
+</script>
+<div id="hmMediaOverlay" hidden style="position:fixed;inset:0;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;pointer-events:none"><video id="hmHorrorVideo" playsinline preload="none" style="width:100%;height:100%;object-fit:contain"></video></div>
+<div id="hmSoundControl" style="position:fixed;right:8px;top:env(safe-area-inset-top,8px);z-index:9000;background:#17121fe6;padding:5px 8px;border-radius:8px;font-size:12px">
+<label><input id="hmSoundEnabled" type="checkbox" checked> 소리</label>
+<input id="hmSoundVolume" aria-label="소리 크기" type="range" min="0" max="100" value="65" style="width:75px;vertical-align:middle">
+</div>
+<script>
+/* Existing repository media, never substitute synthetic placeholders. */
+(()=>{
+ const mediaRoot='https://gb1026gb00-cell.github.io/hoemyeong-hospital/';
+ const overlay=document.getElementById('hmMediaOverlay'),video=document.getElementById('hmHorrorVideo');
+ const enabled=document.getElementById('hmSoundEnabled'),volume=document.getElementById('hmSoundVolume');
+ const audio=new Audio();audio.preload='none';let unlocked=false,activeVideo=false;
+ const queue=[];
+ const soundLevel=()=>enabled.checked?Number(volume.value)/100:0;
+ function applyVolume(){audio.volume=soundLevel();video.volume=soundLevel();audio.muted=!enabled.checked;video.muted=!enabled.checked;}
+ enabled.addEventListener('change',applyVolume);volume.addEventListener('input',applyVolume);applyVolume();
+ document.addEventListener('pointerdown',()=>{unlocked=true;}, {once:true,capture:true});
+ const safeId=id=>/^(G(?:0[1-9]|1[0-8])|H0[134])$/.test(id);
+ function nextVideo(){activeVideo=false;overlay.hidden=true;overlay.style.display='none';video.pause();video.removeAttribute('src');video.load();if(queue.length)playVideo(queue.shift());}
+ function playVideo(id){if(!safeId(id))return;if(activeVideo){queue.push(id);return;}activeVideo=true;overlay.hidden=false;overlay.style.display='flex';video.src=mediaRoot+id+'.mp4';applyVolume();video.currentTime=0;video.play().catch(()=>{nextVideo();document.dispatchEvent(new CustomEvent('hm-media-blocked',{detail:id}));});}
+ video.addEventListener('ended',nextVideo);video.addEventListener('error',nextVideo);
+ function playVoice(chapter){const n=Number(String(chapter).replace(/[^0-9]/g,''));if(!Number.isInteger(n)||n<1||n>6)return;audio.pause();audio.src=mediaRoot+'voice_ch'+String(n).padStart(2,'0')+'.mp3';applyVolume();audio.play().catch(()=>document.dispatchEvent(new CustomEvent('hm-media-blocked',{detail:'voice_ch'+n})));}
+ window.hmMedia={handle(data){if(!data||!data.type)return;if(data.type==='horror_video')playVideo(String(data.id||''));if(data.type==='chapter_voice')playVoice(data.chapter);}};
 })();
 </script>
 </body>
