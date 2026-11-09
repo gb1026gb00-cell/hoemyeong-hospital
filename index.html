@@ -154,6 +154,24 @@ body:has(#modal.v59-drawer) #audioDock,body:has(#modal.v510-card) #audioDock,bod
 #modal.v59-drawer #v59Exit,#modal.v510-card #close,#modal.v510-door #close{top:calc(env(safe-area-inset-top,0px) + 12px)!important;left:12px!important;min-height:44px;min-width:96px;z-index:120!important;touch-action:manipulation}
 @media(max-width:600px){#fearSettings{top:calc(env(safe-area-inset-top,0px) + 54px)!important;font-size:12px!important}#audioDock{top:calc(env(safe-area-inset-top,0px) + 4px)!important;right:5px!important}#v511Help{bottom:calc(env(safe-area-inset-bottom,0px) + 8px)!important}}
 @media(max-height:450px){#fearSettings[open]{max-height:55dvh!important}}
+</style><style id="v105-mobile-ui-css">
+#hm105bar{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:10px;z-index:2147483050;display:flex;gap:7px;align-items:center;font:13px system-ui,sans-serif}
+#hm105bar>button,#hm105bar #v528ChatToggle{position:static!important;min-height:42px!important;padding:9px 11px!important;border-radius:12px!important;border:1px solid #806c91!important;background:#251d30!important;color:#fff!important;box-shadow:0 3px 12px #0009!important;font:600 13px system-ui,sans-serif!important;white-space:nowrap}
+#hm105bar #v528ChatDock{position:static!important;max-width:none!important;z-index:auto!important}
+#hm105bar #v528ChatPanel{position:fixed!important;top:calc(env(safe-area-inset-top,0px) + 62px)!important;right:10px!important;left:auto!important;bottom:auto!important;width:min(360px,calc(100vw - 20px))!important;max-height:calc(100dvh - env(safe-area-inset-top,0px) - 90px)!important;overflow:auto!important;box-sizing:border-box!important;z-index:2147483060!important}
+#hm105bar #v528ChatPanel[hidden]{display:none!important}
+#hm105settings{position:fixed;inset:0;z-index:2147483070;background:#000a;display:flex;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 64px) 12px calc(env(safe-area-inset-bottom,0px) + 16px);box-sizing:border-box}
+#hm105settings[hidden]{display:none!important}
+#hm105settingsInner{width:min(460px,100%);max-height:100%;overflow:auto;overscroll-behavior:contain;background:#1b1523;color:#f6ecf8;border:1px solid #7d668c;border-radius:16px;padding:16px;box-sizing:border-box;box-shadow:0 15px 60px #000c;font:14px system-ui,sans-serif}
+#hm105settingsInner button{cursor:pointer;min-height:42px;touch-action:manipulation}
+#hm105settingsInner .hm105row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+#hm105settingsInner .hm105row>button{background:#342940;color:#fff;border:1px solid #665575;border-radius:10px;padding:9px 12px}
+#hm105settingsInner #audioDock{position:relative!important;inset:auto!important;right:auto!important;bottom:auto!important;top:auto!important;left:auto!important;display:block!important;z-index:auto!important;max-width:100%!important;margin:12px 0}
+#hm105settingsInner #audioPanel{position:static!important;display:block!important;visibility:visible!important;max-height:none!important;max-width:100%!important;transform:none!important;opacity:1!important}
+#hm105settingsInner #audioSettings,#hm105settingsInner #quickMute{display:none!important}
+#hm105settingsInner #coopLaunch,#hm105settingsInner #v514Full,#hm105settingsInner #v514Calm{position:static!important;inset:auto!important;display:inline-block!important;transform:none!important;margin:0!important;z-index:auto!important}
+#hm105settingsInner #v514Calm{display:none!important}
+@media(max-width:650px){#hm105bar{left:8px;right:8px;justify-content:flex-end;gap:5px}#hm105bar>button,#hm105bar #v528ChatToggle{font-size:12px!important;padding:8px 9px!important;min-height:44px!important}body{overflow-x:hidden!important}#hm105settingsInner{max-height:100%}#hm105bar #v528ChatPanel{top:calc(env(safe-area-inset-top,0px) + 59px)!important}}
 </style></head><body><main class="shell"><header class="head"><div><div class="brand">THE EIGHTH DOOR · 回明病院</div><div class="sub">야간 조사 · 출입 허가자 외 접근 금지</div></div><span class="tag">회명병원 · 야간 조사</span></header><section id="scene" class="viewport"><div id="bg" class="bg"></div><button id="dollHotspot" type="button" aria-label="울고 있는 인형 조사" title="인형 조사" hidden></button><div id="torchBeam" aria-hidden="true"></div><div id="changedScene" aria-hidden="true">누군가 이미 다녀갔다.</div><div id="torchTip">빛을 움직여 조사하세요</div><div id="glassApparition" aria-hidden="true"></div><div class="shade"></div><div id="joltOverlay" aria-hidden="true"></div><div id="lookReticle" aria-hidden="true"></div><div id="lookInstruction">드래그해서 둘러보기 · 물체는 탭하여 조사</div><div class="grain"></div><div id="shadowFigure"></div><div id="scareShade"></div><div id="sceneNotice"></div><div id="light" class="light"></div><div class="flash"></div><div id="event" class="event"></div><div class="place" id="place">접수실 · 정면</div><button id="wardHot" class="hot" style="left:35%;top:48%;display:none" type="button">🛏️ 침대 조사</button><button id="bellHot" class="hot" style="right:8%;top:28%;display:none" type="button">🔔 호출벨</button><button id="roomHot" class="hot" style="left:18%;top:20%;display:none" type="button">🚪 208호</button><button class="hot hot1" data-action="desk">접수대</button><button class="hot hot2" data-action="door">출입문</button><button class="hot hot3" data-action="clock">벽시계</button><div id="cinematicScare" aria-hidden="true"><div class="presence"><span class="presence-head"></span><span class="presence-body"></span></div><div class="crack"></div></div><div id="interactionHand" aria-hidden="true"></div><div class="modal" id="modal"><h2 id="mt"></h2><p id="mb"></p><div id="clockPuzzle" hidden class="hmClockPuzzle" aria-label="벽시계 복원 퍼즐">
 <div class="hmClockTitle">회명병원 · 야간 기록실 벽시계</div>
 <div class="hmClockFace" role="img" aria-label="조작 가능한 아날로그 벽시계"><div class="hmClockMarks" id="hmClockMarks"></div><div id="hmHourHand" class="hmClockHand hour"></div><div id="hmMinuteHand" class="hmClockHand minute"></div><span class="hmClockPin"></span></div>
@@ -2501,4 +2519,31 @@ window.addEventListener('pagehide',()=>{pending=[];try{speechSynthesis.cancel()}
  window.hm91ShowVideo=show; // development smoke test only; game triggers come from server
 })();
 </script>
-</body></html>
+<script id="v105-mobile-ui-js">
+(function(){
+function init(){
+ if(document.getElementById('hm105bar'))return;
+ const bar=document.createElement('nav');bar.id='hm105bar';bar.setAttribute('aria-label','게임 빠른 메뉴');
+ const hint=document.createElement('button');hint.type='button';hint.textContent='💡 힌트';hint.onclick=()=>{const b=document.getElementById('v514Guide');if(b)b.click();else document.getElementById('hint')?.click()};
+ const settingsButton=document.createElement('button');settingsButton.type='button';settingsButton.textContent='⚙️ 설정';settingsButton.setAttribute('aria-expanded','false');
+ const chat=document.getElementById('v528ChatDock');if(chat)bar.appendChild(chat);
+ bar.append(hint,settingsButton);document.body.appendChild(bar);
+ const backdrop=document.createElement('div');backdrop.id='hm105settings';backdrop.hidden=true;
+ backdrop.innerHTML='<section id="hm105settingsInner" role="dialog" aria-modal="true" aria-label="게임 설정"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><strong style="font-size:18px">⚙️ 게임 설정</strong><button type="button" id="hm105close" style="background:#40324b;color:white;border:1px solid #776488;border-radius:9px;padding:8px 13px">닫기 ✕</button></div><p style="color:#c6b7cf;font-size:12px">음량·병원 메아리·멀티플레이·화면 기능</p><div id="hm105sound"></div><div class="hm105row" id="hm105extra"></div><p style="font-size:12px;color:#c5b6cf">화면 점멸과 공포 연출은 게임의 고정 연출로 유지됩니다.</p><div class="hm105row" id="hm105story"></div></section>';
+ document.body.appendChild(backdrop);
+ const sound=backdrop.querySelector('#hm105sound');const audio=document.getElementById('audioDock');if(audio)sound.appendChild(audio);
+ const extra=backdrop.querySelector('#hm105extra');
+ ['coopLaunch','v514Full'].forEach(id=>{const node=document.getElementById(id);if(node)extra.appendChild(node)});
+ // Preserve original audio handlers and original multiplayer dialogs; move only their launch controls.
+ const echo=[...document.querySelectorAll('button')].find(b=>b.textContent?.trim().startsWith('병원 메아리'));if(echo)extra.appendChild(echo);
+ const story=backdrop.querySelector('#hm105story');const storyButton=document.getElementById('v528StoryToggle');if(storyButton){const clone=document.createElement('button');clone.textContent='📖 멤버 대사 기록';clone.onclick=()=>{backdrop.hidden=true;settingsButton.setAttribute('aria-expanded','false');document.getElementById('v528ChatToggle')?.click();storyButton.click()};story.appendChild(clone)}
+ const calm=document.getElementById('v514Calm');if(calm){calm.hidden=true;calm.style.display='none';}
+ function toggle(open){backdrop.hidden=!open;settingsButton.setAttribute('aria-expanded',String(open));if(open)document.getElementById('v528ChatPanel')?.setAttribute('hidden','')}
+ settingsButton.onclick=()=>toggle(backdrop.hidden);backdrop.querySelector('#hm105close').onclick=()=>toggle(false);
+ backdrop.addEventListener('click',e=>{if(e.target===backdrop)toggle(false)});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!backdrop.hidden)toggle(false)});
+ const chatPanel=document.getElementById('v528ChatPanel');if(chatPanel)chatPanel.hidden=true;
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(init,100));else setTimeout(init,100);
+})();
+</script></body></html>
