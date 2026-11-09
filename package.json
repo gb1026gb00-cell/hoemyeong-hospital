@@ -4,27 +4,10 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "test": "node test_automated.js && node test_storage.js && node test_ui_static.js && node test_audio_assets.js && node test_release_guard.js && node test_connection_guards.js && node test_storage_hardening.js && node test_preflight.js && node test_reconnect_integration.js && node test_mobile_overlay_v17.js && node test_mobile_v18.js && node test_inline_scripts.js && node test_start_online.js && node test_fragment_gates.js && node test_story_lore.js && node test_capacity_reconnect_v26.js && node test_negative_progression_v28.js && node test_progression_integrity_v33.js && node test_persistence_config_v35.js && node test_persistence_writable_v36.js && node test_persistence_http_v37.js",
-    "test:flow": "node test_automated.js",
-    "test:storage": "node test_storage.js",
-    "test:release": "npm test && npm run test:predeploy && npm run test:network && node --check server.js && node --check room_storage.js",
-    "test:network": "node test_network_ws.js",
-    "test:browser": "python test_browser_mobile.py",
-    "test:browser:navigation": "python test_browser_navigation.py",
-    "test:browser:controls": "python test_browser_controls_v23.py",
-    "test:browser:chapters": "python test_browser_chapters_v27.py",
-    "test:predeploy": "node test_deploy_integrity_v30.js",
-    "test:network:preflight": "node test_network_preflight_v31.js",
-    "test:browser:all": "python test_browser_mobile.py && python test_browser_navigation.py && python test_browser_controls_v23.py && python test_browser_chapters_v27.py",
-    "test:progression": "node test_progression_integrity_v33.js",
-    "test:network:fallback": "node test_network_ws_fallback_v38.js",
-    "test:network:progression": "node test_network_progression_v39.js",
-    "test:network:ch01": "node test_network_ch01_ch02_v40.js",
-    "test:network:ch02": "node test_network_ch01_ch03_v41.js",
-    "test:network:ch03": "node test_network_ch01_ch04_v42.js",
-    "test:network:ch04": "node test_network_ch01_ch05_v43.js",
-    "test:network:ch05": "node test_network_ch01_ch06_v44.js",
-    "test:scene-router": "node test_scene_router_v49.js && node test_scene_router_v50.js"
+    "test": "node test_v158_preflight.js && node test_v164_video_release_guard.js && node test_v166_preservation.js",
+    "test:network": "node test_multiplayer_v160.js",
+    "test:release": "npm test && npm run test:network && node --check server.js && node --check room_storage.js",
+    "test:predeploy": "npm run test:release"
   },
   "dependencies": {
     "ws": "^8.18.0"
