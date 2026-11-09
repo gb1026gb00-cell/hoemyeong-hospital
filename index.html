@@ -174,6 +174,26 @@
       <button type="button" data-ch04="ch05_enter">CH.05 이동 (방장)</button>
     </div>
   </section>
+  <section id="ch05PuzzlePanel" hidden aria-label="격리실 협동 조사" style="max-height:38dvh;overflow:auto;background:#21192c;border:1px solid #675371;border-radius:10px;padding:10px;font-size:13px">
+    <strong>CH.05 · 격리실</strong><p id="ch05Result" style="white-space:pre-wrap;line-height:1.5">관측 기록을 교차 확인하고 밸브를 조작하세요.</p>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">
+      <button type="button" data-ch05="ch05_inspect" data-object="chart">압력 기록지</button>
+      <button type="button" data-ch05="ch05_inspect" data-object="glass">관찰창</button>
+      <button type="button" data-ch05="ch05_inspect" data-object="plate">경고 명판</button>
+      <button type="button" data-ch05="ch05_inspect" data-object="door">격리문 잠금장치</button>
+      <button type="button" data-ch05="ch05_sample" data-sample="chemical">시약 관측 기록</button>
+      <button type="button" data-ch05="ch05_sample" data-sample="pulse">맥박 관측 기록</button>
+      <button type="button" data-ch05="ch05_artifact_record">제0유물 봉인 기록</button>
+      <button type="button" data-ch05="horror_inspect" data-site="observation_glass">관찰창의 이상 현상</button>
+      <button type="button" data-ch05="horror_inspect" data-site="ceiling">천장 조사</button>
+      <button type="button" data-ch05="ch05_valve" data-number="1">밸브 1</button>
+      <button type="button" data-ch05="ch05_valve" data-number="2">밸브 2</button>
+      <button type="button" data-ch05="ch05_valve" data-number="3">밸브 3</button>
+      <button type="button" data-ch05="ch05_valve" data-number="4">밸브 4</button>
+      <button type="button" data-ch05="fragment_search" data-site="glass">관찰창의 제0유물 파편</button>
+      <button type="button" data-ch05="ch06_enter">CH.06 이동 (방장)</button>
+    </div>
+  </section>
   <div class="narrative" id="line">접수실 호출벨을 누르거나 사물을 조사해 조사를 시작하세요.</div>
 
   <nav>
@@ -227,6 +247,9 @@
   let currentPhase = 'reception';
   let lastStarted = false;
   const ch01Panel = document.getElementById("ch01PuzzlePanel");
+  const ch05Panel=document.getElementById("ch05PuzzlePanel");
+  const ch05Result=document.getElementById("ch05Result");
+  ch05Panel.addEventListener("click",e=>{const b=e.target.closest("[data-ch05]");if(!b)return;const action=b.dataset.ch05,extra={};if(b.dataset.object)extra.object=b.dataset.object;if(b.dataset.sample)extra.sample=b.dataset.sample;if(b.dataset.site)extra.site=b.dataset.site;if(b.dataset.number)extra.number=Number(b.dataset.number);chapterSend(action,extra);});
   const ch04Panel=document.getElementById("ch04PuzzlePanel");
   const ch04Result=document.getElementById("ch04Result");
   ch04Panel.addEventListener("click",e=>{const b=e.target.closest("[data-ch04]");if(!b)return;const action=b.dataset.ch04,extra={};if(b.dataset.object)extra.object=b.dataset.object;if(b.dataset.station)extra.station=b.dataset.station;if(b.dataset.site)extra.site=b.dataset.site;if(action==="ch04_vote")extra.answer=document.getElementById("ch04Answer").value;chapterSend(action,extra);});
@@ -267,6 +290,7 @@
               ch02Panel.hidden = !started || !['ch02','ch02_cleared'].includes(currentPhase);
               ch03Panel.hidden = !started || !['ch03','ch03_cleared'].includes(currentPhase);
               ch04Panel.hidden = !started || !['ch04','ch04_cleared'].includes(currentPhase);
+              ch05Panel.hidden = !started || !['ch05','ch05_cleared'].includes(currentPhase);
               document.getElementById('sceneTitle').textContent = '회명병원 · '+currentPhase;
               if(Array.isArray(data.chapter.solved)) document.getElementById('line').textContent = '서버 동기화 · 진행 단계: '+currentPhase+' · 완료한 퍼즐: '+data.chapter.solved.length;
             }
@@ -277,6 +301,7 @@
               ch02Panel.hidden = !['ch02','ch02_cleared'].includes(currentPhase);
               ch03Panel.hidden = !['ch03','ch03_cleared'].includes(currentPhase);
               ch04Panel.hidden = !['ch04','ch04_cleared'].includes(currentPhase);
+              ch05Panel.hidden = !['ch05','ch05_cleared'].includes(currentPhase);
             }
             if(data.token){ token = data.token; localStorage.setItem('hm-token', token); }
             myRole = data.yourRole ?? myRole;
@@ -300,6 +325,7 @@
           if(data.type === 'ch02_event' || data.type === 'ch02_result') ch02Result.textContent = data.message || '208호 조사 상태가 변경됐습니다.';
           if(data.type === 'ch03_event' || data.type === 'ch03_result') ch03Result.textContent = data.message || '엘리베이터 조사 상태가 변경됐습니다.';
           if(data.type === 'ch04_event' || data.type === 'ch04_result') ch04Result.textContent = data.message || '기록보관실 조사 상태가 변경됐습니다.';
+          if(data.type === 'ch05_event' || data.type === 'ch05_result') ch05Result.textContent = data.message || '격리실 조사 상태가 변경됐습니다.';
           if(data.type === 'inspection') { ch01Result.textContent = (data.room?data.room+'\n':'')+(data.description||'')+(data.clue?'\n전달할 암호: '+data.clue.code+' → 조사원 '+data.clue.target:''); }
           if(data.type === 'chapter_result' || data.type === 'fragment_result' || data.type === 'ch02_result') ch01Result.textContent = data.message || JSON.stringify(data);
           if(data.type === 'chapter_event') ch01Result.textContent = ({blackout:'정전 발생. 조사원들이 각 조사실로 분리되었습니다.',escape:'모든 조사실 봉인 해제 완료. 접수실 서류함에서 제0유물 파편을 찾아 다음 구역으로 이동하세요.',sense_locked:'심전도 복원을 먼저 완료해야 합니다.',wrong:'제어판 암호가 틀렸습니다. 전달받은 숫자와 담당 조사실 규칙을 다시 확인하세요.',solved:'제어판 봉인이 해제되었습니다. 다른 조사원의 해제를 기다리세요.'})[data.event] || data.message || '새로운 사건 발생';
@@ -311,7 +337,7 @@
         } catch(err){ console.error(err); }
       };
       ws.onerror = () => coopStatus.textContent = '웹소켓 연결 실패 · 서버 상태를 확인해 주세요.';
-      ws.onclose = () => { ch01Panel.hidden=true; ch02Panel.hidden=true; ch03Panel.hidden=true; ch04Panel.hidden=true; joined=false; started=false; lastStarted=false; isHost=false; hmCapacity.disabled=false; hmCharacter.disabled=false; hmJoin.disabled=false; hmReady.disabled=true; hmStart.disabled=true; hmLeave.disabled=true; coopStatus.textContent='연결 종료 · 다시 입장해 주세요.'; };
+      ws.onclose = () => { ch01Panel.hidden=true; ch02Panel.hidden=true; ch03Panel.hidden=true; ch04Panel.hidden=true; ch05Panel.hidden=true; joined=false; started=false; lastStarted=false; isHost=false; hmCapacity.disabled=false; hmCharacter.disabled=false; hmJoin.disabled=false; hmReady.disabled=true; hmStart.disabled=true; hmLeave.disabled=true; coopStatus.textContent='연결 종료 · 다시 입장해 주세요.'; };
     };
   }
 
