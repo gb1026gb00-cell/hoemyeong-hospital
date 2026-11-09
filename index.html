@@ -447,18 +447,34 @@
  const mediaRoot='https://gb1026gb00-cell.github.io/hoemyeong-hospital/';
  const overlay=document.getElementById('hmMediaOverlay'),video=document.getElementById('hmHorrorVideo');
  const enabled=document.getElementById('hmSoundEnabled'),volume=document.getElementById('hmSoundVolume'),videoStart=document.getElementById('hmVideoStart');
- const audio=new Audio();audio.preload='none';let activeVideo=false;
+ const audio=new Audio();audio.preload='none';let activeVideo=false;let pausedVoiceForVideo=false;const voiceQueue=[];
  const queue=[];
  const soundLevel=()=>enabled.checked?Number(volume.value)/100:0;
  function applyVolume(){audio.volume=soundLevel();video.volume=soundLevel();audio.muted=!enabled.checked;video.muted=!enabled.checked;}
  enabled.addEventListener('change',applyVolume);volume.addEventListener('input',applyVolume);applyVolume();
  const headerSound=document.getElementById('audioToggle');if(headerSound)headerSound.addEventListener('click',()=>{enabled.checked=!enabled.checked;applyVolume();headerSound.textContent=enabled.checked?'🔊':'🔇';});
  const safeId=id=>/^(G(?:0[1-9]|1[0-8])|H0[134])$/.test(id);
- function nextVideo(){activeVideo=false;videoStart.hidden=true;videoStart.textContent='공포 영상 재생';videoStart.onclick=null;overlay.hidden=true;overlay.style.display='none';video.pause();video.removeAttribute('src');video.load();if(queue.length)playVideo(queue.shift());}
- function playVideo(id){if(!safeId(id))return;if(activeVideo){queue.push(id);return;}videoStart.onclick=null;videoStart.textContent='공포 영상 재생';videoStart.hidden=true;activeVideo=true;overlay.hidden=false;overlay.style.display='flex';video.src=mediaRoot+id+'.mp4';applyVolume();video.currentTime=0;video.play().catch(()=>{videoStart.hidden=false;document.dispatchEvent(new CustomEvent('hm-media-blocked',{detail:id}));});}
+ function nextVideo(){
+   activeVideo=false;videoStart.hidden=true;videoStart.textContent='공포 영상 재생';videoStart.onclick=null;
+   overlay.hidden=true;overlay.style.display='none';video.pause();video.removeAttribute('src');video.load();
+   if(queue.length){playVideo(queue.shift());return;}
+   if(voiceQueue.length){pausedVoiceForVideo=false;startVoice(voiceQueue.shift());return;}
+   if(pausedVoiceForVideo){pausedVoiceForVideo=false;audio.play().catch(()=>{});}
+ }
+ function playVideo(id){if(!safeId(id))return;if(activeVideo){queue.push(id);return;}videoStart.onclick=null;videoStart.textContent='공포 영상 재생';videoStart.hidden=true;activeVideo=true;if(!audio.paused){audio.pause();pausedVoiceForVideo=true;}overlay.hidden=false;overlay.style.display='flex';video.src=mediaRoot+id+'.mp4';applyVolume();video.currentTime=0;video.play().catch(()=>{videoStart.hidden=false;document.dispatchEvent(new CustomEvent('hm-media-blocked',{detail:id}));});}
  videoStart.addEventListener('click',()=>{if(videoStart.onclick)return;videoStart.hidden=true;video.play().catch(()=>{videoStart.hidden=false;});});
  video.addEventListener('playing',()=>{videoStart.hidden=true;videoStart.onclick=null;});video.addEventListener('ended',nextVideo);video.addEventListener('error',()=>{videoStart.hidden=false;videoStart.textContent='영상 로드 실패 · 계속하기';videoStart.onclick=nextVideo;});
- function playVoice(chapter){const n=Number(String(chapter).replace(/[^0-9]/g,''));if(!Number.isInteger(n)||n<1||n>6)return;audio.pause();audio.src=mediaRoot+'voice_ch'+String(n).padStart(2,'0')+'.mp3';applyVolume();audio.play().catch(()=>document.dispatchEvent(new CustomEvent('hm-media-blocked',{detail:'voice_ch'+n})));}
+ function startVoice(n){
+   audio.pause();audio.src=mediaRoot+'voice_ch'+String(n).padStart(2,'0')+'.mp3';
+   applyVolume();audio.play().catch(()=>document.dispatchEvent(new CustomEvent('hm-media-blocked',{detail:'voice_ch'+n})));
+ }
+ function playVoice(chapter){
+   const n=Number(String(chapter).replace(/[^0-9]/g,''));
+   if(!Number.isInteger(n)||n<1||n>6)return;
+   if(activeVideo){if(!voiceQueue.includes(n))voiceQueue.push(n);return;}
+   startVoice(n);
+ }
+ audio.addEventListener('ended',()=>{if(!activeVideo&&voiceQueue.length)startVoice(voiceQueue.shift());});
  window.hmMedia={handle(data){if(!data||!data.type)return;if(data.type==='horror_video')playVideo(String(data.id||''));if(data.type==='chapter_voice')playVoice(data.chapter);}};
 })();
 </script>
