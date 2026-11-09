@@ -96,8 +96,9 @@
       <button type="button" data-ch01="inspect" data-object="desk">기록 재조사</button>
       <button type="button" data-ch01="inspect" data-object="cabinet">잠긴 보관함 조사</button>
       <button type="button" data-ch01="inspect" data-object="mirror">거울 조사</button>
+      <label style="grid-column:1/-1">담당 제어판 암호<input id="panelAnswer" inputmode="numeric" placeholder="다른 조사원이 전달한 단서로 계산" style="width:100%;min-height:40px"></label>
       <button type="button" data-ch01="solve">담당 제어판 해제</button>
-      <button type="button" data-ch01="fragment_search" data-site="reception_crack">균열 파편 조사</button>
+      <button type="button" data-ch01="fragment_search" data-site="cabinet">균열 파편 조사</button>
       <button type="button" data-ch01="ch02_enter">다음 구역 이동 (방장)</button>
     </div>
     <div style="display:grid;gap:6px;margin-top:9px">
@@ -172,7 +173,7 @@
   const ch01Panel = document.getElementById("ch01PuzzlePanel");
   const ch01Result = document.getElementById("ch01Result");
   function chapterSend(action, extra={}) { if(!ws || ws.readyState!==WebSocket.OPEN || !started) { ch01Result.textContent="게임 시작 후 조사할 수 있어요."; return; } ws.send(JSON.stringify({type:"chapter",action,...extra})); }
-  ch01Panel.addEventListener("click", e => { const btn=e.target.closest("[data-ch01]"); if(!btn)return; const action=btn.dataset.ch01; const val=id=>document.getElementById(id)?.value.trim()||""; const extra=btn.dataset.object?{object:btn.dataset.object}:btn.dataset.site?{site:btn.dataset.site}:{}; if(["sense_interaction","sense_challenge","sense_submit"].includes(action))extra.index=Number(val("senseIndex")); if(action==="sense_interaction")extra.sequence=val("senseSequence"); if(action==="sense_challenge"){extra.answer=val("senseAnswer");extra.crossKey=val("senseCrossKey");} if(action==="sense_submit")extra.digit=Number(val("senseDigit")); if(action==="evidence_inspect")extra.index=Number(val("evidenceIndex")); if(action==="evidence_submit")extra.answer=val("evidenceAnswer"); if(action==="ecg_submit")extra.answer=val("ecgAnswer"); chapterSend(action,extra); });
+  ch01Panel.addEventListener("click", e => { const btn=e.target.closest("[data-ch01]"); if(!btn)return; const action=btn.dataset.ch01; const val=id=>document.getElementById(id)?.value.trim()||""; const extra=btn.dataset.object?{object:btn.dataset.object}:btn.dataset.site?{site:btn.dataset.site}:{}; if(["sense_interaction","sense_challenge","sense_submit"].includes(action))extra.index=Number(val("senseIndex")); if(action==="sense_interaction")extra.sequence=val("senseSequence"); if(action==="sense_challenge"){extra.answer=val("senseAnswer");extra.crossKey=val("senseCrossKey");} if(action==="sense_submit")extra.digit=Number(val("senseDigit")); if(action==="evidence_inspect")extra.index=Number(val("evidenceIndex")); if(action==="evidence_submit")extra.answer=val("evidenceAnswer"); if(action==="ecg_submit")extra.answer=val("ecgAnswer"); if(action==="solve")extra.answer=val("panelAnswer"); chapterSend(action,extra); });
   const charNames = ['홍중','성화','윤호','여상','산','민기','우영','종호'];
 
   if(hmJoin) {
@@ -227,7 +228,7 @@
           if(['sense_interaction_result','sense_challenge_result','sense_result','evidence_result','evidence_verdict','ecg_result'].includes(data.type)) ch01Result.textContent=(data.message||'')+(data.digit?'\n획득 숫자: '+data.digit:'')+(data.text?'\n'+data.text:'');
           if(data.type === 'inspection') { ch01Result.textContent = (data.room?data.room+'\n':'')+(data.description||'')+(data.clue?'\n전달할 암호: '+data.clue.code+' → 조사원 '+data.clue.target:''); }
           if(data.type === 'chapter_result' || data.type === 'fragment_result' || data.type === 'ch02_result') ch01Result.textContent = data.message || JSON.stringify(data);
-          if(data.type === 'chapter_event') ch01Result.textContent = data.event==='blackout'?'정전 발생. 조사원들이 각 조사실로 분리되었습니다.':data.event==='escape'?'모든 조사실 봉인 해제 완료. 파편을 확보한 뒤 다음 구역으로 이동하세요.':(data.message||'새로운 사건 발생');
+          if(data.type === 'chapter_event') ch01Result.textContent = ({blackout:'정전 발생. 조사원들이 각 조사실로 분리되었습니다.',escape:'모든 조사실 봉인 해제 완료. 접수실 서류함에서 제0유물 파편을 찾아 다음 구역으로 이동하세요.',sense_locked:'심전도 복원을 먼저 완료해야 합니다.',wrong:'제어판 암호가 틀렸습니다. 전달받은 숫자와 담당 조사실 규칙을 다시 확인하세요.',solved:'제어판 봉인이 해제되었습니다. 다른 조사원의 해제를 기다리세요.'})[data.event] || data.message || '새로운 사건 발생';
           if(data.type === 'started') {
             started=true; lastStarted=true; coopStatus.textContent='게임 시작 신호 수신';
             hmReady.disabled=true; hmStart.disabled=true;
