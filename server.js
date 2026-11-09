@@ -18,7 +18,27 @@ if(!ROOM_SAVE_PATH)console.warn('[PERSISTENCE WARNING] ROOM_SAVE_PATH is unset: 
 let rooms=new Map();
 try{rooms=roomStorage.restore(ROOM_SAVE_PATH)}catch(e){console.error('Room restore failed:',e.message);process.exitCode=1;throw e}
 function persist(){if(!ROOM_SAVE_PATH)return;try{roomStorage.save(ROOM_SAVE_PATH,rooms);persistenceWritable=true;persistenceLastError=null}catch(e){persistenceWritable=false;persistenceLastError=e.message;console.error('Room save failed:',e.message)}}
-const server=http.createServer((req,res)=>{res.writeHead(200,{'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':'*'});res.end(JSON.stringify({service:'Hoemyeong Hospital multiplayer v6.0-test',status:'ok',rooms:rooms.size,persistenceConfigured:!!ROOM_SAVE_PATH,persistenceWritable,persistenceError:persistenceLastError}));});
+// V171: Serve the mobile UI and existing media on the SAME origin as multiplayer WebSocket.
+// Keep /health for deployment checks; do not expose source code, secrets or saved room data.
+const fsStatic=require('fs'),pathStatic=require('path');
+const mimeStatic={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.mp4':'video/mp4','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.ico':'image/x-icon'};
+const server=http.createServer((req,res)=>{
+ let urlPath;try{urlPath=decodeURIComponent(new URL(req.url,'http://localhost').pathname)}catch{return res.writeHead(400).end('Bad request')}
+ if(urlPath==='/health'){res.writeHead(200,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});return res.end(JSON.stringify({service:'Hoemyeong multiplayer',status:'ok',rooms:rooms.size,persistenceConfigured:!!ROOM_SAVE_PATH,persistenceWritable}));}
+ if(urlPath==='/'||urlPath==='/index.html')urlPath='/index.html';
+ if(urlPath.includes('\\')||urlPath.includes('..')||!/^\/[a-zA-Z0-9_().\/-]+$/.test(urlPath))return res.writeHead(403).end('Forbidden');
+ const ext=pathStatic.extname(urlPath).toLowerCase();
+ if(!mimeStatic[ext]||urlPath==='/engine.html'||urlPath==='/server.js'||urlPath==='/room_storage.js')return res.writeHead(404).end('Not found');
+ const file=pathStatic.resolve(__dirname,'.'+urlPath);
+ if(!file.startsWith(__dirname+pathStatic.sep))return res.writeHead(403).end('Forbidden');
+ fsStatic.stat(file,(err,st)=>{
+  if(err||!st.isFile())return res.writeHead(404).end('Not found');
+  const range=req.headers.range;
+  const headers={'Content-Type':mimeStatic[ext],'Accept-Ranges':'bytes','Cache-Control':ext==='.html'?'no-store':'public, max-age=3600'};
+  if(range){const match=/^bytes=(\d*)-(\d*)$/.exec(range);if(!match)return res.writeHead(416,{'Content-Range':`bytes */${st.size}`}).end();let start=match[1]?Number(match[1]):0,end=match[2]?Number(match[2]):st.size-1;if(!match[1]&&match[2]){start=Math.max(0,st.size-Number(match[2]));end=st.size-1}if(start>end||start>=st.size)return res.writeHead(416,{'Content-Range':`bytes */${st.size}`}).end();end=Math.min(end,st.size-1);res.writeHead(206,{...headers,'Content-Range':`bytes ${start}-${end}/${st.size}`,'Content-Length':end-start+1});return fsStatic.createReadStream(file,{start,end}).pipe(res)}
+  res.writeHead(200,{...headers,'Content-Length':st.size});fsStatic.createReadStream(file).pipe(res);
+ });
+});
 const wss=new WebSocketServer({server,maxPayload:4096});
 // Heartbeat: remove half-open connections so roles can be reassigned and reconnects accepted.
 // ws responds to ping with pong automatically; the browser WebSocket API does not expose pings.
@@ -35,7 +55,7 @@ wss.on('close',()=>clearInterval(heartbeat));
 const send=(ws,o)=>{if(ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify(o))};
 const validRoom=x=>typeof x==='string'&&/^[A-Z0-9_-]{1,12}$/.test(x);
 const members=r=>[...r.clients].map(c=>({role:c.role,character:c.character,ready:c.ready,host:c===r.host,online:!!c.ws&&c.ws.readyState===WebSocket.OPEN})).sort((a,b)=>a.role-b.role);
-const publicChapter=ch=>ch?{phase:ch.phase,solved:[...(ch.solved||[])],bellBy:ch.bellBy,sensoryDone:[...(ch.sensoryDone||[])],sensoryUnlocked:!!ch.ecgSolved,ecgReady:(ch.sensoryDone||[]).length===8,evidenceFound:[...(ch.evidenceFound||[])],evidenceSolved:!!ch.evidenceSolved,ch02:ch.ch02?{active:true,found:[...ch.ch02.found],switches:[...ch.ch02.switches],unlocked:ch.ch02.unlocked,explored:[...(ch.ch02.explored||[])],alarm:!!ch.ch02.alarm,pressure:[...(ch.ch02.pressure||[])],pressureSolved:!!ch.ch02.pressureSolved,pressureLastRole:ch.ch02.pressureLastRole??null}:null,ch03:ch.ch03?{inspected:[...ch.ch03.inspected],clues:[...ch.ch03.clues],failed:ch.ch03.failed,solved:ch.ch03.solved}:null,ch04:ch.ch04?{inspected:[...ch.ch04.inspected],witnesses:[...ch.ch04.witnesses],votes:[...ch.ch04.votes],failed:ch.ch04.failed,solved:ch.ch04.solved}:null,ch05:ch.ch05?{inspected:[...ch.ch05.inspected],samples:[...ch.ch05.samples],valves:[...ch.ch05.valves],lastRole:ch.ch05.lastRole,failed:ch.ch05.failed,solved:ch.ch05.solved}:null,ch06:ch.ch06?{inspected:[...ch.ch06.inspected],fragments:[...ch.ch06.fragments],switches:[...ch.ch06.switches],failed:ch.ch06.failed,artifactSolved:!!ch.ch06.artifactSolved,artifactInspected:[...(ch.ch06.artifactInspected||[])],solved:ch.ch06.solved}:null}: {phase:'reception',solved:[],bellBy:null};
+const publicChapter=ch=>ch?{voicePlayed:[...(ch.voicePlayed||[])],phase:ch.phase,solved:[...(ch.solved||[])],bellBy:ch.bellBy,sensoryDone:[...(ch.sensoryDone||[])],sensoryUnlocked:!!ch.ecgSolved,ecgReady:(ch.sensoryDone||[]).length===8,evidenceFound:[...(ch.evidenceFound||[])],evidenceSolved:!!ch.evidenceSolved,ch02:ch.ch02?{active:true,found:[...ch.ch02.found],switches:[...ch.ch02.switches],unlocked:ch.ch02.unlocked,explored:[...(ch.ch02.explored||[])],alarm:!!ch.ch02.alarm,pressure:[...(ch.ch02.pressure||[])],pressureSolved:!!ch.ch02.pressureSolved,pressureLastRole:ch.ch02.pressureLastRole??null}:null,ch03:ch.ch03?{inspected:[...ch.ch03.inspected],clues:[...ch.ch03.clues],failed:ch.ch03.failed,solved:ch.ch03.solved}:null,ch04:ch.ch04?{inspected:[...ch.ch04.inspected],witnesses:[...ch.ch04.witnesses],votes:[...ch.ch04.votes],failed:ch.ch04.failed,solved:ch.ch04.solved}:null,ch05:ch.ch05?{inspected:[...ch.ch05.inspected],samples:[...ch.ch05.samples],valves:[...ch.ch05.valves],lastRole:ch.ch05.lastRole,failed:ch.ch05.failed,solved:ch.ch05.solved}:null,ch06:ch.ch06?{inspected:[...ch.ch06.inspected],fragments:[...ch.ch06.fragments],switches:[...ch.ch06.switches],failed:ch.ch06.failed,artifactSolved:!!ch.ch06.artifactSolved,artifactInspected:[...(ch.ch06.artifactInspected||[])],solved:ch.ch06.solved}:null}: {phase:'reception',solved:[],bellBy:null};
 const clueOwners=r=>{const online=[...r.clients].filter(c=>c.ws&&c.ws.readyState===WebSocket.OPEN).map(c=>c.role).sort((a,b)=>a-b);const all=[...r.clients].map(c=>c.role).sort((a,b)=>a-b);const primary=online.length>=2?online:all;return r.devSolo?[primary[0],primary[0]]:primary.slice(0,2);};
 // 기록 복원율: 이미 서버가 확인한 조사 행동에서만 계산합니다.
 function recovery(ch){
@@ -55,6 +75,7 @@ function recovery(ch){
  return {percent,found,total:20,tier:percent===100?3:percent>=80?2:percent>=50?1:0};
 }
 const state=r=>({type:'state',artifactFragments:[...(r.artifactFragments||[])].sort(),dollComplete:r.pieces.size===4,clueOwners:clueOwners(r),roles:members(r).map(x=>x.role),members:members(r),pieces:[...r.pieces].sort(),started:r.started,capacity:r.capacity||2,devSolo:!!r.devSolo,chat:r.chat.slice(-25),chapter:publicChapter(r.chapter),recovery:recovery(r.chapter)});
+function chapterVoiceOnce(r,index){if(!r.chapter||!Number.isInteger(index)||index<1||index>6)return;const ch=r.chapter;if(!Array.isArray(ch.voicePlayed))ch.voicePlayed=[];if(ch.voicePlayed.includes(index))return;ch.voicePlayed.push(index);broadcast(r,state(r));broadcast(r,{type:'chapter_voice',chapter:index});}
 function broadcast(r,o){if(o.type==='state'){
  if([...r.clients].some(c=>c.ws&&c.ws.readyState===WebSocket.OPEN))r.lastActiveAt=Date.now();
  persist();o=state(r);
@@ -180,12 +201,37 @@ wss.on('connection',ws=>{
   if(m.type==='sync')return send(ws,state(r));
   if(m.type==='set_capacity'){if(r.started||r.host!==player)return send(ws,{type:'error',message:'방장만 게임 시작 전에 인원을 변경할 수 있습니다.'});if(![2,3,4,5,6,7,8].includes(m.capacity))return send(ws,{type:'error',message:'2~8인으로 선택할 수 있습니다.'});if(r.clients.size>m.capacity)return send(ws,{type:'error',message:'현재 참가자보다 적은 인원으로 변경할 수 없습니다.'});r.capacity=m.capacity;broadcast(r,state(r));return}
   if(m.type==='ready'){if(r.started)return;player.ready=!!m.ready;broadcast(r,state(r));return}
-  if(m.type==='start'){if(r.host!==player)return send(ws,{type:'error',message:'방장만 시작할 수 있습니다.'});if(r.clients.size!==r.capacity)return send(ws,{type:'error',message:`${r.capacity}명의 조사원이 모두 입장해야 합니다.`});if([...r.clients].some(x=>!x.ws||x.ws.readyState!==WebSocket.OPEN))return send(ws,{type:'error',message:'모든 조사원이 연결된 상태여야 시작할 수 있습니다.'});if([...r.clients].some(x=>!x.ready))return send(ws,{type:'error',message:'모든 조사원이 준비해야 합니다.'});r.senseRoles=[...r.clients].map(x=>x.role).sort((a,b)=>a-b);r.started=true;r.lastActiveAt=Date.now();r.chapter={phase:'reception',solved:[],bellBy:null,inspected:{},sensoryDone:[],ecgSolved:false,evidenceFound:[],evidenceSolved:false,sensoryDigits:Array.from({length:8},()=>require('crypto').randomInt(1,10)),crossKeys:Array.from({length:8},()=>String(require('crypto').randomInt(10,100))),codes:Object.fromEntries([...r.clients].map(x=>[x.role,String(10+require('crypto').randomInt(90))]))};broadcast(r,{type:'started'});for(const member of r.clients)send(member.ws,{type:'sense_assignment',senses:assignedSenses(r,member.role).map(x=>x.sense)});broadcast(r,state(r));return}
+  if(m.type==='start'){if(r.host!==player)return send(ws,{type:'error',message:'방장만 시작할 수 있습니다.'});if(r.clients.size!==r.capacity)return send(ws,{type:'error',message:`${r.capacity}명의 조사원이 모두 입장해야 합니다.`});if([...r.clients].some(x=>!x.ws||x.ws.readyState!==WebSocket.OPEN))return send(ws,{type:'error',message:'모든 조사원이 연결된 상태여야 시작할 수 있습니다.'});if([...r.clients].some(x=>!x.ready))return send(ws,{type:'error',message:'모든 조사원이 준비해야 합니다.'});r.senseRoles=[...r.clients].map(x=>x.role).sort((a,b)=>a-b);r.started=true;r.lastActiveAt=Date.now();r.chapter={phase:'reception',solved:[],bellBy:null,inspected:{},sensoryDone:[],ecgSolved:false,evidenceFound:[],evidenceSolved:false,sensoryDigits:Array.from({length:8},()=>require('crypto').randomInt(1,10)),crossKeys:Array.from({length:8},()=>String(require('crypto').randomInt(10,100))),codes:Object.fromEntries([...r.clients].map(x=>[x.role,String(10+require('crypto').randomInt(90))]))};broadcast(r,{type:'started'});for(const member of r.clients)send(member.ws,{type:'sense_assignment',senses:assignedSenses(r,member.role).map(x=>x.sense)});broadcast(r,state(r));chapterVoiceOnce(r,1);return}
   // CH.01 server-authoritative cooperative sequence; only joined participants can act.
   if(m.type==='chapter'){
    if(!r.started)return;
    if(!r.chapter)r.chapter={phase:'reception',solved:[],bellBy:null};
    const ch=r.chapter;
+   // V162: Optional server-authoritative, once-per-investigator horror inspections.
+   // No puzzle unlocks, item changes, or phase changes.
+   if(m.action==='horror_inspect'){
+    const key=String(m.site||'');
+    const sites={
+     ceiling:{phase:'ch05',id:'G13',message:'폐쇄병동 천장에 붙은 형체가 고개를 돌린다.'},
+     cctv:{phase:'ch04',id:'G14',message:'보안 화면에는 조사원 수보다 한 명이 더 보인다.'},
+     admissions_phone:{phase:'ch04',id:'G15',message:'원무과 내선 전화가 울린다.'},
+     dolls:{phase:'ch02',id:'G16',message:'인형 보관실의 인형들이 같은 방향을 바라본다.'},
+     hidden_room:{phase:'ch03',id:'G17',message:'층 안내도에 없는 병실의 문이 열린다.'},
+     artifact_final:{phase:'ch06',id:'G18',message:'제0유물의 균열이 최종 구역으로 번진다.'},
+     bed_under:{phase:'ch02',id:'H01',message:'침대 아래에 무언가가 있다.'},
+     archive_eye:{phase:'ch04',id:'H03',message:'기록함 안쪽에서 눈이 마주친다.'},
+     observation_glass:{phase:'ch05',id:'H04',message:'관찰창에 손바닥이 나타난다.'}
+    };
+    const site=sites[key];
+    if(!site||ch.phase!==site.phase)return send(ws,{type:'horror_inspect_result',ok:false,message:'현재 조사할 수 없는 장소입니다.'});
+    if(!ch.horrorWitnessed||typeof ch.horrorWitnessed!=='object')ch.horrorWitnessed={};
+    const witnessKey=key+':'+player.role;
+    if(ch.horrorWitnessed[witnessKey])return send(ws,{type:'horror_inspect_result',ok:true,repeat:true,message:'이미 확인한 흔적이다. 영상은 다시 재생되지 않는다.'});
+    ch.horrorWitnessed[witnessKey]=true;
+    send(ws,{type:'horror_inspect_result',ok:true,site:key,message:site.message});
+    send(ws,{type:'horror_video',id:site.id,scope:'self'});
+    persist();return;
+   }
    if(m.action==='inspect'&&ch.phase==='separated'){
     const objects=['desk','cabinet','mirror','intercom'];
     if(!objects.includes(m.object))return;
@@ -291,7 +337,7 @@ wss.on('connection',ws=>{
     if(player!==r.host)return send(ws,{type:'ch02_result',ok:false,message:'방장만 다음 구역으로 이동할 수 있습니다.'});
     if(!ch.evidenceSolved||!ch.ecgSolved)return send(ws,{type:'ch02_result',ok:false,message:'접수실의 증거와 심전도 복원을 먼저 마쳐야 합니다.'});
     ch.phase='ch02';ch.ch02={found:[],switches:[],unlocked:false,explored:[],alarm:false,pressure:[],pressureSolved:false,pressureLastRole:null};
-    broadcast(r,{type:'ch02_event',event:'enter',message:'208호. 비어 있다는 병실에서 호출벨이 울린다. 문틈으로 낡은 환자 차트가 밀려 나온다. 차트 상단에는 「회명병원 / 개원 1988년 / 환자번호 0208」이라고 인쇄되어 있다.'});broadcast(r,state(r));return;
+    broadcast(r,{type:'ch02_event',event:'enter',message:'208호. 비어 있다는 병실에서 호출벨이 울린다. 문틈으로 낡은 환자 차트가 밀려 나온다. 차트 상단에는 「회명병원 / 개원 1988년 / 환자번호 0208」이라고 인쇄되어 있다.'});broadcast(r,state(r));chapterVoiceOnce(r,2);return;
    }
    // G02: authoritative, room-scoped private corridor inspection. No puzzle state changes.
    if(ch.phase==='ch02'&&m.action==='ch02_corridor'){
@@ -321,6 +367,18 @@ wss.on('connection',ws=>{
     }else{
      send(ws,{type:'ch02_result',ok:true,station:'room302',message:'302호 문틈은 텅 비었다. 눈을 마주쳤던 높이에 손자국 하나만 남아 있다.'});
     }
+    persist();return;
+   }
+   // G11: optional pediatric-ward wheelchair scare; once per investigator, no puzzle gate changes.
+   if(ch.phase==='ch02'&&m.action==='ch02_wheelchair'){
+    const ward=ch.ch02;
+    if(!Array.isArray(ward.wheelchairWitnesses))ward.wheelchairWitnesses=[];
+    const key=String(player.role);
+    const first=!ward.wheelchairWitnesses.includes(key);
+    if(first){ward.wheelchairWitnesses.push(key);
+      send(ws,{type:'ch02_result',ok:true,station:'wheelchair',message:'소아병동 끝에 놓인 빈 휠체어. 바퀴 자국은 여기까지 이어지지만, 누가 밀었는지는 보이지 않는다.'});
+      send(ws,{type:'horror_video',id:'G11',scope:'self'});
+    }else send(ws,{type:'ch02_result',ok:true,station:'wheelchair',message:'휠체어는 다시 제자리에 있다. 바퀴는 아직 조금씩 흔들린다.'});
     persist();return;
    }
    if(ch.phase==='ch02'&&m.action==='ch02_explore'){
@@ -374,7 +432,7 @@ wss.on('connection',ws=>{
     if(!(r.artifactFragments||new Set()).has(1))return send(ws,{type:'fragment_result',ok:false,message:'이 구역의 균열의 파편을 직접 찾아 공동 소지품에 등록해야 다음 구역으로 이동할 수 있습니다.'});
     if(player!==r.host)return send(ws,{type:'ch03_result',ok:false,message:'방장만 엘리베이터를 호출할 수 있습니다.'});
     ch.phase='ch03';ch.ch03={inspected:[],clues:[],failed:0,solved:false};
-    broadcast(r,{type:'ch03_event',event:'enter',message:'엘리베이터 문이 닫힌다. 층수 표시가 지워지고, 스피커에서는 208호 환자의 이름 대신 조사원의 이름이 흘러나온다.'});broadcast(r,state(r));return;
+    broadcast(r,{type:'ch03_event',event:'enter',message:'엘리베이터 문이 닫힌다. 층수 표시가 지워지고, 스피커에서는 208호 환자의 이름 대신 조사원의 이름이 흘러나온다.'});broadcast(r,state(r));chapterVoiceOnce(r,3);return;
    }
    if(ch.phase==='ch03'&&m.action==='ch03_explore'){
     const object=String(m.object||'');
@@ -403,7 +461,7 @@ wss.on('connection',ws=>{
     if(!(r.artifactFragments||new Set()).has(2))return send(ws,{type:'fragment_result',ok:false,message:'이 구역의 균열의 파편을 직접 찾아 공동 소지품에 등록해야 다음 구역으로 이동할 수 있습니다.'});
     if(player!==r.host)return send(ws,{type:'ch04_result',ok:false,message:'방장만 기록보관실 문을 열 수 있습니다.'});
     ch.phase='ch04';ch.ch04={inspected:[],witnesses:[],votes:[],failed:0,solved:false};
-    broadcast(r,{type:'ch04_event',event:'enter',message:'서류 세 장에 같은 환자의 이름이 적혀 있다. 사망 시각은 모두 다르다. 복도 끝에서 종이가 넘어간다. 이 층에는 바람이 들지 않는다.'});broadcast(r,state(r));return;
+    broadcast(r,{type:'ch04_event',event:'enter',message:'서류 세 장에 같은 환자의 이름이 적혀 있다. 사망 시각은 모두 다르다. 복도 끝에서 종이가 넘어간다. 이 층에는 바람이 들지 않는다.'});broadcast(r,state(r));chapterVoiceOnce(r,4);return;
    }
    if(ch.phase==='ch04'&&m.action==='ch04_inspect'){
     const object=String(m.object||'');const records={ledger:'퇴실 대장: 208호 / 02:41 / 퇴실 인원 0명. 보관 문서에는 1997년 회명계획 개시 및 2001년 8월 17일 03:08 제0유물 출현 기록이 함께 묶여 있다. 담당자 서명란은 찢겨 있다.',camera:'감시 영상: 02:41 / 그림자 하나가 208호 문 안으로 들어간다. 화면을 멈춰도 얼굴이 있어야 할 자리는 번져 있다. 문 밖으로 나오는 장면은 없다.',call:'내선 통화 기록: 02:41 / 208호에서 구조 요청. 통화 시간 8초. 수화기 받침의 먼지는 끊기지 않았다. 누구도 수화기를 들지 않았다.',tag:'보존 봉투: 2003.11.26 제8차 복원 실험의 비공개 부속 기록. 「기록에 없는 사람을 복원 대상으로 지정하지 말 것」. 원본을 보려면 「사람의 기록」과 「기계의 기록」이 서로 일치하지 않는 이유를 밝혀야 한다.'};
@@ -447,7 +505,7 @@ wss.on('connection',ws=>{
     if(!(r.artifactFragments||new Set()).has(3))return send(ws,{type:'fragment_result',ok:false,message:'이 구역의 균열의 파편을 직접 찾아 공동 소지품에 등록해야 다음 구역으로 이동할 수 있습니다.'});
     if(player!==r.host)return send(ws,{type:'ch05_result',ok:false,message:'방장만 격리실 문을 열 수 있습니다.'});
     ch.phase='ch05';ch.ch05={inspected:[],samples:[],valves:[],lastRole:null,failed:0,solved:false};
-    broadcast(r,{type:'ch05_event',event:'enter',message:'등 뒤에서 잠금쇠가 세 번 걸린다. 벽에는 관 세 개와 밸브 네 개. 출입 기록의 마지막 줄은 여러 번 덧씌워져 있다. 「정상 압력으로 돌려놓지 말 것」.'});broadcast(r,state(r));return;
+    broadcast(r,{type:'ch05_event',event:'enter',message:'등 뒤에서 잠금쇠가 세 번 걸린다. 벽에는 관 세 개와 밸브 네 개. 출입 기록의 마지막 줄은 여러 번 덧씌워져 있다. 「정상 압력으로 돌려놓지 말 것」.'});broadcast(r,state(r));chapterVoiceOnce(r,5);return;
    }
    if(ch.phase==='ch05'&&m.action==='ch05_inspect'){
     const sites={chart:'압력 기록지: 02:41 이전 정상 압력은 2→4→1. 그러나 환자 격리 직후 순서는 역전됐다.',glass:'관찰창: 왼쪽 관의 붉은 침전물은 바닥으로 가라앉는다. 가운데 관의 액체는 투명하다. 오른쪽 관의 검은 기포는 아래로 흐른다. 관을 두드리자 반대편에서도 같은 횟수로 두드린다.',plate:'경고 명판: 3번 밸브는 폐쇄. 비상 해제는 반드시 두 사람이 교대로 조작하시오.',door:'격리문 잠금장치: 「제8단계 — 잔류자 처리」. 관측값 두 개와 밸브 세 번의 교대 조작이 확인되어야 열린다.'};
@@ -493,7 +551,7 @@ wss.on('connection',ws=>{
     if(!(r.artifactFragments||new Set()).has(4))return send(ws,{type:'fragment_result',ok:false,message:'이 구역의 균열의 파편을 직접 찾아 공동 소지품에 등록해야 다음 구역으로 이동할 수 있습니다.'});
     if(player!==r.host)return send(ws,{type:'ch06_result',ok:false,message:'방장만 마지막 문을 열 수 있습니다.'});
     ch.phase='ch06';ch.ch06={inspected:[],fragments:[],switches:[],failed:0,solved:false,artifactSolved:false,artifactInspected:[]};
-    broadcast(r,{type:'ch06_event',event:'enter',message:'여덟 번째 문 앞에서 발소리가 멎는다. 벽에는 02:41, 거울에는 14:20. 문 옆 손잡이는 두 개다. 바닥의 그림자는 방 안에 들어온 사람보다 하나 많다.'});broadcast(r,state(r));return;
+    broadcast(r,{type:'ch06_event',event:'enter',message:'여덟 번째 문 앞에서 발소리가 멎는다. 벽에는 02:41, 거울에는 14:20. 문 옆 손잡이는 두 개다. 바닥의 그림자는 방 안에 들어온 사람보다 하나 많다.'});broadcast(r,state(r));chapterVoiceOnce(r,6);return;
    }
    if(ch.phase==='ch06'&&m.action==='ch06_inspect'){
     const sites={door:'문패: 「기록되지 않은 자는 문을 통과할 수 없다.」 원래 복원 절차는 일곱 단계였으나, 실험 후 문서에 여덟 번째 항목이 나타났다. 문에 서로 다른 두 개의 손잡이가 있다.',mirror:'거울: 시계는 14:20을 가리키지만 거울에 비친 숫자만 역순이다.',clock:'정지 시계: 02:41. 마지막 숫자 1에 검은 손자국이 남아 있다. 손자국은 유리 안쪽에 찍혀 있다.',ledger:'최종 기록: 208호의 구조 요청은 02:41에 시작되었다. 거울 속 시간은 실제 시간이 아니다. 문서 하단에 빈 서명란이 하나 더 있다. 방금 잉크가 번진 것처럼 젖어 있다.'};

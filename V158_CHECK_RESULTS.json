@@ -1,0 +1,312 @@
+{
+  "version": "V158",
+  "passed": 49,
+  "failed": 12,
+  "checks": [
+    {
+      "name": "inline JS 1",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "inline JS 2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "inline JS 3",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "inline JS 4",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "inline JS 5",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "inline JS 6",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "inline JS 7",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "inline JS 8",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "inline JS 9",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "inline JS 10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "inline JS 11",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "inline JS 12",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "inline JS 13",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "inline JS 14",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "inline JS 15",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "inline JS 16",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "inline JS 17",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "inline JS 18",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "inline JS 19",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "server.js parse",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "room_storage.js parse",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "UI hmPlaySheet",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "UI hmFinal06",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "UI hmFinalScene",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "UI hmArchiveScene",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "UI hmIsolation05",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "UI hmElevator03",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "UI hmWard02",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "voice CH1",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "voice CH2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "voice CH3",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "voice CH4",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "voice CH5",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "voice CH6",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "G01 video file",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "G02 video file",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "G03 video file",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "G04 video file",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "G05 video file",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "G06 video file",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "G07 video file",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "G08 video file",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "G09 video file",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "G10 video file",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "G11 video file",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "G12 video file",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "G13 video file",
+      "pass": false,
+      "detail": ""
+    },
+    {
+      "name": "G14 video file",
+      "pass": false,
+      "detail": ""
+    },
+    {
+      "name": "G15 video file",
+      "pass": false,
+      "detail": ""
+    },
+    {
+      "name": "G16 video file",
+      "pass": false,
+      "detail": ""
+    },
+    {
+      "name": "G17 video file",
+      "pass": false,
+      "detail": ""
+    },
+    {
+      "name": "G18 video file",
+      "pass": false,
+      "detail": ""
+    },
+    {
+      "name": "H01 video file",
+      "pass": false,
+      "detail": ""
+    },
+    {
+      "name": "H02 video file",
+      "pass": false,
+      "detail": ""
+    },
+    {
+      "name": "H03 video file",
+      "pass": false,
+      "detail": ""
+    },
+    {
+      "name": "H04 video file",
+      "pass": false,
+      "detail": ""
+    },
+    {
+      "name": "H05 video file",
+      "pass": false,
+      "detail": ""
+    },
+    {
+      "name": "H06 video file",
+      "pass": false,
+      "detail": ""
+    },
+    {
+      "name": "chapter scene handlers",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "role-dependent server logic",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "persistent storage requires ROOM_SAVE_PATH",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

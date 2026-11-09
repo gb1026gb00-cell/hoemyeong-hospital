@@ -1,0 +1,27 @@
+{
+  "included_new_unique": [
+    "G13",
+    "G14",
+    "G15",
+    "G16",
+    "G17",
+    "G18",
+    "H01",
+    "H03",
+    "H04"
+  ],
+  "duplicates_not_included": [
+    {
+      "id": "H02",
+      "duplicate_of": "H01",
+      "uploaded_file": "h2.mp4"
+    }
+  ],
+  "remaining_missing": [
+    "H02",
+    "H05",
+    "H06"
+  ],
+  "existing_g01_g12": true,
+  "warning": "Only asset presence and player allowlist updated; event trigger integration and mobile playback not verified."
+}

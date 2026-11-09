@@ -1,0 +1,357 @@
+{
+  "version": "V159",
+  "videos": {
+    "G01": {
+      "present": true,
+      "bytes": 10338589,
+      "allowed_by_canvas": true
+    },
+    "G02": {
+      "present": true,
+      "bytes": 4728550,
+      "allowed_by_canvas": true
+    },
+    "G03": {
+      "present": true,
+      "bytes": 7980118,
+      "allowed_by_canvas": true
+    },
+    "G04": {
+      "present": true,
+      "bytes": 7734230,
+      "allowed_by_canvas": true
+    },
+    "G05": {
+      "present": true,
+      "bytes": 12281796,
+      "allowed_by_canvas": true
+    },
+    "G06": {
+      "present": true,
+      "bytes": 10630921,
+      "allowed_by_canvas": true
+    },
+    "G07": {
+      "present": true,
+      "bytes": 7649266,
+      "allowed_by_canvas": true
+    },
+    "G08": {
+      "present": true,
+      "bytes": 4500291,
+      "allowed_by_canvas": true
+    },
+    "G09": {
+      "present": true,
+      "bytes": 6822729,
+      "allowed_by_canvas": true
+    },
+    "G10": {
+      "present": true,
+      "bytes": 6108906,
+      "allowed_by_canvas": true
+    },
+    "G11": {
+      "present": true,
+      "bytes": 5407999,
+      "allowed_by_canvas": true
+    },
+    "G12": {
+      "present": true,
+      "bytes": 8239778,
+      "allowed_by_canvas": true
+    },
+    "G13": {
+      "present": false,
+      "bytes": null,
+      "allowed_by_canvas": false
+    },
+    "G14": {
+      "present": false,
+      "bytes": null,
+      "allowed_by_canvas": false
+    },
+    "G15": {
+      "present": false,
+      "bytes": null,
+      "allowed_by_canvas": false
+    },
+    "G16": {
+      "present": false,
+      "bytes": null,
+      "allowed_by_canvas": false
+    },
+    "G17": {
+      "present": false,
+      "bytes": null,
+      "allowed_by_canvas": false
+    },
+    "G18": {
+      "present": false,
+      "bytes": null,
+      "allowed_by_canvas": false
+    },
+    "H01": {
+      "present": false,
+      "bytes": null,
+      "allowed_by_canvas": false
+    },
+    "H02": {
+      "present": false,
+      "bytes": null,
+      "allowed_by_canvas": false
+    },
+    "H03": {
+      "present": false,
+      "bytes": null,
+      "allowed_by_canvas": false
+    },
+    "H04": {
+      "present": false,
+      "bytes": null,
+      "allowed_by_canvas": false
+    },
+    "H05": {
+      "present": false,
+      "bytes": null,
+      "allowed_by_canvas": false
+    },
+    "H06": {
+      "present": false,
+      "bytes": null,
+      "allowed_by_canvas": false
+    }
+  },
+  "voices": {
+    "voice_ch01.mp3": true,
+    "voice_ch02.mp3": true,
+    "voice_ch03.mp3": true,
+    "voice_ch04.mp3": true,
+    "voice_ch05.mp3": true,
+    "voice_ch06.mp3": true
+  },
+  "server_video_triggers": {
+    "G01": [
+      201
+    ],
+    "G02": [
+      304
+    ],
+    "G03": [
+      607
+    ],
+    "G04": [
+      479
+    ],
+    "G05": [
+      321
+    ],
+    "G06": [
+      412
+    ],
+    "G07": [
+      548
+    ],
+    "G08": [
+      566
+    ],
+    "G09": [
+      436
+    ],
+    "G10": [],
+    "G11": [
+      335
+    ],
+    "G12": [],
+    "G13": [],
+    "G14": [],
+    "G15": [],
+    "G16": [],
+    "G17": [],
+    "G18": [],
+    "H01": [],
+    "H02": [],
+    "H03": [],
+    "H04": [],
+    "H05": [],
+    "H06": []
+  },
+  "package_test_scripts_missing": [
+    {
+      "script": "test",
+      "file": "test_automated.js"
+    },
+    {
+      "script": "test",
+      "file": "test_storage.js"
+    },
+    {
+      "script": "test",
+      "file": "test_ui_static.js"
+    },
+    {
+      "script": "test",
+      "file": "test_audio_assets.js"
+    },
+    {
+      "script": "test",
+      "file": "test_release_guard.js"
+    },
+    {
+      "script": "test",
+      "file": "test_connection_guards.js"
+    },
+    {
+      "script": "test",
+      "file": "test_storage_hardening.js"
+    },
+    {
+      "script": "test",
+      "file": "test_preflight.js"
+    },
+    {
+      "script": "test",
+      "file": "test_reconnect_integration.js"
+    },
+    {
+      "script": "test",
+      "file": "test_mobile_overlay_v17.js"
+    },
+    {
+      "script": "test",
+      "file": "test_mobile_v18.js"
+    },
+    {
+      "script": "test",
+      "file": "test_inline_scripts.js"
+    },
+    {
+      "script": "test",
+      "file": "test_start_online.js"
+    },
+    {
+      "script": "test",
+      "file": "test_fragment_gates.js"
+    },
+    {
+      "script": "test",
+      "file": "test_story_lore.js"
+    },
+    {
+      "script": "test",
+      "file": "test_capacity_reconnect_v26.js"
+    },
+    {
+      "script": "test",
+      "file": "test_negative_progression_v28.js"
+    },
+    {
+      "script": "test",
+      "file": "test_progression_integrity_v33.js"
+    },
+    {
+      "script": "test",
+      "file": "test_persistence_config_v35.js"
+    },
+    {
+      "script": "test",
+      "file": "test_persistence_writable_v36.js"
+    },
+    {
+      "script": "test",
+      "file": "test_persistence_http_v37.js"
+    },
+    {
+      "script": "test:flow",
+      "file": "test_automated.js"
+    },
+    {
+      "script": "test:storage",
+      "file": "test_storage.js"
+    },
+    {
+      "script": "test:network",
+      "file": "test_network_ws.js"
+    },
+    {
+      "script": "test:browser",
+      "file": "test_browser_mobile.py"
+    },
+    {
+      "script": "test:browser:navigation",
+      "file": "test_browser_navigation.py"
+    },
+    {
+      "script": "test:browser:controls",
+      "file": "test_browser_controls_v23.py"
+    },
+    {
+      "script": "test:browser:chapters",
+      "file": "test_browser_chapters_v27.py"
+    },
+    {
+      "script": "test:predeploy",
+      "file": "test_deploy_integrity_v30.js"
+    },
+    {
+      "script": "test:network:preflight",
+      "file": "test_network_preflight_v31.js"
+    },
+    {
+      "script": "test:browser:all",
+      "file": "test_browser_mobile.py"
+    },
+    {
+      "script": "test:browser:all",
+      "file": "test_browser_navigation.py"
+    },
+    {
+      "script": "test:browser:all",
+      "file": "test_browser_controls_v23.py"
+    },
+    {
+      "script": "test:browser:all",
+      "file": "test_browser_chapters_v27.py"
+    },
+    {
+      "script": "test:progression",
+      "file": "test_progression_integrity_v33.js"
+    },
+    {
+      "script": "test:network:fallback",
+      "file": "test_network_ws_fallback_v38.js"
+    },
+    {
+      "script": "test:network:progression",
+      "file": "test_network_progression_v39.js"
+    },
+    {
+      "script": "test:network:ch01",
+      "file": "test_network_ch01_ch02_v40.js"
+    },
+    {
+      "script": "test:network:ch02",
+      "file": "test_network_ch01_ch03_v41.js"
+    },
+    {
+      "script": "test:network:ch03",
+      "file": "test_network_ch01_ch04_v42.js"
+    },
+    {
+      "script": "test:network:ch04",
+      "file": "test_network_ch01_ch05_v43.js"
+    },
+    {
+      "script": "test:network:ch05",
+      "file": "test_network_ch01_ch06_v44.js"
+    },
+    {
+      "script": "test:scene-router",
+      "file": "test_scene_router_v49.js"
+    },
+    {
+      "script": "test:scene-router",
+      "file": "test_scene_router_v50.js"
+    }
+  ]
+}

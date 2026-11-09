@@ -1,0 +1,366 @@
+{
+  "video_files": [
+    {
+      "id": "G01",
+      "exists": true,
+      "readable": true,
+      "bytes": 10338589,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "audio"
+        },
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        }
+      ]
+    },
+    {
+      "id": "G02",
+      "exists": true,
+      "readable": true,
+      "bytes": 4728550,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "audio"
+        },
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        }
+      ]
+    },
+    {
+      "id": "G03",
+      "exists": true,
+      "readable": true,
+      "bytes": 7980118,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "audio"
+        },
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        }
+      ]
+    },
+    {
+      "id": "G04",
+      "exists": true,
+      "readable": true,
+      "bytes": 7734230,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "audio"
+        },
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        }
+      ]
+    },
+    {
+      "id": "G05",
+      "exists": true,
+      "readable": true,
+      "bytes": 12281796,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "audio"
+        },
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        }
+      ]
+    },
+    {
+      "id": "G06",
+      "exists": true,
+      "readable": true,
+      "bytes": 10630921,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "audio"
+        },
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        }
+      ]
+    },
+    {
+      "id": "G07",
+      "exists": true,
+      "readable": true,
+      "bytes": 7649266,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "audio"
+        },
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        }
+      ]
+    },
+    {
+      "id": "G08",
+      "exists": true,
+      "readable": true,
+      "bytes": 4500291,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "audio"
+        },
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        }
+      ]
+    },
+    {
+      "id": "G09",
+      "exists": true,
+      "readable": true,
+      "bytes": 6822729,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "audio"
+        },
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        }
+      ]
+    },
+    {
+      "id": "G10",
+      "exists": true,
+      "readable": true,
+      "bytes": 6108906,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "audio"
+        },
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        }
+      ]
+    },
+    {
+      "id": "G11",
+      "exists": true,
+      "readable": true,
+      "bytes": 5407999,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "audio"
+        },
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        }
+      ]
+    },
+    {
+      "id": "G12",
+      "exists": true,
+      "readable": true,
+      "bytes": 8239778,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "audio"
+        },
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        }
+      ]
+    },
+    {
+      "id": "G13",
+      "exists": true,
+      "readable": true,
+      "bytes": 621386,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        },
+        {
+          "codec_type": "audio"
+        }
+      ]
+    },
+    {
+      "id": "G14",
+      "exists": true,
+      "readable": true,
+      "bytes": 1860316,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        },
+        {
+          "codec_type": "audio"
+        }
+      ]
+    },
+    {
+      "id": "G15",
+      "exists": true,
+      "readable": true,
+      "bytes": 909157,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        },
+        {
+          "codec_type": "audio"
+        }
+      ]
+    },
+    {
+      "id": "G16",
+      "exists": true,
+      "readable": true,
+      "bytes": 1150422,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        },
+        {
+          "codec_type": "audio"
+        }
+      ]
+    },
+    {
+      "id": "G17",
+      "exists": true,
+      "readable": true,
+      "bytes": 1231833,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        },
+        {
+          "codec_type": "audio"
+        }
+      ]
+    },
+    {
+      "id": "G18",
+      "exists": true,
+      "readable": true,
+      "bytes": 950038,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        },
+        {
+          "codec_type": "audio"
+        }
+      ]
+    },
+    {
+      "id": "H01",
+      "exists": true,
+      "readable": true,
+      "bytes": 924574,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        },
+        {
+          "codec_type": "audio"
+        }
+      ]
+    },
+    {
+      "id": "H03",
+      "exists": true,
+      "readable": true,
+      "bytes": 1298536,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        },
+        {
+          "codec_type": "audio"
+        }
+      ]
+    },
+    {
+      "id": "H04",
+      "exists": true,
+      "readable": true,
+      "bytes": 1546157,
+      "seconds": 10.04,
+      "streams": [
+        {
+          "codec_type": "video",
+          "width": 1920,
+          "height": 1080
+        },
+        {
+          "codec_type": "audio"
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "H02 uploaded file duplicated H01, not retained",
+    "H05 H06 never produced",
+    "Asset and syntax checks do not prove event playback on a phone"
+  ]
+}

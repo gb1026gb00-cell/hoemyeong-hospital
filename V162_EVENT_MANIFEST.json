@@ -1,0 +1,20 @@
+{
+  "version": "V162",
+  "event_sites": {
+    "G13": "ceiling",
+    "G14": "cctv",
+    "G15": "admissions_phone",
+    "G16": "dolls",
+    "G17": "hidden_room",
+    "G18": "artifact_final",
+    "H01": "bed_under",
+    "H03": "archive_eye",
+    "H04": "observation_glass"
+  },
+  "H02": "same uploaded bytes as H01; not a distinct asset",
+  "H05_H06": "never produced; not required",
+  "limitations": [
+    "scene hotspot wiring for new events remains unfinished",
+    "live multiplayer test not run"
+  ]
+}
