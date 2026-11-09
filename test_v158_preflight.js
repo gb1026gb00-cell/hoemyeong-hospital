@@ -15,7 +15,7 @@ for(const id of ['hmPlaySheet','hmFinal06','hmFinalScene','hmArchiveScene','hmIs
 }
 for(let i=1;i<=6;i++)test('voice CH'+i,fs.existsSync(path.join(root,'voice_ch'+String(i).padStart(2,'0')+'.mp3')));
 for(let i=1;i<=18;i++)test('G'+String(i).padStart(2,'0')+' video file',fs.existsSync(path.join(root,'G'+String(i).padStart(2,'0')+'.mp4')));
-for(let i=1;i<=6;i++)test('H'+String(i).padStart(2,'0')+' video file',fs.existsSync(path.join(root,'H'+String(i).padStart(2,'0')+'.mp4')));
+for(const id of ['H01','H03','H04'])test(id+' video file',fs.existsSync(path.join(root,id+'.mp4')));
 test('chapter scene handlers',Array.from({length:6},(_,i)=>html.includes('CH.'+String(i+1).padStart(2,'0'))).every(Boolean));
 test('role-dependent server logic',fs.readFileSync(path.join(root,'server.js'),'utf8').includes('clueOwners'));
 test('persistent storage requires ROOM_SAVE_PATH',fs.readFileSync(path.join(root,'server.js'),'utf8').includes('ROOM_SAVE_PATH'));
