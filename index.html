@@ -392,12 +392,12 @@
               hmCapacity.disabled = true;
               hmCharacter.disabled = true;
               coopMembers.style.whiteSpace = 'pre-line';
-              coopMembers.textContent = data.members.map(m => `[${charNames[m.character]||'조사원'}] ${m.ready?'준비완료':'대기중'}${m.host?' (방장)':''}`).join('\n');
+              coopMembers.textContent = data.members.map(m => `[${charNames[m.character]||'조사원'}] ${m.online===false?'연결 끊김 · 재접속 대기':m.ready?'준비완료':'대기중'}${m.host?' (방장)':''}`).join('\n');
               hmReady.disabled = started;
-              hmStart.disabled = !isHost || started;
+              hmStart.disabled = !isHost || started || data.members.filter(m=>m.online!==false).length<2 || data.members.some(m=>m.online===false||!m.ready);
               hmLeave.disabled = false;
             }
-            coopStatus.textContent = `${started?'진행 중':'입장 성공'} · ${charNames[myRole]||myRole} · ${data.members?.filter(m=>m.online!==false).length||0}명 연결`;
+            coopStatus.textContent = `${started?'진행 중':'입장 성공'} · ${charNames[myRole]||myRole} · ${data.members?.filter(m=>m.online!==false).length||0}명 연결${started&&data.members?.some(m=>m.online===false)?' · 재접속 대기 중인 조사원 있음':''}`;
             document.getElementById('roleDisplay').textContent = `담당: ${charNames[myRole]||'조사원'}`;
           }
           if(['sense_interaction_result','sense_challenge_result','sense_result','evidence_result','evidence_verdict','ecg_result'].includes(data.type)) ch01Result.textContent=(data.message||'')+(data.digit?'\n획득 숫자: '+data.digit:'')+(data.text?'\n'+data.text:'');
