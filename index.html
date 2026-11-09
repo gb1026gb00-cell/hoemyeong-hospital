@@ -213,8 +213,9 @@
       <button type="button" data-ch06="ch06_answer">마지막 문 해제</button>
     </div>
   </section>
+  <div id="artifactProgress" role="status" aria-live="polite" style="background:#21192c;border:1px solid #675371;border-radius:10px;padding:9px;color:#d4bbdf;font-size:12px" hidden>제0유물 파편 · 0 / 5</div>
   <section id="dollPanel" hidden style="background:#21192c;border:1px solid #675371;border-radius:10px;padding:8px;font-size:12px">
-    <strong>인형 조립 · 팀 공동 수집</strong><span id="dollStatus">0 / 4</span><div id="artifactProgress" role="status" aria-live="polite" style="margin-top:5px;color:#d4bbdf">제0유물 파편 · 0 / 5</div>
+    <strong>인형 조립 · 팀 공동 수집</strong><span id="dollStatus">0 / 4</span>
     <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px">
       <button type="button" data-piece="0">부품 1</button><button type="button" data-piece="1">부품 2</button>
       <button type="button" data-piece="2">부품 3</button><button type="button" data-piece="3">부품 4</button>
@@ -372,6 +373,7 @@
                 });
               }
               if(Array.isArray(data.artifactFragments)){
+                document.getElementById('artifactProgress').hidden=!phaseStarted;
                 const found=data.artifactFragments.map(Number);
                 document.getElementById('artifactProgress').textContent='제0유물 파편 · '+found.length+' / 5';
               }
@@ -445,7 +447,7 @@
         } catch(err){ console.error(err); }
       };
       ws.onerror = () => coopStatus.textContent = '웹소켓 연결 실패 · 서버 상태를 확인해 주세요.';
-      ws.onclose = () => { ch01Panel.hidden=true; ch02Panel.hidden=true; ch03Panel.hidden=true; ch04Panel.hidden=true; ch05Panel.hidden=true; ch06Panel.hidden=true; dollPanel.hidden=true; coopPanel.hidden=false; document.getElementById('senseDisplay').textContent='담당 감각 배정 대기'; joined=false; started=false; lastStarted=false; isHost=false; hmCapacity.disabled=false; hmCharacter.disabled=false; hmJoin.disabled=false; hmReady.disabled=true; hmStart.disabled=true; hmLeave.disabled=true; coopStatus.textContent='연결 종료 · 다시 입장해 주세요.'; };
+      ws.onclose = () => { ch01Panel.hidden=true; ch02Panel.hidden=true; ch03Panel.hidden=true; ch04Panel.hidden=true; ch05Panel.hidden=true; ch06Panel.hidden=true; dollPanel.hidden=true; document.getElementById('artifactProgress').hidden=true; coopPanel.hidden=false; document.getElementById('senseDisplay').textContent='담당 감각 배정 대기'; joined=false; started=false; lastStarted=false; isHost=false; hmCapacity.disabled=false; hmCharacter.disabled=false; hmJoin.disabled=false; hmReady.disabled=true; hmStart.disabled=true; hmLeave.disabled=true; coopStatus.textContent='연결 종료 · 다시 입장해 주세요.'; };
     };
   }
 
