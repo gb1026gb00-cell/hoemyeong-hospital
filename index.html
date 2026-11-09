@@ -346,11 +346,11 @@
             }
             return;
           }
-          if(data.type==='sense_assignment'&&Array.isArray(data.senses)){
-            document.getElementById('senseDisplay').textContent='담당 감각: '+(data.senses.length?data.senses.join(' · '):'재배정 대기');
-          }
-          if(data.type === 'joined' && Array.isArray(data.senses)){
-            document.getElementById('senseDisplay').textContent='담당 감각: '+(data.senses.length?data.senses.join(' · '):'재배정 대기');
+          if((data.type==='sense_assignment'||data.type==='joined')&&Array.isArray(data.senses)){
+            const senseDisplay=document.getElementById('senseDisplay');
+            senseDisplay.textContent=data.senses.length
+              ? '담당 감각: '+data.senses.join(' · ')
+              : (data.cooperationPaused ? '담당 감각 · 협동 재접속 대기' : '담당 감각 · 재배정 대기');
           }
           if(data.type === 'joined' || data.type === 'state') {
             if(data.chapter && typeof data.chapter.phase === 'string') {
@@ -423,6 +423,8 @@
               hmStart.disabled = !isHost || started || data.members.filter(m=>m.online!==false).length<2 || data.members.some(m=>m.online===false||!m.ready);
               hmLeave.disabled = false;
             }
+            if(data.cooperationPaused)
+              document.getElementById('senseDisplay').textContent='담당 감각 · 협동 재접속 대기';
             coopStatus.textContent = data.cooperationPaused
               ? '협동 진행 대기 · 최소 2명 연결 필요 · 다른 조사원의 재접속을 기다려 주세요.'
               : `${started?'진행 중':'입장 성공'} · ${charNames[myRole]||myRole} · ${data.members?.filter(m=>m.online!==false).length||0}명 연결${started&&data.members?.some(m=>m.online===false)?' · 재접속 대기 중인 조사원 있음':''}`;
