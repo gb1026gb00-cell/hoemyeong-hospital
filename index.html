@@ -51,7 +51,7 @@
     <label>서버 주소 (WSS)</label><input id="hmEndpoint" value="wss://hoemyeong-hospital.onrender.com"/>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:9px;">
       <div><label>방 코드</label><input id="hmRoom" value="208"/></div>
-      <div><label>인원 (2~8인)</label><select id="hmCapacity"><option>2</option><option>3</option><option>4</option><option>6</option><option>8</option></select></div>
+      <div><label>인원 (2~8인)</label><select id="hmCapacity"><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></div>
     </div>
     <label>조사원 선택</label>
     <select id="hmCharacter">
@@ -316,6 +316,8 @@
 
       if(ws && ws.readyState <= WebSocket.OPEN) return;
       if(!/^wss:\/\//.test(url) || !/^[A-Z0-9_-]{1,12}$/.test(room)){ coopStatus.textContent='서버 주소 또는 방 코드를 확인해 주세요.'; return; }
+      // Rejoin tokens belong to a specific room, never reuse them across rooms.
+      try { token=localStorage.getItem('hm-token:'+room)||null; } catch(_) { token=null; }
       coopStatus.textContent='서버 연결 중...';
       try { ws = new WebSocket(url); } catch(e) { coopStatus.textContent='연결 주소 오류: '+e.message; return; }
       ws.onopen = () => {
@@ -353,7 +355,7 @@
               ch05Panel.hidden = !['ch05','ch05_cleared'].includes(currentPhase);
               ch06Panel.hidden = currentPhase !== 'ch06';
             }
-            if(data.token){ token = data.token; localStorage.setItem('hm-token', token); }
+            if(data.token){ token = data.token; try{localStorage.setItem('hm-token:'+hmRoom.value.trim().toUpperCase(), token);}catch(_){} }
             myRole = data.yourRole ?? myRole;
             if(data.type === 'joined') { joined = true; isHost = !!data.isHost; hmJoin.disabled=true; }
             if(data.started) started=true;
