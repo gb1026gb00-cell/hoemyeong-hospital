@@ -26,6 +26,10 @@ jobs:
         id: static_checks
         continue-on-error: true
         run: npm test
+      - name: Guard approved V172 scene preservation
+        id: approved_ui
+        continue-on-error: true
+        run: node test_approved_v172_ui.js
       - name: Run real multiplayer reconnect checks
         id: network_checks
         continue-on-error: true
@@ -38,11 +42,16 @@ jobs:
         if: always()
         run: |
           echo "Static checks: ${{ steps.static_checks.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Approved V172 UI: ${{ steps.approved_ui.outcome }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Multiplayer checks: ${{ steps.network_checks.outcome }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Server syntax: ${{ steps.syntax_checks.outcome }}" >> "$GITHUB_STEP_SUMMARY"
           failed=0
           if [ "${{ steps.static_checks.outcome }}" != success ]; then
             echo "::error title=Static preflight failed::Preservation, media, or inline-script checks failed."
+            failed=1
+          fi
+          if [ "${{ steps.approved_ui.outcome }}" != success ]; then
+            echo "::error title=Approved V172 UI missing::Restore the approved scene and horror-object layer before release."
             failed=1
           fi
           if [ "${{ steps.network_checks.outcome }}" != success ]; then
