@@ -120,7 +120,7 @@ body{background:#050807}.shell{max-width:1000px}.viewport{height:min(72vh,720px)
 .dollPieces button{font-size:12px}
 #dollLog{border-left:2px solid #876b6d;padding:8px 12px;min-height:64px;background:#191619;white-space:pre-line}
 @media(max-width:520px){#dollHotspot{left:27%;top:56%;width:28px;height:28px}}
-</style><meta content="V108-2P-mobile-fix" name="game-build"/>
+</style><meta name="game-build" content="V112-mobile-foundation-fix">
 <style id="hm-fear-mobile-accessibility-fix">
 /* Keep horror settings above the scene overlays and accessible on touch devices. */
 #fearSettings{position:fixed!important;top:calc(env(safe-area-inset-top, 0px) + 10px)!important;left:10px!important;z-index:2147483000!important;max-width:min(260px,calc(100vw - 20px))!important;pointer-events:auto!important;touch-action:manipulation!important;box-shadow:0 6px 24px #000b}
@@ -284,6 +284,77 @@ body:has(#modal.show.v107-clock) #hm109header{visibility:hidden!important}
  .shell>.story{margin:0 10px!important;padding:11px 12px!important}
 }
 @media(max-width:390px){.hm109-heading strong{font-size:12px!important}.hm109-heading small{font-size:9px!important}#hm109actions #hm105bar>button,#hm109actions #hm105bar #v528ChatToggle{font-size:10px!important;padding:7px 5px!important}}
+</style><style id="v110-disable-broken-fullscreen">
+/* Mobile fullscreen causes an unresponsive/unclickable viewport. Remove the control
+   without deleting the element because the legacy handler still binds to its ID. */
+#v514Full{display:none!important;visibility:hidden!important;pointer-events:none!important}
+</style><style id="v111-mobile-scroll-fix">
+/* V111: viewport-fit without trapping navigation; keep V109 reference composition. */
+html { height:auto!important; min-height:100%!important; overflow-y:auto!important; overscroll-behavior-y:auto!important; }
+body { position:static!important; height:auto!important; min-height:100dvh!important; max-height:none!important; overflow-y:auto!important; overflow-x:hidden!important; touch-action:pan-y!important; -webkit-overflow-scrolling:touch; }
+main.shell { height:auto!important; min-height:100dvh!important; max-height:none!important; overflow:visible!important; display:block!important; padding-bottom:calc(36px + env(safe-area-inset-bottom,0px))!important; }
+#hm109header { position:relative!important; }
+#scene.viewport { overflow:hidden!important; }
+/* The scene is intentionally shorter than the screen so the story and nav remain reachable. */
+@media(max-width:700px) {
+ #scene.viewport { height:clamp(270px,49dvh,530px)!important; min-height:270px!important; max-height:530px!important; }
+ #hm109lore { min-height:0!important; height:auto!important; padding:7px 9px!important; }
+ .shell>.story { min-height:0!important; height:auto!important; max-height:150px!important; overflow-y:auto!important; margin:0 10px!important; }
+ #nodeNav { position:relative!important; display:grid!important; visibility:visible!important; opacity:1!important; transform:none!important; overflow:visible!important; height:auto!important; min-height:0!important; padding-bottom:calc(15px + env(safe-area-inset-bottom,0px))!important; }
+ #nodeNav button { min-height:62px!important; }
+ #scene #lookInstruction { bottom:12px!important; }
+ #scene .control { display:none!important; }
+}
+@media(max-width:700px) and (max-height:680px) {
+ #scene.viewport { height:clamp(250px,43dvh,370px)!important; min-height:250px!important; }
+ #hm109header { height:60px!important; }
+ #nodeNav button { min-height:56px!important; }
+}
+/* Settings is independently scrollable, never locks the underlying page. */
+#hm105settings { overflow-y:auto!important; overscroll-behavior:contain!important; }
+#hm105settingsInner { max-height:calc(100dvh - 90px)!important; overflow-y:auto!important; -webkit-overflow-scrolling:touch; }
+/* Fullscreen control remains unavailable. */
+#v514Full, #hm105settings #v514Full { display:none!important; }
+</style><style id="v112-mobile-foundation">
+/* Mobile navigation is always visible; swipe the image to scroll the document. */
+@media (max-width:700px) {
+ html, body {height:auto!important; min-height:100%!important; overflow-y:auto!important; overflow-x:hidden!important; overscroll-behavior-y:auto!important;}
+ body {position:static!important; touch-action:pan-y!important;}
+ main.shell {height:auto!important; max-height:none!important; overflow:visible!important; padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))!important;}
+ #hm109header {height:auto!important; min-height:58px!important; padding:7px 8px!important;}
+ #hm109lore {font-size:10px!important; padding:5px 8px!important;}
+ #scene.viewport {height:clamp(245px,45dvh,460px)!important; min-height:0!important; max-height:none!important; touch-action:pan-y!important;}
+ #scene .bg, #scene .shade, #scene .grain, #scene .light, #scene .event, #scene #lookInstruction {pointer-events:none!important;}
+ #scene .hot {touch-action:manipulation!important;}
+ #scene #lookInstruction {bottom:10px!important;}
+ #nodeNav {position:fixed!important; left:0!important; right:0!important; bottom:0!important; top:auto!important; width:100%!important; height:auto!important; z-index:90!important; transform:none!important; display:grid!important; grid-template-columns:repeat(4,minmax(0,1fr))!important; gap:5px!important; padding:6px 7px calc(6px + env(safe-area-inset-bottom,0px))!important; background:#0b0810f5!important; border-top:1px solid #665069!important; visibility:visible!important; pointer-events:auto!important; }
+ #nodeNav button {min-height:52px!important; font-size:11px!important; padding:4px 2px!important; touch-action:manipulation!important;}
+ #nodeNav button::before {font-size:16px!important; margin-bottom:0!important;}
+ .shell>.story {max-height:none!important; overflow:visible!important; margin:0 8px!important; padding:10px!important;}
+ #hm105settings {position:fixed!important; inset:0!important; overflow-y:auto!important; align-items:flex-start!important; padding:calc(10px + env(safe-area-inset-top,0px)) 8px calc(18px + env(safe-area-inset-bottom,0px))!important; touch-action:pan-y!important;}
+ #hm105settingsInner {max-height:calc(100dvh - 28px)!important; overflow-y:auto!important; touch-action:pan-y!important;}
+ body:has(#modal.show) #nodeNav {display:none!important;}
+}
+#v514Full {display:none!important;pointer-events:none!important;}
+</style><style id="v113-emergency-mobile-fix">
+/* One header, not two. Keep guide logic mounted but out of the visual flow. */
+#v514Dock{display:none!important}
+#v514Panel{display:none!important}
+.shell>.head{display:none!important}
+#hm109header{position:relative!important;top:auto!important}
+@media(max-width:700px){
+ #scene.viewport{height: min(56vw, 310px)!important;min-height:220px!important;max-height:310px!important;touch-action:pan-y!important}
+ #scene .bg{inset:0!important;background-size:cover!important;background-position:center center!important;transform:none!important}
+ #scene .shade{pointer-events:none!important}
+ #scene .hot{z-index:15!important}
+ #hm109lore{height:auto!important;min-height:28px!important}
+ #nodeNav{z-index:70!important}
+ #hm109header{z-index:75!important}
+ #hm105settings{z-index:2147483070!important}
+}
+</style><style id="v114-stability">
+#v514Dock,#v514Panel{display:none!important}
+@media(max-width:700px){.shell>.head{display:none!important}#scene.viewport{height:clamp(230px,58vw,390px)!important;min-height:0!important}#scene .bg{inset:0!important;background-size:cover!important;background-position:center!important}#scene .hot{touch-action:manipulation!important}#scene .modal.show{overscroll-behavior:contain;touch-action:pan-y}}
 </style></head><body><main class="shell"><header class="hm109-header" id="hm109header"><div class="hm109-heading"><strong id="hm109chapter">CH.01 · 접수실</strong><small>출입증 확보 · 잠금 조사</small></div><div id="hm109actions"></div></header><header class="head"><div><div class="brand">THE EIGHTH DOOR · 回明病院</div><div class="sub">야간 조사 · 출입 허가자 외 접근 금지</div></div><span class="tag">회명병원 · 야간 조사</span></header><div id="hm109lore">F-WORLD 세계관 연계 작품 · 별도 사전 지식 없이 플레이할 수 있습니다.</div><section class="viewport" id="scene"><div class="bg" id="bg"></div><button aria-label="울고 있는 인형 조사" hidden="" id="dollHotspot" title="인형 조사" type="button"></button><div aria-hidden="true" id="torchBeam"></div><div aria-hidden="true" id="changedScene">누군가 이미 다녀갔다.</div><div id="torchTip">빛을 움직여 조사하세요</div><div aria-hidden="true" id="glassApparition"></div><div class="shade"></div><div aria-hidden="true" id="joltOverlay"></div><div aria-hidden="true" id="lookReticle"></div><div id="lookInstruction">드래그해서 둘러보기 · 물체는 탭하여 조사</div><div class="grain"></div><div id="shadowFigure"></div><div id="scareShade"></div><div id="sceneNotice"></div><div class="light" id="light"></div><div class="flash"></div><div class="event" id="event"></div><div class="place" id="place">접수실 · 정면</div><button class="hot" id="wardHot" style="left:35%;top:48%;display:none" type="button">🛏️ 침대 조사</button><button class="hot" id="bellHot" style="right:8%;top:28%;display:none" type="button">🔔 호출벨</button><button class="hot" id="roomHot" style="left:18%;top:20%;display:none" type="button">🚪 208호</button><button class="hot hot1" data-action="desk">접수대</button><button class="hot hot2" data-action="door">출입문</button><button class="hot hot3" data-action="clock">벽시계</button><div aria-hidden="true" id="cinematicScare"><div class="presence"><span class="presence-head"></span><span class="presence-body"></span></div><div class="crack"></div></div><div aria-hidden="true" id="interactionHand"></div><div class="modal" id="modal"><h2 id="mt"></h2><p id="mb"></p><div aria-label="벽시계 복원 퍼즐" class="hmClockPuzzle" hidden="" id="clockPuzzle">
 <div class="hmClockTitle">회명병원 · 야간 기록실 벽시계</div>
 <div aria-label="조작 가능한 아날로그 벽시계" class="hmClockFace" role="img"><div class="hmClockMarks" id="hmClockMarks"></div><div class="hmClockHand hour" id="hmHourHand"></div><div class="hmClockHand minute" id="hmMinuteHand"></div><span class="hmClockPin"></span></div>
@@ -421,7 +492,7 @@ const $=id=>document.getElementById(id), scene=$('scene'),bg=$('bg'),story=$('st
 let doorUnlocked=false,handleTurned=false,cardBack=false,drawerOpen=false;let angle='front',closeup=false,hasCard=false,ctx=null,playing=[],timers=[],torch=false;
 const views={front:['reception','접수실 · 정면','접수대 뒤의 형광등이 두 번 깜빡인다. 두 번째에는 유리 너머에 서 있던 그림자가 보이지 않는다.'],left:['nurse','접수실 · 왼쪽','간호사실 문 아래로 종이 한 장이 밀려 나온다. 안쪽에는 발소리가 없는데 종이는 계속 움직인다.'],right:['corridor','접수실 · 오른쪽','복도 끝의 불이 켜져 있다. 벽에는 스위치가 없고, 전선은 천장에서 끊겨 있다.'],back:['ward','접수실 · 뒤쪽','방금 지나온 병동 입구. 돌아가는 방향의 발자국만 먼지 위에서 지워져 있다.']};
 function say(t,tag='조사 기록 01'){story.textContent=t;$('narrator').textContent=tag}
-function render(){if(chapter===2){renderWard();return}let v=views[angle];bg.style.backgroundImage=`url("${IMAGES[v[0]]}")`;place.textContent=v[1]+(closeup?' · 근접 조사':'');scene.classList.toggle('near',closeup);document.querySelectorAll('.hot').forEach(x=>x.classList.toggle('hide',angle!=='front'));if(!closeup)say(v[2]);}
+function render(){if(chapter===2){renderWard();return}let v=views[angle];if(bg.dataset.hmImageKey!==v[0]){bg.style.backgroundImage=`url("${IMAGES[v[0]]}")`;bg.dataset.hmImageKey=v[0];}place.textContent=v[1]+(closeup?' · 근접 조사':'');scene.classList.toggle('near',closeup);document.querySelectorAll('.hot').forEach(x=>x.classList.toggle('hide',angle!=='front'));if(!closeup)say(v[2]);}
 function turn(dir){if(chapter===3){$('examStatus').textContent='검사실 장치를 조작하고 있어. 아래의 버튼으로 진행해.';return}if(chapter===2){wardTurn(dir);return}if(dir==='left'||dir==='right'){found.add('wing');updateObjective()}closeup=false;modal.classList.remove('show');angle=dir;render();if(dir==='back')maybeScare('back')}
 ['left','right','back','front'].forEach(d=>$(d).addEventListener('click',()=>turn(d)));
 let startX=null;scene.addEventListener('touchstart',e=>{if(e.touches.length===1)startX=e.touches[0].clientX},{passive:true});scene.addEventListener('touchend',e=>{if(startX===null||closeup)return;const diff=e.changedTouches[0].clientX-startX;if(Math.abs(diff)>75){const a=['left','front','right','back'];turn(a[(a.indexOf(angle)+(diff<0?1:3))%4])}startX=null},{passive:true});
@@ -963,7 +1034,7 @@ render();
  }
  nav.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>visit(b.dataset.node)));
  const blocked=t=>t.closest('button,.modal,select,input,textarea,#nodeNav');
- sc.addEventListener('pointerdown',e=>{if(blocked(e.target)||typeof chapter!=='undefined'&&chapter!==1)return;start={x:e.clientX,y:e.clientY,id:e.pointerId};sc.classList.add('dragging');sc.setPointerCapture(e.pointerId)});
+ sc.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||blocked(e.target)||typeof chapter!=='undefined'&&chapter!==1)return;start={x:e.clientX,y:e.clientY,id:e.pointerId};sc.classList.add('dragging');sc.setPointerCapture(e.pointerId)});
  sc.addEventListener('pointermove',e=>{if(!start||e.pointerId!==start.id)return;const dx=e.clientX-start.x,dy=e.clientY-start.y;
   lookX=Math.max(-Math.min(38,sc.clientWidth*.07),Math.min(Math.min(38,sc.clientWidth*.07),lookX+dx*.34));lookY=Math.max(-Math.min(22,sc.clientHeight*.07),Math.min(Math.min(22,sc.clientHeight*.07),lookY+dy*.25));
   sc.style.setProperty('--look-x',lookX+'px');sc.style.setProperty('--look-y',lookY+'px');start.x=e.clientX;start.y=e.clientY;
@@ -2141,14 +2212,7 @@ const Original=window.WebSocket;window.WebSocket=class extends Original{construc
 }
 @media(max-width:600px){#scene.viewport .bg{inset:-30% -30%}}
 </style>
-<script id="hm554diagnostics">
-(()=>{const bg=document.getElementById('bg'),scene=document.getElementById('scene');if(!bg||!scene)return;
-let last='';
-const check=()=>{const url=getComputedStyle(bg).backgroundImage;if(!url||url==='none'||url===last)return;last=url;const match=url.match(/^url\(["']?(.*?)["']?\)$/);if(!match)return;const im=new Image();im.onload=()=>{scene.dataset.imageStatus='loaded'};im.onerror=()=>{scene.dataset.imageStatus='failed';console.warn('회명병원: 배경 이미지 로드 실패 (네트워크/주소 확인)',match[1].slice(0,90));const notice=document.getElementById('sceneNotice');if(notice){notice.textContent='배경 이미지 로딩에 실패했습니다. 연결 상태를 확인하고 새로고침해 주세요.';notice.setAttribute('role','alert')}};im.src=match[1];};
-new MutationObserver(check).observe(bg,{attributes:true,attributeFilter:['style']});check();
-const dock=document.getElementById('audioPanel');if(dock){const btn=document.createElement('button');btn.type='button';btn.id='hmAudioTest';btn.textContent='🔉 공포 효과음 테스트';btn.style.marginTop='12px';dock.append(btn);btn.onclick=()=>{document.dispatchEvent(new Event('hoemyeong-audio-test'));};}
-})();
-</script><style id="hm556style">#hm556{position:fixed;inset:auto 12px 12px;z-index:2147482551;max-width:530px;max-height:78dvh;overflow:auto;margin:auto;padding:16px;border:1px solid #a28aa9;border-radius:12px;background:#100d19f5;color:#f4e8f5;font:14px/1.6 system-ui;box-shadow:0 8px 35px #000b}#hm556[hidden]{display:none}#hm556 button,#hm556 input{margin:5px;padding:9px;border:1px solid #947ba5;border-radius:7px;background:#36233f;color:#fff}#hm556 button:disabled{opacity:.5}</style>
+<script id="hm554diagnostics">/* V114: disabled duplicate full-resolution image decode during scene changes. */</script><style id="hm556style">#hm556{position:fixed;inset:auto 12px 12px;z-index:2147482551;max-width:530px;max-height:78dvh;overflow:auto;margin:auto;padding:16px;border:1px solid #a28aa9;border-radius:12px;background:#100d19f5;color:#f4e8f5;font:14px/1.6 system-ui;box-shadow:0 8px 35px #000b}#hm556[hidden]{display:none}#hm556 button,#hm556 input{margin:5px;padding:9px;border:1px solid #947ba5;border-radius:7px;background:#36233f;color:#fff}#hm556 button:disabled{opacity:.5}</style>
 <script id="hm556script">(()=>{
 const el=document.createElement('section');el.id='hm556';el.hidden=true;el.innerHTML='<h3>CH.03 — 없는 층의 엘리베이터</h3><p>층수가 사라진 엘리베이터. 조사원마다 다른 기록을 확보하고 비상 패널의 세 자리를 복원해야 한다.</p><div id="hm556actions"></div><p id="hm556status" role="status"></p>';document.body.append(el);
 let clueOwners=[0,1];let chapter=null,role=null,isHost=false;const sock=()=> (window.__hm534sockets||[]).findLast(w=>w.readyState===1);
@@ -2621,7 +2685,7 @@ function init(){
  document.body.appendChild(backdrop);
  const sound=backdrop.querySelector('#hm105sound');const audio=document.getElementById('audioDock');if(audio)sound.appendChild(audio);
  const extra=backdrop.querySelector('#hm105extra');
- ['coopLaunch','v514Full'].forEach(id=>{const node=document.getElementById(id);if(node)extra.appendChild(node)});
+ ['coopLaunch'].forEach(id=>{const node=document.getElementById(id);if(node)extra.appendChild(node)});
  // Preserve original audio handlers and original multiplayer dialogs; move only their launch controls.
  const echo=[...document.querySelectorAll('button')].find(b=>b.textContent?.trim().startsWith('병원 메아리'));if(echo)extra.appendChild(echo);
  const story=backdrop.querySelector('#hm105story');const storyButton=document.getElementById('v528StoryToggle');if(storyButton){const clone=document.createElement('button');clone.textContent='📖 멤버 대사 기록';clone.onclick=()=>{backdrop.hidden=true;settingsButton.setAttribute('aria-expanded','false');document.getElementById('v528ChatToggle')?.click();storyButton.click()};story.appendChild(clone)}
@@ -2636,16 +2700,16 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script><script id="v107-preview-script">
 (()=>{
- const $=id=>document.getElementById(id);
- const modal=$('modal'), clock=$('clockPuzzle');
+ const modal=document.getElementById('modal'),clock=document.getElementById('clockPuzzle');
  if(!modal||!clock)return;
- const sync=()=>{const active=modal.classList.contains('show')&&!clock.hidden;
- modal.classList.toggle('v107-clock',active);
- if(active){modal.classList.remove('v510-card','v510-door','v59-drawer');}
- };
- new MutationObserver(sync).observe(modal,{attributes:true,attributeFilter:['class']});
- new MutationObserver(sync).observe(clock,{attributes:true,attributeFilter:['hidden']});
- $('close')?.addEventListener('click',()=>{modal.classList.remove('v107-clock');},true);
+ let scheduled=false;
+ function sync(){scheduled=false;const active=modal.classList.contains('show')&&!clock.hidden;
+  if(modal.classList.contains('v107-clock')!==active)modal.classList.toggle('v107-clock',active);
+ }
+ function queue(){if(!scheduled){scheduled=true;requestAnimationFrame(sync)}}
+ new MutationObserver(queue).observe(modal,{attributes:true,attributeFilter:['class']});
+ new MutationObserver(queue).observe(clock,{attributes:true,attributeFilter:['hidden']});
+ document.getElementById('close')?.addEventListener('click',queue);
  sync();
 })();
 </script><script id="v109-reference-layout-script">(()=>{
