@@ -36,6 +36,33 @@ async function check(label,fn){await fn();checks.push(label);console.log('PASS',
    const reassigned=await wait(b,m=>m.type==='sense_assignment'&&m.senses?.length>0);
    assert.ok(reassigned.senses.length>0);
  });
+ await check('four-player room reassigns senses after one disconnect and reconnect',async()=>{
+   const team=[client(),client(),client(),client()];
+   for(const c of team)await connect(c);
+   const room4='V160FOUR';
+   const tokens=[];
+   for(let i=0;i<4;i++){
+     send(team[i],{type:'join',room:room4,role:i,character:i,capacity:4});
+     const joined=await wait(team[i],m=>m.type==='joined');
+     tokens.push(joined.token);
+   }
+   for(const c of team)send(c,{type:'ready',ready:true});
+   await wait(team[0],m=>m.type==='state'&&m.members?.length===4&&m.members.every(x=>x.ready));
+   send(team[0],{type:'start'});
+   await wait(team[0],m=>m.type==='state'&&m.started===true);
+   team[3].ws.close();
+   const reduced=await wait(team[0],m=>m.type==='state'&&m.started&&m.members?.filter(x=>x.online!==false).length===3);
+   assert.equal(reduced.cooperationPaused,false);
+   const senses3=await wait(team[0],m=>m.type==='sense_assignment'&&m.senses?.length>=2);
+   assert.ok(senses3.senses.length>=2);
+   const back=client();await connect(back);
+   send(back,{type:'join',room:room4,role:3,character:3,token:tokens[3]});
+   assert.equal((await wait(back,m=>m.type==='joined')).resumed,true);
+   const restored=await wait(team[0],m=>m.type==='state'&&m.members?.filter(x=>x.online!==false).length===4);
+   assert.equal(restored.cooperationPaused,false);
+   const senses4=await wait(team[0],m=>m.type==='sense_assignment'&&m.senses?.length>0);
+   assert.ok(senses4.senses.length<senses3.senses.length);
+ });
  console.log('RESULT',checks.length,'passed');fs.writeFileSync(__dirname+'/V160_RUNTIME_RESULT.json',JSON.stringify({status:'passed',checks},null,2));
  }catch(e){console.error('FAIL',e.stack);fs.writeFileSync(__dirname+'/V160_RUNTIME_RESULT.json',JSON.stringify({status:'failed',checks,error:String(e)},null,2));process.exitCode=1}
  finally{for(const c of clients)try{c.ws?.close()}catch{}server.kill('SIGTERM');setTimeout(()=>server.kill('SIGKILL'),500).unref()}
