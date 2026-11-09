@@ -139,6 +139,7 @@
   const coopMembers = document.getElementById('hmCoopMembers');
 
   let ws = null, token = null, myRole = null, isHost = false, joined = false, started = false;
+  let currentPhase = 'reception';
   const charNames = ['홍중','성화','윤호','여상','산','민기','우영','종호'];
 
   if(hmJoin) {
@@ -161,11 +162,19 @@
           const data = JSON.parse(e.data);
           if(data.type === 'error') { coopStatus.textContent='오류: '+data.message; return; }
           if(data.type === 'joined' || data.type === 'state') {
+            if(data.chapter && typeof data.chapter.phase === 'string') {
+              currentPhase = data.chapter.phase;
+              document.getElementById('sceneTitle').textContent = '회명병원 · '+currentPhase;
+              if(Array.isArray(data.chapter.solved)) document.getElementById('line').textContent = '서버 동기화 · 진행 단계: '+currentPhase+' · 완료한 퍼즐: '+data.chapter.solved.length;
+            }
+            if(data.started === true) { started = true; }
             if(data.token){ token = data.token; localStorage.setItem('hm-token', token); }
             myRole = data.yourRole ?? myRole;
             if(data.type === 'joined') { joined = true; isHost = !!data.isHost; hmJoin.disabled=true; }
             if(data.started) started=true;
             if(data.members) {
+              if(data.type === 'state') isHost = data.members.some(m => m.role === myRole && m.host === true);
+              coopMembers.style.whiteSpace = 'pre-line';
               coopMembers.textContent = data.members.map(m => `[${charNames[m.character]||'조사원'}] ${m.ready?'준비완료':'대기중'}${m.host?' (방장)':''}`).join('\n');
               hmReady.disabled = started;
               hmStart.disabled = !isHost || started;
@@ -194,7 +203,8 @@
   document.querySelectorAll('.hot').forEach(btn => {
     btn.onclick = () => {
       const action = btn.dataset.action;
-      if(!ws || ws.readyState !== WebSocket.OPEN) return alert('멀티플레이 서버에 먼저 접속해 주세요.');
+      if(!ws || ws.readyState !== WebSocket.OPEN || !started) return alert('두 조사원이 입장하고 게임을 시작한 뒤 조사할 수 있어요.');
+      if(currentPhase !== 'reception' && currentPhase !== 'separated') return alert('현재 단계는 전용 퍼즐 화면에서 조사해야 합니다.');
       if(action === 'bell') {
         ws.send(JSON.stringify({ type:'chapter', action:'bell' }));
       } else {
