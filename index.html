@@ -403,7 +403,9 @@
               hmStart.disabled = !isHost || started || data.members.filter(m=>m.online!==false).length<2 || data.members.some(m=>m.online===false||!m.ready);
               hmLeave.disabled = false;
             }
-            coopStatus.textContent = `${started?'진행 중':'입장 성공'} · ${charNames[myRole]||myRole} · ${data.members?.filter(m=>m.online!==false).length||0}명 연결${started&&data.members?.some(m=>m.online===false)?' · 재접속 대기 중인 조사원 있음':''}`;
+            coopStatus.textContent = data.cooperationPaused
+              ? '협동 진행 대기 · 최소 2명 연결 필요 · 다른 조사원의 재접속을 기다려 주세요.'
+              : `${started?'진행 중':'입장 성공'} · ${charNames[myRole]||myRole} · ${data.members?.filter(m=>m.online!==false).length||0}명 연결${started&&data.members?.some(m=>m.online===false)?' · 재접속 대기 중인 조사원 있음':''}`;
             document.getElementById('roleDisplay').textContent = `담당: ${charNames[myRole]||'조사원'}`;
           }
           if(['sense_interaction_result','sense_challenge_result','sense_result','evidence_result','evidence_verdict','ecg_result'].includes(data.type)) ch01Result.textContent=(data.message||'')+(data.digit?'\n획득 숫자: '+data.digit:'')+(data.text?'\n'+data.text:'');
