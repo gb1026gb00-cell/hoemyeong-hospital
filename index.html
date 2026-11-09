@@ -405,10 +405,23 @@
           if(data.type === 'ch03_event' || data.type === 'ch03_result') ch03Result.textContent = data.message || '엘리베이터 조사 상태가 변경됐습니다.';
           if(data.type === 'ch04_event' || data.type === 'ch04_result') ch04Result.textContent = data.message || '기록보관실 조사 상태가 변경됐습니다.';
           if(data.type === 'ch05_event' || data.type === 'ch05_result') ch05Result.textContent = data.message || '격리실 조사 상태가 변경됐습니다.';
-          if(['ch06_event','ch06_result','artifact_result','doll_event'].includes(data.type))ch06Result.textContent=data.message||'마지막 문 조사 상태가 변경됐습니다.';
+          if(['ch06_event','ch06_result','artifact_result'].includes(data.type))ch06Result.textContent=data.message||'마지막 문 조사 상태가 변경됐습니다.';
+          if(data.type==='doll_event'){
+            document.getElementById('dollStatus').textContent=' 4 / 4 · 조립 완료';
+            const target=({ch02:ch02Result,ch03:ch03Result,ch04:ch04Result,ch05:ch05Result,ch06:ch06Result})[currentPhase.replace('_cleared','')]||ch01Result;
+            target.textContent=data.message||'인형이 완성되었습니다.';
+          }
+          if(data.type==='horror_inspect_result'){
+            const target=({ch02:ch02Result,ch03:ch03Result,ch04:ch04Result,ch05:ch05Result,ch06:ch06Result})[currentPhase.replace('_cleared','')]||ch01Result;
+            target.textContent=data.message||'조사 결과를 확인했습니다.';
+          }
           if(data.type === 'chapter_voice') coopStatus.textContent='CH.'+String(data.chapter).padStart(2,'0')+' 음성 재생 요청';
           if(data.type === 'inspection') { ch01Result.textContent = (data.room?data.room+'\n':'')+(data.description||'')+(data.clue?'\n전달할 암호: '+data.clue.code+' → 조사원 '+data.clue.target:''); }
-          if(data.type === 'chapter_result' || data.type === 'fragment_result') ch01Result.textContent = data.message || JSON.stringify(data);
+          if(data.type === 'chapter_result') ch01Result.textContent = data.message || JSON.stringify(data);
+          if(data.type === 'fragment_result'){
+            const target=({ch02:ch02Result,ch03:ch03Result,ch04:ch04Result,ch05:ch05Result,ch06:ch06Result})[currentPhase.replace('_cleared','')]||ch01Result;
+            target.textContent=data.message||'제0유물 파편 조사 결과를 확인했습니다.';
+          }
           if(data.type === 'chapter_event') ch01Result.textContent = ({blackout:'정전 발생. 조사원들이 각 조사실로 분리되었습니다.',escape:'모든 조사실 봉인 해제 완료. 접수실 서류함에서 제0유물 파편을 찾아 다음 구역으로 이동하세요.',sense_locked:'심전도 복원을 먼저 완료해야 합니다.',wrong:'제어판 암호가 틀렸습니다. 전달받은 숫자와 담당 조사실 규칙을 다시 확인하세요.',solved:'제어판 봉인이 해제되었습니다. 다른 조사원의 해제를 기다리세요.'})[data.event] || data.message || '새로운 사건 발생';
           if(data.type === 'started') {
             started=true; lastStarted=true; coopStatus.textContent='게임 시작 신호 수신';
