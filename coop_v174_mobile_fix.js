@@ -269,7 +269,8 @@
   const lines=Array.isArray(message.lines)?message.lines:[message.message||''];
   const header=message.label|| (message.ok?'접수대 봉인':'명부 확인');
   out.textContent=header+'\\n'+lines.join('\\n');
-  const shadows=$('hmReceptionShadows');if(shadows){shadows.replaceChildren();shadows.hidden=message.object!=='mirror';if(message.object==='mirror'&&Number.isInteger(message.shadowCount)){for(let i=0;i<message.shadowCount;i++){const figure=document.createElement('span');figure.className='hmShadowNurse';figure.setAttribute('aria-label','얼굴이 검게 지워진 간호사 그림자');figure.innerHTML='<span class="hmNurseHead"></span><span class="hmNurseBody"></span>';shadows.append(figure);}}}
+  // No synthetic human silhouettes: the mirror clue is delivered as text.
+  const shadows=$('hmReceptionShadows');if(shadows)shadows.remove();
   out.style.borderColor=message.ok?'#6b9a83':'#9b697f';
   if(message.complete){document.querySelectorAll('#hmReceptionCoop input').forEach(input=>input.disabled=true);}
  }
@@ -317,7 +318,6 @@
    b.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN)return;socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));};
    objects.append(b);
   }
-  const shadows=document.createElement('div');shadows.id='hmReceptionShadows';shadows.hidden=true;shadows.style.cssText='display:flex;justify-content:center;align-items:end;flex-wrap:wrap;gap:8px;min-height:130px;padding:12px;background:radial-gradient(#3b3540,#0a090d);border:3px ridge #71616f;border-radius:8px;margin:9px 0';
   const output=document.createElement('pre');output.id='hmReceptionOutput';output.textContent='접수대, 거울, 캐비닛, 접수명부를 조사하세요.';output.style.cssText='white-space:pre-wrap;line-height:1.7;padding:12px;background:#110e15;border:1px solid #5d4759;border-radius:8px;min-height:80px;font:13px/1.7 system-ui';
   const hint=document.createElement('p');hint.textContent='팀원과 숫자·기호를 공유하세요. 각 칸에 숫자 하나씩 입력하세요. 모든 조사원이 확인하면 봉인이 풀립니다.';hint.style.cssText='font-size:12px;color:#d8c1ce';
   const cells=document.createElement('div');cells.style.cssText='display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin-top:10px';
@@ -333,8 +333,7 @@
   const inputProxy=document.createElement('input');inputProxy.id='hmReceptionAnswer';inputProxy.type='hidden';
   const submit=document.createElement('button');submit.type='button';submit.textContent='접수대 봉인 해제';submit.style.cssText='width:100%;min-height:48px;margin-top:9px;border:1px solid #ac7a90;border-radius:9px;background:#5c3047;color:#fff;font-weight:bold';
   submit.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN)return;socket.send(JSON.stringify({type:'chapter',action:'reception_submit',answer:input.value.trim()}));};
-  section.append(title,intro,objects,shadows,output,hint,cells,inputProxy,submit);
-  const css=document.createElement('style');css.textContent='#hmReceptionShadows[hidden]{display:none!important}.hmShadowNurse{display:flex;flex-direction:column;align-items:center;width:36px;height:98px;filter:drop-shadow(0 0 5px #08040b)}.hmNurseHead{width:27px;height:30px;background:radial-gradient(ellipse at 50% 38%,#020104 0 57%,#b5a8a8 59% 75%,#24212a 80%);border-radius:47% 47% 43% 43%;border-top:5px solid #c5b6b8}.hmNurseBody{height:63px;width:34px;background:linear-gradient(90deg,#39353d,#c2b8ba 38%,#66606a 68%,#19151d);clip-path:polygon(29% 0,70% 0,100% 100%,0 100%);border-radius:8px}';document.head.append(css);
+  section.append(title,intro,objects,output,hint,cells,inputProxy,submit);
   const guide=$('hmCh01Guide');if(guide)guide.before(section);else panel.querySelector('strong')?.after(section);
   // Hide only the obsolete CH01 numeric form, retaining its DOM and all server
   // handlers for backward compatibility. Other chapters and artifacts untouched.
