@@ -14,6 +14,7 @@
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
     if(m.type==='state'||m.type==='joined'){active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
+    if(m.type==='reception_clue'||m.type==='reception_result')showReceptionResult(m);
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
     if(m.type==='chat'){const box=$('hmV174ChatLog');if(box){const line=document.createElement('div');line.textContent=(Number.isInteger(m.item?.character)&&m.item.character>=0&&m.item.character<8?['홍중','성화','윤호','여상','산','민기','우영','종호'][m.item.character]+': ':(m.item?.role!==undefined?'조사원 '+(m.item.role+1)+': ':''))+(m.item?.text||m.item?.message||'');box.append(line);box.scrollTop=box.scrollHeight;}}
    });
@@ -150,6 +151,46 @@
   if(revisit)revisit.textContent='접수대 명부 다시 조사';
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhanceChapterInteractions,{once:true});else enhanceChapterInteractions();
+
+ function showReceptionResult(message){
+  const out=$('hmReceptionOutput');if(!out)return;
+  const lines=Array.isArray(message.lines)?message.lines:[message.message||''];
+  const header=message.label|| (message.ok?'접수대 봉인':'명부 확인');
+  out.textContent=header+'\\n'+lines.join('\\n');
+  out.style.borderColor=message.ok?'#6b9a83':'#9b697f';
+  if(message.complete){const input=$('hmReceptionAnswer');if(input)input.disabled=true;}
+ }
+ function installReceptionCoop(){
+  const panel=$('ch01PuzzlePanel');if(!panel||$('hmReceptionCoop'))return;
+  const section=document.createElement('section');section.id='hmReceptionCoop';
+  section.style.cssText='margin:12px 0;padding:14px;border:1px solid #91677c;border-radius:12px;background:linear-gradient(#271820,#100d15);color:#f4e8ee';
+  const title=document.createElement('strong');title.textContent='접수명부 · 여섯 자리 봉인';
+  const intro=document.createElement('p');intro.textContent='각자 다른 접수번호와 기호가 보입니다. 네 곳을 조사하고 팀원에게 보이는 내용을 공유해 여섯 자리 암호를 완성하세요.';intro.style.cssText='font-size:12px;line-height:1.6;color:#d5c2ce';
+  const objects=document.createElement('div');objects.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0';
+  for(const [object,label] of [['desk','📖 접수대'],['mirror','◈ 거울'],['cabinet','▤ 캐비닛'],['ledger','📋 접수명부']]){
+   const b=document.createElement('button');b.type='button';b.textContent=label;
+   b.style.cssText='min-height:55px;padding:10px;border:1px solid #805c72;border-radius:9px;background:#382531;color:#fff';
+   b.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN)return;socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));};
+   objects.append(b);
+  }
+  const output=document.createElement('pre');output.id='hmReceptionOutput';output.textContent='접수대, 거울, 캐비닛, 접수명부를 조사하세요.';output.style.cssText='white-space:pre-wrap;line-height:1.7;padding:12px;background:#110e15;border:1px solid #5d4759;border-radius:8px;min-height:80px;font:13px/1.7 system-ui';
+  const hint=document.createElement('p');hint.textContent='팀원과 숫자·기호를 공유하세요. 비밀번호는 숫자 6자리이며, 모든 조사원이 확인해야 봉인이 풀립니다.';hint.style.cssText='font-size:12px;color:#d8c1ce';
+  const input=document.createElement('input');input.id='hmReceptionAnswer';input.inputMode='numeric';input.maxLength=6;input.placeholder='6자리 접수번호';input.style.cssText='width:100%;min-height:48px;padding:10px;border:1px solid #92758a;border-radius:8px;background:#140f17;color:white;font-size:20px;letter-spacing:4px';
+  const submit=document.createElement('button');submit.type='button';submit.textContent='접수대 봉인 해제';submit.style.cssText='width:100%;min-height:48px;margin-top:9px;border:1px solid #ac7a90;border-radius:9px;background:#5c3047;color:#fff;font-weight:bold';
+  submit.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN)return;socket.send(JSON.stringify({type:'chapter',action:'reception_submit',answer:input.value.trim()}));};
+  section.append(title,intro,objects,output,hint,input,submit);
+  const guide=$('hmCh01Guide');if(guide)guide.before(section);else panel.querySelector('strong')?.after(section);
+  // Hide only the obsolete CH01 numeric form, retaining its DOM and all server
+  // handlers for backward compatibility. Other chapters and artifacts untouched.
+  const old=panel.querySelector('#senseIndex')?.closest('div');
+  if(old){old.hidden=true;old.style.display='none';}
+  const oldControls=panel.querySelector('[data-ch01="inspect"]')?.parentElement;
+  if(oldControls){oldControls.hidden=true;oldControls.style.display='none';}
+  if(guide){guide.hidden=true;guide.style.display='none';}
+  const desk=document.querySelector('#mainScene [data-action="desk"]');
+  if(desk){desk.addEventListener('click',()=>{if(active&&phase==='separated'&&socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'desk'}));});}
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installReceptionCoop,{once:true});else installReceptionCoop();
  window.WebSocket=CoopSocket;
  // Only the approved 2/4/6/8-person capacities are selectable.
  function normalizeCapacityControls(){
