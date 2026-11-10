@@ -746,9 +746,8 @@ wss.on('connection',ws=>{
     if(!/^[0-9]{6}$/.test(attempt))return send(ws,{type:'reception_result',ok:false,message:'각 단서에서 구한 숫자를 한 칸씩, 총 여섯 칸에 입력하세요.'});
     if(attempt!==p.answer)return send(ws,{type:'reception_result',ok:false,message:'틀린 칸이 있습니다. 거울·캐비닛·명부를 팀원과 다시 대조하세요.'});
     if(!p.confirmed.includes(player.role))p.confirmed.push(player.role);
-    broadcast(r,{type:'reception_result',ok:true,message:'접수번호 대조 성공. '+p.confirmed.length+'명의 조사원이 확인했습니다.'});
-    const online=[...r.clients].filter(c=>c.ws?.readyState===WebSocket.OPEN);
-    if(online.length>=2&&online.every(c=>p.confirmed.includes(c.role))){
+    broadcast(r,{type:'reception_result',ok:true,message:'봉인 번호 일치. 조사원 한 명의 확인으로 공동 봉인을 해제합니다.'});
+    if(true){
      ch.ecgSolved=true;ch.evidenceSolved=true;ch.solved=online.map(c=>c.role);ch.phase='escaped';
      broadcast(r,{type:'chapter_event',event:'escape'});
      // Preserve the real CH01 fragment in the shared artifact collection.
