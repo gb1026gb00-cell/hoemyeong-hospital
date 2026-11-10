@@ -6,6 +6,7 @@
  let startedOnce=false;
  let ch02IsHost=false;
  let receptionAnswerLength=4;
+ let ch02AssignedRole=0,ch02RoomCapacity=2;
  const NativeWS=window.WebSocket;
  function hideLobby(){const p=$('hmCoopPanel');if(p)p.hidden=true;}
  function showConnectionStatus(message){let el=$('hmV174ConnectionStatus');if(!el){el=document.createElement('div');el.id='hmV174ConnectionStatus';el.setAttribute('role','alert');el.style.cssText='position:fixed;top:12px;left:12px;right:12px;z-index:99980;padding:13px 16px;border:1px solid #d1a2a2;border-radius:10px;background:#29151df2;color:#fff;font:14px system-ui;text-align:center;pointer-events:none';document.body.append(el);}el.textContent=message;el.hidden=!message;}
@@ -15,8 +16,9 @@
   constructor(...args){super(...args);socket=this;
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
-    if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity)))receptionAnswerLength=Number(m.capacity)/2+3;active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
+    if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity))){receptionAnswerLength=Number(m.capacity)/2+3;ch02RoomCapacity=Number(m.capacity);}active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='joined'&&typeof m.isHost==='boolean')ch02IsHost=m.isHost;
+    if(m.type==='joined'&&Number.isInteger(Number(m.yourRole)))ch02AssignedRole=Number(m.yourRole);
     if(m.type==='error'&&phase==='ch02'){
      const popup=document.getElementById('hmCh02NewDialog');
      if(popup&&popup.dataset.awaitingCertificate==='yes'){
@@ -840,6 +842,26 @@
   const footer=document.createElement('p');footer.textContent='※ 장비번호와 환자번호의 연결 정보는 병상 인식표에 보관되어 있습니다.';footer.style.cssText='border-top:1px dashed #315b42;padding-top:12px;font-size:12px;color:#8baa99';panel.append(footer);
   wrap.append(panel);document.body.append(wrap);
  }
+ // Local CH02 document data mirrors server allocation; no wait for network response.
+ function openLocalCh02Certificate(){
+  const records=[
+   {id:'A-01',patient:'성명 불명 / 302-A',time:'02:41',cause:'심정지',stamp:'사망 확인',trace:'사망 판정 후 심전도 자료가 삭제 처리됨',revision:'원본 판정란 위에 재기입 흔적'},
+   {id:'B-02',patient:'성명 불명 / 302-B',time:'02:38',cause:'호흡 정지',stamp:'사망 확인',trace:'의사 서명 시각이 원본과 일치하지 않음',revision:'의사 서명란 잉크 색상 불일치'},
+   {id:'C-03',patient:'성명 불명 / 302-C',time:'03:06',cause:'다발성 장기부전',stamp:'사망 확인',trace:'사망 판정 후 활력 기록이 비공개 처리됨',revision:'직접 사인 항목의 수정 흔적'},
+   {id:'D-04',patient:'성명 불명 / 302-D',time:'02:52',cause:'심폐 기능 정지',stamp:'사망 확인',trace:'기록 수정 이력에 담당자 확인 없음',revision:'사망 판정 도장 아래 다른 글씨가 비침'}
+  ];
+  const verification=[
+   {id:'대조-01',patient:'302-A / 기록 대조',time:'02:41',cause:'사망 판정 원본 대조',stamp:'원본 확인 필요',trace:'심전도 원본과 사망 판정이 상충함',revision:'A 문서의 수정 이력 확인'},
+   {id:'대조-02',patient:'302-B / 서명 대조',time:'02:38',cause:'의사 서명 대조',stamp:'원본 확인 필요',trace:'사망 시각과 서명 등록 시각이 다름',revision:'B 문서의 수정 이력 확인'},
+   {id:'대조-03',patient:'302-C / 활력 대조',time:'03:06',cause:'사망 판정 원본 대조',stamp:'원본 확인 필요',trace:'판정 이후의 활력 기록이 존재함',revision:'C 문서의 수정 이력 확인'},
+   {id:'대조-04',patient:'302-D / 도장 대조',time:'02:52',cause:'판정 도장 대조',stamp:'원본 확인 필요',trace:'원본의 판정란과 재발급본이 다름',revision:'D 문서의 수정 이력 확인'}
+  ];
+  const count=[2,4,8].includes(ch02RoomCapacity)?ch02RoomCapacity:2;
+  const role=((ch02AssignedRole%count)+count)%count;
+  const assigned=count===2?[records.slice(0,2),records.slice(2,4)][role]:count===4?[records[role]]:role<4?[records[role]]:[verification[role-4]];
+  showCh02Certificate({role,capacity:count,records:assigned});
+  if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'ch02_new_inspect',site:'certificate'}));
+ }
  function showCh02Certificate(message){
   document.getElementById('hmCh02NewDialog')?.remove();
   const wrap=document.createElement('div');wrap.id='hmCh02NewDialog';wrap.setAttribute('role','dialog');wrap.setAttribute('aria-modal','true');
@@ -1016,15 +1038,8 @@
   e.preventDefault();e.stopImmediatePropagation();
   if(site==='underbed')ch02HandPending=true;
   if(site==='certificate'){
-   ch02Dialog('사망진단서','원본 기록을 불러오는 중…');
-   const dialog=document.getElementById('hmCh02NewDialog');
-   if(dialog)dialog.dataset.awaitingCertificate='yes';
-   if(dialog){
-    const waiting=dialog;
-    setTimeout(()=>{if(document.getElementById('hmCh02NewDialog')===waiting){
-     ch02Dialog('진단서 서버 응답 없음','터치는 인식됐지만 서버에서 진단서 데이터나 오류 메시지가 오지 않았어. 서버 배포 버전과 같은 방 접속 상태를 확인해야 해.');
-    }},7000);
-   }
+   openLocalCh02Certificate();
+   return;
   }
   ch02Send('ch02_new_inspect',{site});
  },true);
