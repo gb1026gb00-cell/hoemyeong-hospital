@@ -21,7 +21,7 @@
     handleHospitalSoundEvent(m);
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
     if(m.type==='horror_video'&&m.id==='G01')playReceptionScare();
-    if(m.type==='horror_video'&&m.id==='RECEPTION_HAND')playReceptionHand();
+    // Drawer video is triggered only by an explicit scene drawer click, never by a clue response.
     if(m.type==='chat'){const box=$('hmV174ChatLog');if(box){const line=document.createElement('div');line.textContent=(Number.isInteger(m.item?.character)&&m.item.character>=0&&m.item.character<8?['홍중','성화','윤호','여상','산','민기','우영','종호'][m.item.character]+': ':(m.item?.role!==undefined?'조사원 '+(m.item.role+1)+': ':''))+(m.item?.text||m.item?.message||'');box.append(line);box.scrollTop=box.scrollHeight;}}
    });
    this.addEventListener('close',()=>{if(socket===this){active=false;updateBell();updateConnectionStatus();}});
@@ -320,7 +320,7 @@
   button.onclick=()=>{
    if(!active||socket?.readyState!==NativeWS.OPEN){hint.textContent='팀원과 협동 서버 연결을 확인하세요.';return;}
    if(phase!=='reception'){hint.textContent='이미 분리된 조사실입니다. 현장 조사를 계속하세요.';return;}
-   socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'desk'}));
+   socket.send(JSON.stringify({type:'chapter',action:'start_investigation'}));
    button.disabled=true;hint.textContent='다른 조사원들과 분리되는 중…';
    setTimeout(()=>{if(phase==='reception'){button.disabled=false;hint.textContent='응답이 없습니다. 서버 연결을 확인하고 다시 누르세요.';}},4500);
   };
@@ -355,7 +355,7 @@
   for(const [object,label] of [['desk','📖 접수대'],['mirror','◈ 거울'],['cabinet','▤ 캐비닛'],['ledger','📋 접수명부']]){
    const b=document.createElement('button');b.type='button';b.textContent=label;
    b.style.cssText='min-height:55px;padding:10px;border:1px solid #805c72;border-radius:9px;background:#382531;color:#fff';
-   b.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN)return;if(object==='desk')playReceptionHand();socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));};
+   b.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN)return;socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));};
    objects.append(b);
   }
   const output=document.createElement('pre');output.id='hmReceptionOutput';output.textContent='접수대, 거울, 캐비닛, 접수명부를 조사하세요.';output.style.cssText='white-space:pre-wrap;line-height:1.7;padding:12px;background:#110e15;border:1px solid #5d4759;border-radius:8px;min-height:80px;font:13px/1.7 system-ui';
@@ -392,8 +392,7 @@
    oldControls.hidden=true;oldControls.style.display='none';
   }
   if(guide){guide.hidden=true;guide.style.display='none';}
-  const desk=document.querySelector('#mainScene [data-action="desk"]');
-  if(desk){desk.addEventListener('click',()=>{if(active&&phase==='separated'&&socket?.readyState===NativeWS.OPEN){playReceptionHand();socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'desk'}));}});}
+
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installReceptionCoop,{once:true});else installReceptionCoop();
  document.addEventListener('hm-v175-started',installReceptionCoop);
@@ -466,21 +465,21 @@
   const close=document.createElement('button');close.textContent='현장으로 돌아가기';close.style.cssText='width:100%;margin-top:14px;padding:13px;background:#463345;border:1px solid #957b90;color:white;border-radius:8px';close.onclick=()=>overlay.remove();
   card.append(close);overlay.append(card);document.body.append(overlay);
  }
- // One and only one scene hotspot router for both reception and split.
- // Use the clicked control's own label/data, never a parent container's text.
+ // Route only the four original scene hotspots. No substring matching on
+ // parent text, which previously confused the ledger with the drawer.
  document.addEventListener('click',event=>{
   if(!active||socket?.readyState!==NativeWS.OPEN||!['reception','separated'].includes(phase))return;
-  const target=event.target.closest?.('button,[role="button"],[data-action],[data-object],[data-ch01]');
-  if(!target||target.closest('#hmReceptionCodeModal,#hmSceneClueOverlay,#hmReceptionCoop,#hmForcedSeparation,#hmReceptionHandScare'))return;
-  const own=[target.dataset.object,target.dataset.action,target.dataset.ch01,target.getAttribute('aria-label'),target.getAttribute('title'),target.textContent].filter(Boolean);
-  const label=own.join(' ').trim();
+  const target=event.target.closest?.('#mainScene [data-action],#mainScene [data-object],#mainScene [data-ch01],#mainScene button,#mainScene [role="button"]');
+  if(!target||target.closest('#hmReceptionCodeModal,#hmSceneClueOverlay,#hmReceptionCoop'))return;
   const code=(target.dataset.object||target.dataset.action||target.dataset.ch01||'').toLowerCase();
-  let object=({desk:'desk',drawer:'desk',reception_desk:'desk',reception_drawer:'desk',mirror:'mirror',cabinet:'cabinet',ledger:'ledger'})[code];
+  const names={desk:'desk',drawer:'desk',reception_desk:'desk',reception_drawer:'desk',mirror:'mirror',cabinet:'cabinet',ledger:'ledger'};
+  let object=names[code];
   if(!object){
-   if(/접수명부|접수 명부|명부|ledger/i.test(label))object='ledger';
-   else if(/캐비닛|cabinet/i.test(label))object='cabinet';
-   else if(/거울|mirror/i.test(label))object='mirror';
-   else if(/접수대\\s*서랍|서랍|reception.drawer|desk.drawer/i.test(label))object='desk';
+   const label=(target.getAttribute('aria-label')||target.getAttribute('title')||target.textContent||'').trim();
+   if(/^(?:균열 난 )?거울$/.test(label))object='mirror';
+   else if(/^(?:잠긴 )?캐비닛$/.test(label))object='cabinet';
+   else if(/^접수\\s*명부$/.test(label))object='ledger';
+   else if(/^접수대\\s*서랍$/.test(label))object='desk';
   }
   if(!object)return;
   event.preventDefault();event.stopImmediatePropagation();
@@ -488,7 +487,7 @@
    socket.send(JSON.stringify({type:'chapter',action:'start_investigation'}));return;
   }
   if(object==='desk')playReceptionHand();
-  socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));
+  else socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));
  },true);
  // The new CH01 investigation controls remain usable after the split.
  // Original uploaded audio files. This bridge never alters the approved videos,
