@@ -73,6 +73,7 @@
     }
     if((m.type==='chapter_event'&&m.event==='escape')||((m.type==='state'||m.type==='joined')&&m.chapter&&['escaped','ch02','ch03','ch04','ch05','ch06','finished'].includes(m.chapter.phase))){$('hmReceptionCodeModal')?.remove();$('hmCh01InspectionScreen')?.remove();}
     handleHospitalSoundEvent(m);
+    if(m.type==='chapter_event'&&m.event==='blackout'){document.getElementById('hmCh01GroupIntro')?.remove();appendCh01StoryChat();}
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
     if(m.type==='horror_video'&&m.id==='G01')playReceptionScare();
     // Drawer video is triggered only by an explicit scene drawer click, never by a clue response.
@@ -82,6 +83,40 @@
    this.addEventListener('open',()=>{if(socket===this)updateConnectionStatus();});
   }
  }
+ // Eight-member fan-story intro; game capacity and cooperative roles remain unchanged.
+ let ch01StoryChatShown=false;
+ function appendCh01StoryChat(){
+  if(ch01StoryChatShown)return;
+  ch01StoryChatShown=true;
+  const lines=[['우영','너네 어디 갔어?!?!'],['민기','야 나 혼자인데? 장난하지 마'],['윤호','다들 움직이지 말고 지금 보이는 거 말해 봐.'],['홍중','일단 침착해. 서로 단서부터 공유하자.']];
+  const write=()=>{
+   const log=$('hmV174ChatLog');if(!log)return false;
+   for(const [name,message] of lines){const item=document.createElement('div');item.textContent=name+': '+message;item.dataset.hmStory='ch01';log.append(item);}
+   log.scrollTop=log.scrollHeight;return true;
+  };
+  if(!write()){let tries=0;const retry=setInterval(()=>{if(write()||++tries>=20)clearInterval(retry);},250);}
+ }
+ function mountCh01GroupIntro(){
+  const visible=active&&phase==='reception';
+  let overlay=$('hmCh01GroupIntro');
+  if(!visible){overlay?.remove();return;}
+  if(overlay)return;
+  overlay=document.createElement('div');overlay.id='hmCh01GroupIntro';
+  overlay.style.cssText='position:fixed;inset:0;z-index:999985;background:#050505;color:#f5f5f5;display:flex;justify-content:center;align-items:center;padding:14px;box-sizing:border-box;font:14px/1.5 system-ui';
+  const phone=document.createElement('section');phone.style.cssText='width:min(500px,100%);height:min(720px,92dvh);display:flex;flex-direction:column;background:#101010;border:1px solid #343434;border-radius:15px;overflow:hidden;box-shadow:0 16px 50px #000';
+  const head=document.createElement('header');head.textContent='회명병원 · 단체 대화 (8)';head.style.cssText='padding:17px 19px;border-bottom:1px solid #303030;font-weight:700;text-align:center';phone.append(head);
+  const thread=document.createElement('div');thread.style.cssText='flex:1;overflow:auto;padding:17px 15px;display:flex;flex-direction:column;gap:11px';
+  const dialogue=[['홍중','다들 도착했어?'],['성화','여기 정말 폐병원 맞아? 불은 켜져 있는데.'],['윤호','일단 같이 움직이자. 흩어지지 말고.'],['민기','아까 복도에서 발소리 들은 사람?'],['여상','우리 말고 누가 더 있는 것 같은데.'],['종호','출입문이 안 열려요.'],['우영','야 최산. 너 아까 문 잠갔냐?'],['산','안 잠갔어. 근데 접수대에 뭐가 있어.']];
+  for(const [name,message] of dialogue){const row=document.createElement('div');row.style.cssText='display:flex;flex-direction:column;align-items:flex-start;gap:4px';const label=document.createElement('span');label.textContent=name;label.style.cssText='font-size:12px;color:#bcbcbc';const bubble=document.createElement('div');bubble.textContent=message;bubble.style.cssText='max-width:90%;background:#292929;border-radius:4px 13px 13px 13px;padding:10px 13px;color:#f5f5f5;white-space:pre-wrap';row.append(label,bubble);thread.append(row);}
+  phone.append(thread);
+  const footer=document.createElement('div');footer.style.cssText='padding:14px;border-top:1px solid #303030;background:#101010';
+  const start=document.createElement('button');start.type='button';start.textContent='조사 시작';start.style.cssText='width:100%;padding:15px;border:1px solid #777;border-radius:9px;background:#272727;color:#fff;font:700 16px system-ui;cursor:pointer';
+  start.onclick=()=>{if(!active||phase!=='reception'||socket?.readyState!==NativeWS.OPEN)return;start.disabled=true;start.textContent='조사 시작 중…';socket.send(JSON.stringify({type:'chapter',action:'start_investigation'}));};
+  footer.append(start);phone.append(footer);overlay.append(phone);document.body.append(overlay);
+ }
+ document.addEventListener('hm-v175-state',mountCh01GroupIntro);
+ document.addEventListener('hm-v175-started',mountCh01GroupIntro);
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountCh01GroupIntro,{once:true});else mountCh01GroupIntro();
  // Independent CH01 entry control: not attached to the legacy puzzle panel.
  // It is visible whenever the cooperative server is in reception phase.
  function mountDirectInvestigation(){
