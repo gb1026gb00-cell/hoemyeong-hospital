@@ -560,7 +560,12 @@ wss.on('connection',ws=>{
     if(!r.artifactFragments)r.artifactFragments=new Set();
     r.artifactFragments.add(1);
     broadcast(r,{type:'ch02_new_result',site:'answer',ok:true,scene:'death_record_invalidated',artifactFragment:1,message:'PATIENT STATUS : ALIVE · 302호 봉인 해제. 제0유물 파편이 공동 수집함에 등록되었습니다.'});
-    broadcast(r,state(r));persist();return;
+    // The completed DEAD puzzle transitions the entire room directly into CH03.
+    // This avoids the legacy reception view appearing between chapter screens.
+    ch.phase='ch03';
+    ch.ch03={inspected:[],clues:[],failed:0,solved:false};
+    broadcast(r,{type:'ch03_event',event:'enter',message:'302호의 봉인이 풀리고 엘리베이터 문이 열린다.'});
+    broadcast(r,state(r));chapterVoiceOnce(r,3);persist();return;
    }
    if(ch.phase==='ch02'&&String(m.action||'').startsWith('ch02_'))return;
    if(m.action==='ch03_enter'&&ch.phase==='ch02_cleared'){
