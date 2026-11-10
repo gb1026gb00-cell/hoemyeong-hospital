@@ -328,6 +328,7 @@ function prune(){const now=Date.now();let expired=false;for(const r of rooms.val
  if(!r.started)continue;
  if(![...r.clients].some(c=>c.ws&&c.ws.readyState===WebSocket.OPEN)&&now-(r.lastActiveAt||now)>=roomStorage.TTL){rooms.delete(r.code);expired=true;continue;}
  if(!r.clients.size)continue;
+ if(r.chapter?.videoGate)finishVideoGate(r);
  for(const c of r.clients)if(c.ws)send(c.ws,state(r));
 }if(expired)persist();}
 setInterval(prune,15000).unref();
@@ -367,10 +368,11 @@ wss.on('connection',ws=>{
    send(ws,{...state(r),type:'joined',token:c.token,yourRole:c.role,isHost:c===r.host,senses:assignedSenses(r,c.role).map(x=>x.sense)});broadcast(r,state(r));return;
   }
   const player=ws.player||c;if(!player.room||player.ws!==ws)return;const r=rooms.get(player.room);if(!r||!r.clients.has(player))return;
-  if(m.type==='sync')return send(ws,state(r));
+  if(m.type==='sync'){if(r.chapter?.videoGate)finishVideoGate(r);return send(ws,state(r));}
   // Do not let a lone investigator advance shared puzzles while the team is disconnected.
   // Chat and clue sharing remain available so players can coordinate reconnection.
   if(r.started&&(m.type==='chapter'||m.type==='piece')&&
+     !(m.type==='chapter'&&m.action==='mandatory_video_done')&&
      [...r.clients].filter(x=>x.ws&&x.ws.readyState===WebSocket.OPEN).length<2){
     return send(ws,{type:'error',message:'협동 진행 대기: 최소 2명의 조사원이 연결되어야 퍼즐을 진행할 수 있습니다.'});
   }
