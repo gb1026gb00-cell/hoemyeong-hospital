@@ -91,9 +91,9 @@ const server=http.createServer((req,res)=>{
    fs.createReadStream(file).pipe(res);
   });
  }
- if((req.method==='GET'||req.method==='HEAD')&&pathname==='/reception_hand.mp4'){
+ if((req.method==='GET'||req.method==='HEAD')&&['/reception_hand.mp4','/G01.mp4','/G08.mp4'].includes(pathname)){
   const fs=require('fs'),path=require('path');
-  const file=path.join(__dirname,'reception_hand.mp4');
+  const file=path.join(__dirname,pathname.slice(1));
   fs.stat(file,(err,stat)=>{
    if(err||!stat.isFile()){res.writeHead(404,{'Content-Type':'text/plain'});return res.end('Reception video unavailable');}
    const range=req.headers.range;
@@ -359,7 +359,6 @@ wss.on('connection',ws=>{
     }
     // Original V172 investigation uses "inspect", not reception_clue.
     // Trigger the drawer scare from the original desk inspection as well.
-    if(m.object==='desk')send(ws,{type:'horror_video',id:'RECEPTION_HAND',scope:'self'});
     if(!found.includes(m.object))found.push(m.object);
     const ordered=[...r.clients].sort((a,b)=>a.role-b.role);
     const index=ordered.findIndex(x=>x.role===player.role),target=ordered[(index+1)%ordered.length];
@@ -701,30 +700,20 @@ wss.on('connection',ws=>{
     }
     c.solved=true;ch.phase='finished';broadcast(r,{type:'ch06_event',event:'cleared',message:'여덟 번째 문이 열린다. 기록에는 208호가 비어 있었다. 그러나 구조 요청은 그 안에서 시작됐다. 문 너머에는 회명병원의 처음 접수실이 있다. END — 귀환.'});broadcast(r,state(r));return;
    }
-   // Cooperative reception ledger: three two-digit entries, distributed across
-   // all investigators; the six-digit solution is server-validated.
-   // First investigation, not a call bell, triggers the one-time team split.
+   // V176: only the explicit "start_investigation" action launches G08 and separation.
+   // Touching a ledger, mirror, cabinet or desk may never launch a cinematic.
    if(ch.phase==='reception'&&['reception_clue','inspect'].includes(m.action)){
-    const object=String(m.object||'');
-    if(['desk','mirror','cabinet','ledger','intercom'].includes(object)){
-     ch.phase='separated';ch.bellBy=player.role;
-     ch.receptionCoop={...makeReceptionPuzzle(r),confirmed:[],g01Witnessed:[]};
-     broadcast(r,{type:'chapter_event',event:'blackout',by:player.role});
-     broadcast(r,{type:'horror_video',id:'G08',scope:'all'});
-     broadcast(r,state(r));return;
-    }
+    send(ws,{type:'chapter_notice',message:'접수실 조사 시작을 누른 다음 사물을 조사해 주세요.'});return;
    }
    // Fixed, object-led cooperative CH01: every investigator sees only one half
    // of each clue. No random room codes or sensory-key input.
    if(m.action==='reception_clue'&&ch.phase==='separated'){
     const p=ch.receptionCoop;if(!p)return;
     const object=String(m.object||'');
-    if(!['desk','mirror','cabinet','ledger'].includes(object))return;
+    if(!['mirror','cabinet','ledger'].includes(object))return;
     const position=p.roles.indexOf(player.role);
     if(position<0)return;
-    if(object==='desk'){
-      send(ws,{type:'reception_clue',object,label:'접수대 서랍',lines:['서랍 안은 텅 비어 있다.','안쪽에서 손이 뻗어 나온다.']});
-    }else if(object==='mirror'){
+    if(object==='mirror'){
       send(ws,{type:'reception_clue',object,label:'거울 · 검은 얼룩',shadowCount:p.shadows[position],lines:['거울 표면에 검은 그림자 덩어리 '+p.shadows[position]+'개가 맺혀 있다.','각 조사원이 본 개수를 모두 더하라. 합계가 두 자리라면 앞의 두 칸을 채운다.']});
     }else if(object==='cabinet'){
       const hidden=p.cabinet[position];
@@ -733,10 +722,6 @@ wss.on('connection',ws=>{
     }else if(object==='ledger'){
       const entry=p.dates[position];
       send(ws,{type:'reception_clue',object,label:'접수 명부',date:entry.date,people:entry.people,lines:['11월 '+entry.date+'일 입실 '+entry.people+'명.','전원의 날짜별 입실 인원을 합하라. 합계의 마지막 '+p.ledgerCount+'자리가 봉인의 마지막 칸들이다.']});
-    }
-    if(object==='desk'){
-     // Do not suppress the scare if the browser failed to load it previously.
-     send(ws,{type:'horror_video',id:'RECEPTION_HAND',scope:'self'});
     }
     return;
    }
