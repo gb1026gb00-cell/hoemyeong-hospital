@@ -165,20 +165,41 @@
   overlay.id='hmReceptionHandScare';
   overlay.style.cssText='position:fixed;inset:0;z-index:999998;background:#000;display:flex;align-items:center;justify-content:center';
   const video=document.createElement('video');video.playsInline=true;video.preload='auto';video.controls=false;
-  video.src='/reception_hand.mp4';
+  video.src=new URL('/reception_hand.mp4',location.origin).href;
   configureCinematicVideo(video);
   video.style.cssText='width:100%;height:100%;object-fit:contain';
   video.volume=soundVolume();video.muted=soundVolume()===0;
   const retry=document.createElement('button');retry.type='button';retry.textContent='접수대 영상 재생';
   retry.style.cssText='position:absolute;bottom:12%;padding:14px 22px;border:1px solid #9e5263;border-radius:10px;background:#2c131d;color:white;font:700 15px system-ui';
   retry.hidden=true;
-  const finish=()=>{video.pause();overlay.remove();receptionHandPlaying=false;};
+  const finish=()=>{video.pause();overlay.remove();receptionHandPlaying=false;openReceptionCodePanel();};
   video.addEventListener('ended',finish,{once:true});
-  video.addEventListener('error',()=>{retry.textContent='영상 로딩 오류 · 다시 재생';retry.hidden=false;},{once:true});
+  video.addEventListener('error',()=>{retry.textContent='영상 로딩 오류 · 봉인 입력으로 이동';retry.hidden=false;retry.onclick=finish;},{once:true});
   retry.onclick=()=>{video.muted=false;video.play().catch(()=>{retry.hidden=false;retry.textContent='영상 재생하기';});};
   const exit=document.createElement('button');exit.type='button';exit.textContent='영상 닫기';exit.style.cssText='position:absolute;right:16px;top:16px;z-index:2;padding:9px 14px;background:#241a22;color:#fff;border:1px solid #806777;border-radius:8px';exit.onclick=finish;
   overlay.append(video,retry,exit);document.body.append(overlay);
   video.play().catch(()=>{retry.hidden=false;});
+ }
+ function openReceptionCodePanel(){
+  let board=$('hmReceptionCoop');if(!board){installReceptionCoop();board=$('hmReceptionCoop');}
+  if(!board)return;
+  const old=$('hmReceptionCodeModal');if(old)old.remove();
+  const overlay=document.createElement('div');overlay.id='hmReceptionCodeModal';
+  overlay.style.cssText='position:fixed;inset:0;z-index:999997;background:#070509ee;display:flex;align-items:center;justify-content:center;padding:16px';
+  const content=document.createElement('section');content.style.cssText='position:relative;width:min(540px,100%);max-height:88vh;overflow-y:auto;background:#1a121c;border:2px solid #98748b;border-radius:12px;padding:22px;color:#f1e3ed';
+  const heading=document.createElement('h2');heading.textContent='回明病院 · 접수대 봉인';heading.style.cssText='font-size:20px;margin:0 0 14px';
+  const close=document.createElement('button');close.textContent='닫기';close.style.cssText='position:absolute;right:14px;top:12px;background:#302331;color:white;border:1px solid #806777;padding:8px;border-radius:6px';close.onclick=()=>overlay.remove();
+  const notice=$('hmReceptionSecurityNotice'),cells=$('hmReceptionCodeCells'),submit=$('hmReceptionCodeSubmit');
+  content.append(heading,close);
+  if(notice)content.append(notice.cloneNode(true));
+  if(cells&&submit){
+    const clone=cells.cloneNode(true);
+    const button=submit.cloneNode(true);
+    button.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN)return;const answer=[...clone.querySelectorAll('input')].map(el=>el.value.replace(/\\D/g,'').slice(0,1)).join('');socket.send(JSON.stringify({type:'chapter',action:'reception_submit',answer}));};
+    clone.querySelectorAll('input').forEach((input,i,all)=>{input.addEventListener('input',()=>{input.value=input.value.replace(/\\D/g,'').slice(0,1);if(input.value&&all[i+1])all[i+1].focus();});});
+    content.append(clone,button);
+  }else{const msg=document.createElement('p');msg.textContent='조사 기록을 열어 봉인 번호를 입력하세요.';content.append(msg);}
+  overlay.append(content);document.body.append(overlay);
  }
  // G08 is owned by the transition above; all other approved horror videos
  // continue through the original V172 media handler unchanged.
@@ -349,7 +370,7 @@
   }
   const output=document.createElement('pre');output.id='hmReceptionOutput';output.textContent='접수대, 거울, 캐비닛, 접수명부를 조사하세요.';output.style.cssText='white-space:pre-wrap;line-height:1.7;padding:12px;background:#110e15;border:1px solid #5d4759;border-radius:8px;min-height:80px;font:13px/1.7 system-ui';
   const hint=document.createElement('p');hint.textContent='팀원과 숫자·기호를 공유하세요. 각 칸에 숫자 하나씩 입력하세요. 모든 조사원이 확인하면 봉인이 풀립니다.';hint.style.cssText='font-size:12px;color:#d8c1ce';
-  const cells=document.createElement('div');cells.style.cssText='display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin-top:10px';
+  const cells=document.createElement('div');cells.id='hmReceptionCodeCells';cells.style.cssText='display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin-top:10px';
   const digitInputs=[];
   for(let i=0;i<6;i++){
    const field=document.createElement('input');field.type='text';field.inputMode='numeric';field.maxLength=1;field.autocomplete='off';field.setAttribute('aria-label',(i+1)+'번째 숫자');
@@ -360,7 +381,7 @@
   }
   const input={get value(){return digitInputs.map(el=>el.value).join('');},set disabled(value){digitInputs.forEach(el=>el.disabled=value);}};
   const inputProxy=document.createElement('input');inputProxy.id='hmReceptionAnswer';inputProxy.type='hidden';
-  const submit=document.createElement('button');submit.type='button';submit.textContent='접수대 봉인 해제';submit.style.cssText='width:100%;min-height:48px;margin-top:9px;border:1px solid #ac7a90;border-radius:9px;background:#5c3047;color:#fff;font-weight:bold';
+  const submit=document.createElement('button');submit.id='hmReceptionCodeSubmit';submit.type='button';submit.textContent='접수대 봉인 해제';submit.style.cssText='width:100%;min-height:48px;margin-top:9px;border:1px solid #ac7a90;border-radius:9px;background:#5c3047;color:#fff;font-weight:bold';
   submit.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN)return;socket.send(JSON.stringify({type:'chapter',action:'reception_submit',answer:input.value.trim()}));};
   section.append(title,intro,objects,output,hint,notice,cells,inputProxy,submit);
   const guide=$('hmCh01Guide');if(guide)guide.before(section);else panel.querySelector('strong')?.after(section);
