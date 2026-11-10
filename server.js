@@ -199,7 +199,15 @@ function finishVideoGate(r){
  const g=r.chapter?.videoGate;if(!g)return;
  const status=videoGateStatus(r);if(!status.online.length||status.remaining.length)return;
  const ch=r.chapter;ch.videoGate=null;
- if(g.id==='ch03_clear'){
+ if(g.id==='ch01_clear'){
+  ch.phase='ch02';ch.ch02={newVisited:{},newScareRoles:[]};
+  broadcast(r,{type:'ch02_event',event:'enter',message:'접수실의 봉인이 풀리고 302호 문이 열린다.'});
+  broadcast(r,state(r));chapterVoiceOnce(r,2);persist();
+ }else if(g.id==='ch02_clear'){
+  ch.phase='ch03';ch.ch03={inspected:[],clues:[],failed:0,solved:false};
+  broadcast(r,{type:'ch03_event',event:'enter',message:'302호의 봉인이 풀리고 엘리베이터 문이 열린다.'});
+  broadcast(r,state(r));chapterVoiceOnce(r,3);persist();
+ }else if(g.id==='ch03_clear'){
   ch.phase='ch04';ch.ch04={inspected:[],witnesses:[],votes:[],failed:0,solved:false};
   broadcast(r,{type:'ch04_event',event:'enter',message:'전원이 엘리베이터의 기록을 확인했다. 기록보관실 문이 열린다.'});
   broadcast(r,state(r));chapterVoiceOnce(r,4);persist();
@@ -590,16 +598,10 @@ wss.on('connection',ws=>{
    if(ch.phase==='ch02'&&m.action==='ch02_new_solve'){
     if(String(m.answer||'').trim().toUpperCase()!=='DEAD')return send(ws,{type:'ch02_new_result',site:'answer',ok:false,message:'사망진단서의 기록을 다시 대조하세요.'});
     if(!ch.ch02.newVisited||!Object.values(ch.ch02.newVisited).some(v=>v.includes('certificate'))||!Object.values(ch.ch02.newVisited).some(v=>v.includes('ecg'))||!Object.values(ch.ch02.newVisited).some(v=>v.includes('eight'))||!Object.values(ch.ch02.newVisited).some(v=>v.includes('underbed')))return send(ws,{type:'ch02_new_result',site:'answer',ok:false,message:'네 조사 지점을 먼저 확인하세요.'});
-    ch.phase='ch02_cleared';
     if(!r.artifactFragments)r.artifactFragments=new Set();
     r.artifactFragments.add(1);
-    broadcast(r,{type:'ch02_new_result',site:'answer',ok:true,scene:'death_record_invalidated',artifactFragment:1,message:'PATIENT STATUS : ALIVE · 302호 봉인 해제. 제0유물 파편이 공동 수집함에 등록되었습니다.'});
-    // The completed DEAD puzzle transitions the entire room directly into CH03.
-    // This avoids the legacy reception view appearing between chapter screens.
-    ch.phase='ch03';
-    ch.ch03={inspected:[],clues:[],failed:0,solved:false};
-    broadcast(r,{type:'ch03_event',event:'enter',message:'302호의 봉인이 풀리고 엘리베이터 문이 열린다.'});
-    broadcast(r,state(r));chapterVoiceOnce(r,3);persist();return;
+    broadcast(r,{type:'ch02_new_result',site:'answer',ok:true,scene:'death_record_invalidated',artifactFragment:1,message:'PATIENT STATUS : ALIVE · 제0유물 파편이 공동 수집함에 등록되었습니다.'});
+    ch.phase='ch02_video_wait';startVideoGate(r,'ch02_clear','G02');return;
    }
    if(ch.phase==='ch02'&&String(m.action||'').startsWith('ch02_'))return;
    if(m.action==='ch03_enter'&&ch.phase==='ch02_cleared'){
@@ -832,9 +834,7 @@ wss.on('connection',ws=>{
       broadcast(r,{type:'fragment_result',ok:true,index:0,message:FRAGMENT_DESCRIPTIONS[0]+' (팀 공동 소지품에 등록)'});
      }
      broadcast(r,{type:'reception_result',ok:true,complete:true,message:'접수대 봉인 해제. 제0유물 파편을 공동 소지품에 등록했습니다. 208호로 이동합니다.'});
-     ch.phase='ch02';ch.ch02={found:[],switches:[],unlocked:false,explored:[],alarm:false,pressure:[],pressureSolved:false,pressureLastRole:null};
-     broadcast(r,{type:'ch02_event',event:'enter',message:'208호. 비어 있다는 병실에서 호출벨이 울린다. 문틈으로 낡은 환자 차트가 밀려 나온다. 차트 상단에는 「회명병원 / 개원 1988년 / 환자번호 0208」이라고 인쇄되어 있다.'});
-     chapterVoiceOnce(r,2);
+     ch.phase='ch01_video_wait';startVideoGate(r,'ch01_clear','G01');
     }
     broadcast(r,state(r));persist();return;
    }
