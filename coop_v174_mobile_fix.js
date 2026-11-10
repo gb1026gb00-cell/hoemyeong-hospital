@@ -317,14 +317,14 @@
 
  let ch03VideoSeen=false;
  function playCh03ElevatorVideo(){
-  document.getElementById('hmCh03G06')?.remove();
+  if(ch03VideoSeen||document.getElementById('hmCh03G06'))return;
   const overlay=document.createElement('div');overlay.id='hmCh03G06';
   overlay.style.cssText='position:fixed;inset:0;z-index:2147483650;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#e8dfdb;font:14px system-ui';
   const video=document.createElement('video');video.src='/G06.mp4';video.autoplay=true;video.playsInline=true;video.controls=false;video.preload='auto';video.style.cssText='width:100%;max-height:90dvh;object-fit:contain';
   const info=document.createElement('div');info.textContent='엘리베이터 내부 감시 기록 재생 중';info.style.cssText='padding:12px;color:#cbbbc0;text-align:center';
-  const finish=()=>{ch03VideoSeen=true;overlay.remove();const form=document.getElementById('hmCh03CodeForm');if(form){form.hidden=false;form.style.display='flex';}const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent='환자복의 형체가 사라졌다. 계산한 운행 코드를 입력하십시오.';};
+  const finish=()=>{ch03VideoSeen=true;if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'ch03_video_done'}));overlay.remove();const form=document.getElementById('hmCh03CodeForm');if(form){form.hidden=false;form.style.display='flex';}const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent='환자복의 형체가 사라졌다. 계산한 운행 코드를 입력하십시오.';};
   video.addEventListener('ended',finish,{once:true});
-  video.addEventListener('error',()=>{info.textContent='영상 재생에 실패했습니다. 운행 코드를 입력할 수 있습니다.';finish();},{once:true});
+  video.addEventListener('error',()=>{info.textContent='G06 영상을 불러오지 못했습니다. 다시 시도해 주세요.';video.controls=true;},{once:true});
   overlay.append(video,info);document.body.append(overlay);
   video.play().catch(()=>{video.muted=true;video.play().catch(()=>{info.textContent='자동재생이 차단되었습니다. 영상을 눌러 재생하십시오.';video.controls=true;});});
  }
