@@ -622,7 +622,7 @@ wss.on('connection',ws=>{
     if(!c?.transitionPending)return send(ws,{type:'ch03_result',ok:false,message:'아직 챕터 전환 영상이 시작되지 않았습니다.'});
     if(!Array.isArray(c.transitionWatchedRoles))c.transitionWatchedRoles=[];
     if(!c.transitionWatchedRoles.includes(player.role))c.transitionWatchedRoles.push(player.role);
-    const present=[...r.clients].filter(p=>p.ws?.readyState===WebSocket.OPEN).map(p=>p.role);
+    const present=[...r.clients].filter(p=>p.ws&&p.ws.readyState===WebSocket.OPEN).map(p=>p.role);
     if(!present.every(role=>c.transitionWatchedRoles.includes(role))){send(ws,{type:'ch03_result',ok:true,message:'G02 시청 완료. 다른 조사원의 시청을 기다립니다.'});broadcast(r,state(r));return;}
     c.transitionPending=false;c.solved=true;
     ch.phase='ch04';
