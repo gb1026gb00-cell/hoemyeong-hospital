@@ -491,7 +491,7 @@ wss.on('connection',ws=>{
     if(!(r.artifactFragments||new Set()).has(0))return send(ws,{type:'fragment_result',ok:false,message:'이 구역의 균열의 파편을 직접 찾아 공동 소지품에 등록해야 다음 구역으로 이동할 수 있습니다.'});
     if(player!==r.host)return send(ws,{type:'ch02_result',ok:false,message:'방장만 다음 구역으로 이동할 수 있습니다.'});
     if(!ch.evidenceSolved||!ch.ecgSolved)return send(ws,{type:'ch02_result',ok:false,message:'접수실의 증거와 심전도 복원을 먼저 마쳐야 합니다.'});
-    broadcast(r,{type:'chapter_transition_video',from:1,to:2,video:'H03(1)'});
+    broadcast(r,{type:'chapter_transition_video',from:1,to:2,video:'H03'});
     ch.phase='ch02';ch.ch02={newVisited:{},newScareRoles:[]};
     broadcast(r,{type:'ch02_event',event:'enter',message:'208호. 비어 있다는 병실에서 호출벨이 울린다. 문틈으로 낡은 환자 차트가 밀려 나온다. 차트 상단에는 「회명병원 / 개원 1988년 / 환자번호 0208」이라고 인쇄되어 있다.'});broadcast(r,state(r));chapterVoiceOnce(r,2);return;
    }
@@ -565,7 +565,7 @@ wss.on('connection',ws=>{
     if(!r.artifactFragments)r.artifactFragments=new Set();
     r.artifactFragments.add(1);
     broadcast(r,{type:'ch02_new_result',site:'answer',ok:true,scene:'death_record_invalidated',artifactFragment:1,message:'PATIENT STATUS : ALIVE · 302호 봉인 해제. 제0유물 파편이 공동 수집함에 등록되었습니다.'});
-    broadcast(r,{type:'chapter_transition_video',from:2,to:3,video:'G13(2)'});
+    broadcast(r,{type:'chapter_transition_video',from:2,to:3,video:'G13'});
      // The completed DEAD puzzle transitions the entire room directly into CH03.
     // This avoids the legacy reception view appearing between chapter screens.
     ch.phase='ch03';
@@ -577,7 +577,7 @@ wss.on('connection',ws=>{
    if(m.action==='ch03_enter'&&ch.phase==='ch02_cleared'){
     if(!(r.artifactFragments||new Set()).has(1))return send(ws,{type:'fragment_result',ok:false,message:'이 구역의 균열의 파편을 직접 찾아 공동 소지품에 등록해야 다음 구역으로 이동할 수 있습니다.'});
     if(player!==r.host)return send(ws,{type:'ch03_result',ok:false,message:'방장만 엘리베이터를 호출할 수 있습니다.'});
-     broadcast(r,{type:'chapter_transition_video',from:2,to:3,video:'G13(2)'});
+     broadcast(r,{type:'chapter_transition_video',from:2,to:3,video:'G13'});
     ch.phase='ch03';ch.ch03={inspected:[],clues:[],failed:0,solved:false};
     broadcast(r,{type:'ch03_event',event:'enter',message:'엘리베이터 문이 닫힌다. 층수 표시가 지워지고, 스피커에서는 208호 환자의 이름 대신 조사원의 이름이 흘러나온다.'});broadcast(r,state(r));chapterVoiceOnce(r,3);return;
    }
@@ -831,7 +831,7 @@ wss.on('connection',ws=>{
       broadcast(r,{type:'fragment_result',ok:true,index:0,message:FRAGMENT_DESCRIPTIONS[0]+' (팀 공동 소지품에 등록)'});
      }
      broadcast(r,{type:'reception_result',ok:true,complete:true,message:'접수대 봉인 해제. 제0유물 파편을 공동 소지품에 등록했습니다. 208호로 이동합니다.'});
-     broadcast(r,{type:'chapter_transition_video',from:1,to:2,video:'H03(1)'});
+     broadcast(r,{type:'chapter_transition_video',from:1,to:2,video:'H03'});
      ch.phase='ch02';ch.ch02={found:[],switches:[],unlocked:false,explored:[],alarm:false,pressure:[],pressureSolved:false,pressureLastRole:null};
      broadcast(r,{type:'ch02_event',event:'enter',message:'208호. 비어 있다는 병실에서 호출벨이 울린다. 문틈으로 낡은 환자 차트가 밀려 나온다. 차트 상단에는 「회명병원 / 개원 1988년 / 환자번호 0208」이라고 인쇄되어 있다.'});
      chapterVoiceOnce(r,2);
