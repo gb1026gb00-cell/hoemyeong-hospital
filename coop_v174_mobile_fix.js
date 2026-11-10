@@ -158,6 +158,7 @@
   const lines=Array.isArray(message.lines)?message.lines:[message.message||''];
   const header=message.label|| (message.ok?'접수대 봉인':'명부 확인');
   out.textContent=header+'\\n'+lines.join('\\n');
+  const shadows=$('hmReceptionShadows');if(shadows){shadows.replaceChildren();shadows.hidden=message.object!=='mirror';if(message.object==='mirror'&&Number.isInteger(message.shadowCount)){for(let i=0;i<message.shadowCount;i++){const figure=document.createElement('span');figure.className='hmShadowNurse';figure.setAttribute('aria-label','얼굴이 검게 지워진 간호사 그림자');figure.innerHTML='<span class="hmNurseHead"></span><span class="hmNurseBody"></span>';shadows.append(figure);}}}
   out.style.borderColor=message.ok?'#6b9a83':'#9b697f';
   if(message.complete){const input=$('hmReceptionAnswer');if(input)input.disabled=true;}
  }
@@ -166,7 +167,7 @@
   const section=document.createElement('section');section.id='hmReceptionCoop';
   section.style.cssText='margin:12px 0;padding:14px;border:1px solid #91677c;border-radius:12px;background:linear-gradient(#271820,#100d15);color:#f4e8ee';
   const title=document.createElement('strong');title.textContent='접수명부 · 여섯 자리 봉인';
-  const intro=document.createElement('p');intro.textContent='각자 다른 접수번호와 기호가 보입니다. 네 곳을 조사하고 팀원에게 보이는 내용을 공유해 여섯 자리 암호를 완성하세요.';intro.style.cssText='font-size:12px;line-height:1.6;color:#d5c2ce';
+  const intro=document.createElement('p');intro.textContent='각자 보이는 물건이 다릅니다. 거울의 그림자를 세고, 접수대 날짜와 명부를 대조하고, 캐비닛을 확인하세요. 팀원과 공유해 여섯 칸을 완성하세요.';intro.style.cssText='font-size:12px;line-height:1.6;color:#d5c2ce';
   const objects=document.createElement('div');objects.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0';
   for(const [object,label] of [['desk','📖 접수대'],['mirror','◈ 거울'],['cabinet','▤ 캐비닛'],['ledger','📋 접수명부']]){
    const b=document.createElement('button');b.type='button';b.textContent=label;
@@ -174,12 +175,24 @@
    b.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN)return;socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));};
    objects.append(b);
   }
+  const shadows=document.createElement('div');shadows.id='hmReceptionShadows';shadows.hidden=true;shadows.style.cssText='display:flex;justify-content:center;align-items:end;flex-wrap:wrap;gap:8px;min-height:130px;padding:12px;background:radial-gradient(#3b3540,#0a090d);border:3px ridge #71616f;border-radius:8px;margin:9px 0';
   const output=document.createElement('pre');output.id='hmReceptionOutput';output.textContent='접수대, 거울, 캐비닛, 접수명부를 조사하세요.';output.style.cssText='white-space:pre-wrap;line-height:1.7;padding:12px;background:#110e15;border:1px solid #5d4759;border-radius:8px;min-height:80px;font:13px/1.7 system-ui';
-  const hint=document.createElement('p');hint.textContent='팀원과 숫자·기호를 공유하세요. 비밀번호는 숫자 6자리이며, 모든 조사원이 확인해야 봉인이 풀립니다.';hint.style.cssText='font-size:12px;color:#d8c1ce';
-  const input=document.createElement('input');input.id='hmReceptionAnswer';input.inputMode='numeric';input.maxLength=6;input.placeholder='6자리 접수번호';input.style.cssText='width:100%;min-height:48px;padding:10px;border:1px solid #92758a;border-radius:8px;background:#140f17;color:white;font-size:20px;letter-spacing:4px';
+  const hint=document.createElement('p');hint.textContent='팀원과 숫자·기호를 공유하세요. 각 칸에 숫자 하나씩 입력하세요. 모든 조사원이 확인하면 봉인이 풀립니다.';hint.style.cssText='font-size:12px;color:#d8c1ce';
+  const cells=document.createElement('div');cells.style.cssText='display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin-top:10px';
+  const digitInputs=[];
+  for(let i=0;i<6;i++){
+   const field=document.createElement('input');field.type='text';field.inputMode='numeric';field.maxLength=1;field.autocomplete='off';field.setAttribute('aria-label',(i+1)+'번째 숫자');
+   field.placeholder=String(i+1);field.style.cssText='width:100%;min-width:0;height:48px;text-align:center;font:700 21px system-ui;color:#fff;background:#140f17;border:1px solid #92758a;border-radius:8px';
+   field.addEventListener('input',()=>{field.value=field.value.replace(/\\D/g,'').slice(0,1);if(field.value&&i<5)digitInputs[i+1].focus();});
+   field.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!field.value&&i>0)digitInputs[i-1].focus();});
+   digitInputs.push(field);cells.append(field);
+  }
+  const input={get value(){return digitInputs.map(el=>el.value).join('');},set disabled(value){digitInputs.forEach(el=>el.disabled=value);}};
+  const inputProxy=document.createElement('input');inputProxy.id='hmReceptionAnswer';inputProxy.type='hidden';
   const submit=document.createElement('button');submit.type='button';submit.textContent='접수대 봉인 해제';submit.style.cssText='width:100%;min-height:48px;margin-top:9px;border:1px solid #ac7a90;border-radius:9px;background:#5c3047;color:#fff;font-weight:bold';
   submit.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN)return;socket.send(JSON.stringify({type:'chapter',action:'reception_submit',answer:input.value.trim()}));};
-  section.append(title,intro,objects,output,hint,input,submit);
+  section.append(title,intro,objects,shadows,output,hint,cells,inputProxy,submit);
+  const css=document.createElement('style');css.textContent='#hmReceptionShadows[hidden]{display:none!important}.hmShadowNurse{display:flex;flex-direction:column;align-items:center;width:36px;height:98px;filter:drop-shadow(0 0 5px #08040b)}.hmNurseHead{width:27px;height:30px;background:radial-gradient(ellipse at 50% 38%,#020104 0 57%,#b5a8a8 59% 75%,#24212a 80%);border-radius:47% 47% 43% 43%;border-top:5px solid #c5b6b8}.hmNurseBody{height:63px;width:34px;background:linear-gradient(90deg,#39353d,#c2b8ba 38%,#66606a 68%,#19151d);clip-path:polygon(29% 0,70% 0,100% 100%,0 100%);border-radius:8px}';document.head.append(css);
   const guide=$('hmCh01Guide');if(guide)guide.before(section);else panel.querySelector('strong')?.after(section);
   // Hide only the obsolete CH01 numeric form, retaining its DOM and all server
   // handlers for backward compatibility. Other chapters and artifacts untouched.
