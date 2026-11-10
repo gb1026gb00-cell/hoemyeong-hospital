@@ -37,7 +37,7 @@ const server=http.createServer((req,res)=>{
    fs.readFile(approved,'utf8',(readError,html)=>{
     if(readError){res.writeHead(503,{'Content-Type':'text/plain; charset=utf-8'});return res.end('Game file read failed');}
     const script='<script src="/coop-v174-mobile-fix.js"></script><script src="/coop-v175-lobby.js"></script>';
-    const output=html.replace(/<\/body>\s*<\/html>\s*$/i,script+'</body></html>');
+    const output=/<\/body>/i.test(html)?html.replace(/<\/body>/i,script+'</body>'):html+script;
     res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
     res.end(req.method==='HEAD'?'':output);
    });
