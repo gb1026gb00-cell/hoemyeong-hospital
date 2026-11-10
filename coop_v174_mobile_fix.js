@@ -176,23 +176,38 @@
   document.getElementById('hmCh02ClearScene')?.remove();
   document.getElementById('hmCh02NewDialog')?.remove();
   const root=document.createElement('section');root.id='hmIndependentCh03';
-  root.style.cssText='position:fixed!important;inset:0!important;z-index:2147483000!important;background:#050506;color:#e9e3dd;display:flex;flex-direction:column;font:14px/1.5 system-ui;overflow:auto';
+  root.style.cssText='position:fixed!important;inset:0!important;z-index:2147483000!important;background:#080709;color:#e9e3dd;display:flex!important;flex-direction:column;font:14px/1.5 system-ui;overflow-y:auto;overscroll-behavior:contain;pointer-events:auto!important';
   const header=document.createElement('header');header.textContent='03. 엘리베이터 · 回明病院';
-  header.style.cssText='padding:13px 18px;background:#0d0d10;border-bottom:1px solid #494149;letter-spacing:1px;text-align:center';root.append(header);
-  const scene=document.createElement('div');scene.style.cssText='position:relative;flex:1;min-height:280px;max-height:78dvh;overflow:hidden;background:#0a090b';
-  const photo=document.createElement('img');photo.src='/elevator_hall.webp';photo.alt='낡은 회명병원 엘리베이터';photo.style.cssText='width:100%;height:100%;object-fit:contain;display:block';scene.append(photo);
-  const buttons=[['panel','층수 버튼','right:4%;top:37%'],['mirror','거울','left:5%;top:24%'],['speaker','스피커','left:34%;top:8%']];
-  for(const [site,label,pos] of buttons){
-   const b=document.createElement('button');b.type='button';b.textContent=label;b.style.cssText='position:absolute;'+pos+'background:#16131acc;color:#fff;border:1px solid #998b95;border-radius:6px;padding:9px 12px;font:13px system-ui';
-   b.onclick=()=>ch02Send('ch03_explore',{object:site});scene.append(b);
-  }
+  header.style.cssText='flex:none;padding:13px 18px;background:#0d0d10;border-bottom:1px solid #494149;letter-spacing:1px;text-align:center';root.append(header);
+  const scene=document.createElement('div');scene.style.cssText='position:relative;flex:none;width:100%;aspect-ratio:16/9;max-height:48dvh;overflow:hidden;background:#09080a';
+  const photo=document.createElement('img');photo.src='/elevator_hall.webp';photo.alt='낡은 회명병원 엘리베이터';photo.style.cssText='width:100%;height:100%;object-fit:cover;display:block;pointer-events:none';scene.append(photo);
+  // Irregular damp grime on the floor directory; no fabricated readable text.
+  const grime=document.createElement('div');grime.setAttribute('aria-hidden','true');
+  grime.style.cssText='position:absolute;left:76%;top:10%;width:17%;height:76%;pointer-events:none;opacity:.9;mix-blend-mode:multiply;background:radial-gradient(ellipse at 23% 15%,#070a09 0%,#161e1a 18%,transparent 46%),radial-gradient(ellipse at 78% 43%,#080b09 0%,#161d18 23%,transparent 53%),radial-gradient(ellipse at 42% 73%,#060807 0%,#18211c 27%,transparent 60%),linear-gradient(102deg,transparent 5%,#101411a8 39%,transparent 72%);filter:blur(2px)';scene.append(grime);
   root.append(scene);
-  const bottom=document.createElement('div');bottom.style.cssText='padding:12px 16px 18px;background:#0b0b0e;border-top:1px solid #494149;display:flex;flex-wrap:wrap;gap:8px';
-  for(const [site,label] of [['log','운행 일지'],['reflection','반사면 분석']]){
-   const b=document.createElement('button');b.type='button';b.textContent=label;b.style.cssText='padding:10px 12px;border:1px solid #695963;border-radius:5px;background:#241d25;color:#fff';
-   b.onclick=()=>ch02Send('ch03_clue',{station:site});bottom.append(b);
+  const bottom=document.createElement('div');bottom.style.cssText='flex:none;padding:13px 16px 24px;background:#100d12;border-top:1px solid #494149;display:grid;grid-template-columns:1fr 1fr;gap:10px';
+  const note=document.createElement('div');note.id='hmIndependentCh03Note';note.textContent='조사 지점을 누르면 서버의 기록이 표시됩니다. 서로 다른 조사원의 단서를 대조하세요.';note.style.cssText='grid-column:1/-1;min-height:52px;white-space:pre-wrap;color:#d9c9d5;padding:10px;background:#1e1721;border:1px solid #4b394d;border-radius:6px';bottom.append(note);
+  function sendInvestigation(action,extra,label){
+   note.textContent=label+' 조사 요청 중…';
+   if(socket?.readyState===NativeWS.OPEN){socket.send(JSON.stringify({type:'chapter',action,...extra}));}
+   else note.textContent='협동 서버 연결이 끊어졌습니다. 연결 후 다시 조사해 주세요.';
   }
-  const note=document.createElement('div');note.id='hmIndependentCh03Note';note.textContent='엘리베이터 내부를 조사하고 팀원과 단서를 공유하세요.';note.style.cssText='flex-basis:100%;white-space:pre-wrap;color:#cfc4cd';bottom.append(note);root.append(bottom);
+  function control(label,action,extra){
+   const b=document.createElement('button');b.type='button';b.textContent=label;
+   b.style.cssText='display:block!important;visibility:visible!important;opacity:1!important;position:relative!important;z-index:1;min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c!important;color:#f5edf3!important;font:600 14px system-ui;pointer-events:auto!important;touch-action:manipulation;cursor:pointer';
+   b.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();sendInvestigation(action,extra,label);});
+   bottom.append(b);
+  }
+  control('층수 버튼','ch03_explore',{object:'panel'});
+  control('거울','ch03_explore',{object:'mirror'});
+  control('스피커','ch03_explore',{object:'speaker'});
+  control('운행 일지','ch03_clue',{station:'log'});
+  control('반사면 분석','ch03_clue',{station:'reflection'});
+  const form=document.createElement('form');form.style.cssText='grid-column:1/-1;display:flex;gap:8px';
+  const input=document.createElement('input');input.placeholder='세 자리 암호';input.inputMode='numeric';input.maxLength=3;input.autocomplete='off';input.style.cssText='min-width:0;flex:1;padding:12px;background:#161119;color:#fff;border:1px solid #766477;border-radius:6px;font-size:16px';
+  const submit=document.createElement('button');submit.type='submit';submit.textContent='암호 입력';submit.style.cssText='padding:12px 15px;background:#4b354e;color:#fff;border:1px solid #a18ba5;border-radius:6px;font-size:14px';
+  form.addEventListener('submit',ev=>{ev.preventDefault();ev.stopPropagation();if(!/^\\d{3}$/.test(input.value.trim())){note.textContent='세 자리 숫자를 입력하세요.';return;}sendInvestigation('ch03_submit',{answer:input.value.trim()},'암호');});
+  form.append(input,submit);bottom.append(form);root.append(bottom);
   document.body.append(root);
  }
  // Keep the server-authoritative chapter above the legacy V172 scene.
