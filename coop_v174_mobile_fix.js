@@ -109,6 +109,11 @@
     if(m.type==='chapter_event'&&m.event==='blackout'){document.getElementById('hmCh01GroupIntro')?.remove();appendCh01StoryChat();}
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
     if(m.type==='horror_video'&&m.id==='G06'&&phase==='ch03')playCh03ElevatorVideo();
+    if(m.type==='ch03_event'&&m.event==='cleared'){phase='ch03_cleared';showCh03Cleared();}
+    if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2){ch03FragmentCollected=true;const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent='제0유물 파편이 공동 소지품에 등록되었습니다.';}
+    if(m.type==='ch04_result'&&m.ok===false&&phase==='ch03_cleared'){const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent=m.message||'다음 구역으로 이동할 수 없습니다.';}
+    if(m.type==='fragment_result'&&m.ok===false&&phase==='ch03_cleared'){const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent=m.message||'파편을 회수하지 못했습니다.';}
+
     if(m.type==='horror_video'&&m.id==='G01')playReceptionScare();
     // Drawer video is triggered only by an explicit scene drawer click, never by a clue response.
     if(m.type==='chat'){const box=$('hmV174ChatLog');if(box){const line=document.createElement('div');line.textContent=(Number.isInteger(m.item?.character)&&m.item.character>=0&&m.item.character<8?['홍중','성화','윤호','여상','산','민기','우영','종호'][m.item.character]+': ':(m.item?.role!==undefined?'조사원 '+(m.item.role+1)+': ':''))+(m.item?.text||m.item?.message||'');box.append(line);box.scrollTop=box.scrollHeight;}}
@@ -321,6 +326,38 @@
   overlay.append(video,info);document.body.append(overlay);
   video.play().catch(()=>{video.muted=true;video.play().catch(()=>{info.textContent='자동재생이 차단되었습니다. 영상을 눌러 재생하십시오.';video.controls=true;});});
  }
+
+ let ch03FragmentCollected=false;
+ function showCh03Cleared(){
+  if(!active||phase!=='ch03_cleared'){document.getElementById('hmCh03Cleared')?.remove();return;}
+  document.getElementById('hmIndependentCh03')?.remove();
+  let root=document.getElementById('hmCh03Cleared');
+  if(root)return;
+  root=document.createElement('section');root.id='hmCh03Cleared';
+  root.style.cssText='position:fixed;inset:0;z-index:2147483000;background:#09090b;color:#eee7df;display:flex;flex-direction:column;overflow:auto;font:14px/1.5 system-ui';
+  const title=document.createElement('header');title.textContent='03. 엘리베이터 · 운행 코드 승인';title.style.cssText='padding:16px;text-align:center;border-bottom:1px solid #4c4346';root.append(title);
+  const scene=document.createElement('div');scene.style.cssText='position:relative;width:100%;aspect-ratio:16/9;max-height:52dvh;flex:none;background:#070709';
+  const photo=document.createElement('img');photo.src='/elevator_hall.webp';photo.alt='엘리베이터 내부';photo.style.cssText='width:100%;height:100%;object-fit:cover;display:block';scene.append(photo);
+  const mirror=document.createElement('button');mirror.type='button';mirror.setAttribute('aria-label','거울 가장자리의 틈 조사');
+  mirror.style.cssText='position:absolute;left:7%;top:14%;width:30%;height:73%;border:1px solid #ffffff44;background:#ffffff08;cursor:pointer;touch-action:manipulation';
+  mirror.onclick=()=>{
+   const status=document.getElementById('hmCh03ClearedStatus');
+   if(status)status.textContent='거울 가장자리의 틈을 조사하는 중…';
+   if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'fragment_search',site:'mirror'}));
+   else if(status)status.textContent='협동 서버 연결이 끊어졌습니다.';
+  };
+  scene.append(mirror);root.append(scene);
+  const panel=document.createElement('div');panel.style.cssText='padding:18px;display:flex;flex-direction:column;gap:14px;align-items:stretch;max-width:540px;width:100%;box-sizing:border-box;margin:0 auto';
+  const description=document.createElement('p');description.textContent='엘리베이터 문이 열렸지만 거울 가장자리에 이상한 틈이 남아 있다. 직접 조사해 제0유물 파편을 회수하자.';panel.append(description);
+  const status=document.createElement('div');status.id='hmCh03ClearedStatus';status.textContent=ch03FragmentCollected?'제0유물 파편이 공동 소지품에 등록되었습니다.':'거울 가장자리를 눌러 조사하세요.';status.style.cssText='padding:12px;border:1px solid #65535c;border-radius:6px;background:#1d171c';panel.append(status);
+  const next=document.createElement('button');next.type='button';next.textContent='기록보관실로 이동 · CH.04';next.style.cssText='padding:14px;background:#4b354e;color:white;border:1px solid #9c819d;border-radius:7px;font:600 15px system-ui';
+  next.onclick=()=>{
+   if(!ch03FragmentCollected){status.textContent='먼저 거울 틈의 제0유물 파편을 회수해야 합니다.';return;}
+   if(socket?.readyState===NativeWS.OPEN){status.textContent='CH.04 이동 요청 중…';socket.send(JSON.stringify({type:'chapter',action:'ch04_enter'}));}
+   else status.textContent='서버 연결을 확인하세요.';
+  };
+  panel.append(next);root.append(panel);document.body.append(root);
+ }
  function mountIndependentCh03(){
   const old=document.getElementById('hmIndependentCh03');
   if(!active||phase!=='ch03'){old?.remove();return;}
@@ -372,16 +409,20 @@
    const cleared=document.getElementById('hmCh02ClearScene');
    if(cleared)cleared.style.setProperty('z-index','2147482999','important');
   }else if(phase==='ch03'){
+   document.getElementById('hmCh03Cleared')?.remove();
    document.getElementById('hmCh02ClearScene')?.remove();
    mountIndependentCh03();
+  }else if(phase==='ch03_cleared'){
+   showCh03Cleared();
   }else if(phase!=='ch02'){
+   document.getElementById('hmCh03Cleared')?.remove();
    document.getElementById('hmIndependentCh03')?.remove();
   }
  }
  document.addEventListener('hm-v175-state',reconcileChapterSurface);
  document.addEventListener('hm-v175-started',reconcileChapterSurface);
  // Legacy UI mutates its scene after WebSocket events; reassert only for cleared/CH03.
- setInterval(()=>{if(active&&(phase==='ch02_cleared'||phase==='ch03'))reconcileChapterSurface();},750);
+ setInterval(()=>{if(active&&(phase==='ch02_cleared'||phase==='ch03'||phase==='ch03_cleared'))reconcileChapterSurface();},750);
  document.addEventListener('hm-v175-state',mountIndependentCh03);
  document.addEventListener('hm-v175-started',mountIndependentCh03);
  const laterStory={
