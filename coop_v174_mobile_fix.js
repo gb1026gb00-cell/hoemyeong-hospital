@@ -15,6 +15,8 @@
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
     if(m.type==='state'||m.type==='joined'){active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='reception_clue'||m.type==='reception_result')showReceptionResult(m);
+    if(m.type==='reception_result'&&m.ok===false){const modal=$('hmReceptionCodeModal');if(modal){const p=modal.querySelector('p:nth-of-type(2)');if(p)p.textContent=m.message||'번호를 다시 확인하세요.';}}
+    if(m.type==='reception_result'&&m.complete){$('hmReceptionCodeModal')?.remove();}
     handleHospitalSoundEvent(m);
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
     if(m.type==='horror_video'&&m.id==='G01')playReceptionScare();
@@ -176,30 +178,24 @@
   video.addEventListener('ended',finish,{once:true});
   video.addEventListener('error',()=>{retry.textContent='영상 로딩 오류 · 봉인 입력으로 이동';retry.hidden=false;retry.onclick=finish;},{once:true});
   retry.onclick=()=>{video.muted=false;video.play().catch(()=>{retry.hidden=false;retry.textContent='영상 재생하기';});};
-  const exit=document.createElement('button');exit.type='button';exit.textContent='영상 닫기';exit.style.cssText='position:absolute;right:16px;top:16px;z-index:2;padding:9px 14px;background:#241a22;color:#fff;border:1px solid #806777;border-radius:8px';exit.onclick=finish;
-  overlay.append(video,retry,exit);document.body.append(overlay);
-  video.play().catch(()=>{retry.hidden=false;});
+  overlay.append(video,retry);document.body.append(overlay);
+  video.play().catch(()=>{video.muted=true;video.play().catch(()=>{retry.hidden=false;});});
  }
  function openReceptionCodePanel(){
-  let board=$('hmReceptionCoop');if(!board){installReceptionCoop();board=$('hmReceptionCoop');}
-  if(!board)return;
-  const old=$('hmReceptionCodeModal');if(old)old.remove();
+  if($('hmReceptionCodeModal'))return;
   const overlay=document.createElement('div');overlay.id='hmReceptionCodeModal';
-  overlay.style.cssText='position:fixed;inset:0;z-index:999997;background:#070509ee;display:flex;align-items:center;justify-content:center;padding:16px';
-  const content=document.createElement('section');content.style.cssText='position:relative;width:min(540px,100%);max-height:88vh;overflow-y:auto;background:#1a121c;border:2px solid #98748b;border-radius:12px;padding:22px;color:#f1e3ed';
+  overlay.style.cssText='position:fixed;inset:0;z-index:999997;background:#070509f5;display:flex;align-items:center;justify-content:center;padding:16px';
+  const content=document.createElement('section');content.style.cssText='width:min(540px,100%);max-height:88vh;overflow-y:auto;background:#1a121c;border:2px solid #98748b;border-radius:12px;padding:22px;color:#f1e3ed';
   const heading=document.createElement('h2');heading.textContent='回明病院 · 접수대 봉인';heading.style.cssText='font-size:20px;margin:0 0 14px';
-  const close=document.createElement('button');close.textContent='닫기';close.style.cssText='position:absolute;right:14px;top:12px;background:#302331;color:white;border:1px solid #806777;padding:8px;border-radius:6px';close.onclick=()=>overlay.remove();
-  const notice=$('hmReceptionSecurityNotice'),cells=$('hmReceptionCodeCells'),submit=$('hmReceptionCodeSubmit');
-  content.append(heading,close);
-  if(notice)content.append(notice.cloneNode(true));
-  if(cells&&submit){
-    const clone=cells.cloneNode(true);
-    const button=submit.cloneNode(true);
-    button.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN)return;const answer=[...clone.querySelectorAll('input')].map(el=>el.value.replace(/\\D/g,'').slice(0,1)).join('');socket.send(JSON.stringify({type:'chapter',action:'reception_submit',answer}));};
-    clone.querySelectorAll('input').forEach((input,i,all)=>{input.addEventListener('input',()=>{input.value=input.value.replace(/\\D/g,'').slice(0,1);if(input.value&&all[i+1])all[i+1].focus();});});
-    content.append(clone,button);
-  }else{const msg=document.createElement('p');msg.textContent='조사 기록을 열어 봉인 번호를 입력하세요.';content.append(msg);}
-  overlay.append(content);document.body.append(overlay);
+  const notice=document.createElement('p');notice.textContent='비친 것을 먼저 헤아리고, 잠긴 것의 빈자리를 채운 뒤, 마지막으로 남겨진 기록을 대조하라.';notice.style.cssText='font:15px/1.8 serif;color:#d7c2ce';
+  const cells=document.createElement('div');cells.style.cssText='display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:15px 0';
+  const inputs=[];
+  for(let i=0;i<6;i++){const field=document.createElement('input');field.inputMode='numeric';field.maxLength=1;field.autocomplete='off';field.setAttribute('aria-label',(i+1)+'번째 숫자');field.style.cssText='min-width:0;width:100%;height:50px;text-align:center;font:700 22px system-ui;background:#0d0a12;color:white;border:1px solid #9e8298;border-radius:7px';field.oninput=()=>{field.value=field.value.replace(/[^0-9]/g,'').slice(0,1);if(field.value&&inputs[i+1])inputs[i+1].focus();};inputs.push(field);cells.append(field);}
+  const status=document.createElement('p');status.style.cssText='font-size:13px;color:#e2b5c9';
+  const submit=document.createElement('button');submit.textContent='봉인 해제 · CH.02 입장';submit.style.cssText='width:100%;padding:15px;background:#53354d;border:1px solid #ac8da4;border-radius:8px;color:white;font-weight:700';
+  submit.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN){status.textContent='서버 연결을 확인하세요.';return;}const answer=inputs.map(x=>x.value).join('');if(answer.length!==6){status.textContent='여섯 자리 숫자를 모두 입력하세요.';return;}socket.send(JSON.stringify({type:'chapter',action:'reception_submit',answer}));status.textContent='팀원 확인을 기다리는 중…';};
+  content.append(heading,notice,cells,status,submit);overlay.append(content);document.body.append(overlay);
+  inputs[0].focus();
  }
  // G08 is owned by the transition above; all other approved horror videos
  // continue through the original V172 media handler unchanged.
