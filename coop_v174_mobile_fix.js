@@ -17,6 +17,21 @@
   }
  }
  window.WebSocket=CoopSocket;
+ // Only the approved 2/4/6/8-person capacities are selectable.
+ function normalizeCapacityControls(){
+  document.querySelectorAll('select').forEach(select=>{
+   const options=[...select.options];
+   const values=options.map(o=>Number(o.value));
+   if(values.filter(n=>Number.isInteger(n)&&n>=2&&n<=8).length<4)return;
+   if(!values.includes(2)||!values.includes(8))return;
+   for(const option of options){const n=Number(option.value);if([3,5,7].includes(n))option.remove();}
+   if([3,5,7].includes(Number(select.value))){select.value='2';select.dispatchEvent(new Event('change',{bubbles:true}));}
+  });
+  document.querySelectorAll('input[type="number"]').forEach(input=>{
+   if(Number(input.min)===2&&Number(input.max)===8){input.step='2';input.addEventListener('change',()=>{if([3,5,7].includes(Number(input.value)))input.value=String(Math.max(2,Math.min(8,Number(input.value)-1)));});}
+  });
+ }
+ document.addEventListener('DOMContentLoaded',normalizeCapacityControls,{once:true});
  const scene=document.querySelector('.scene');
  if(scene){
   const b=document.createElement('button');b.type='button';b.id='hmV174Bell';b.textContent='🔔 호출벨';b.setAttribute('aria-label','접수대 호출벨 누르기');b.hidden=true;
