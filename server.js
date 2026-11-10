@@ -372,7 +372,7 @@ wss.on('connection',ws=>{
      archive_eye:{phase:'ch04',id:'H03',message:'기록함 안쪽에서 눈이 마주친다.'},
      observation_glass:{phase:'ch05',id:'H04',message:'관찰창에 손바닥이 나타난다.'},
      mortuary_drawer:{phase:'ch04',id:'G10',message:'영안실 서랍 안쪽에서 차가운 공기가 흘러나온다.'}, 
-     stair_8th:{phase:'ch03',id:'G12',message:'계단에 존재하지 않는 8층을 가리키는 표지판이 나타난다.'}   
+     // G12 (8층 비상계단) disabled: not part of the approved CH02/CH03 video flow.   
     };
     const site=sites[key];
     if(!site||ch.phase!==site.phase)return send(ws,{type:'horror_inspect_result',ok:false,message:'현재 조사할 수 없는 장소입니다.'});
