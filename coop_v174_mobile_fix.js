@@ -689,19 +689,30 @@
  },true);
  // Keep the approved four-button mobile footer but remove the redundant chat
  // and area-movement entries; floating team chat remains available.
+ // Hide only the two redundant original mobile navigation items.
+ // Preserve inventory, hints, chapter actions, and the separate floating team chat.
+ const footerCleanupStyle=document.createElement('style');
+ footerCleanupStyle.textContent='[data-menu="chat"],[data-menu="move"],[data-menu="area"]{display:none!important}';
+ document.head.append(footerCleanupStyle);
  function cleanMobileFooter(){
-  const targets=['구역 이동','구역이동','이동','대화'];
-  for(const b of document.querySelectorAll('button,[role="button"]')){
+  const menuCandidates=document.querySelectorAll('button,[role="button"],[data-menu]');
+  for(const b of menuCandidates){
    if(b.id==='hmV174ChatFloating'||b.closest('#hmV174Chat,#hmCh01GroupIntro,#hmCh02GroupIntro,.hmLaterStoryIntro'))continue;
    const label=(b.textContent||'').replace(/\\s+/g,' ').trim();
-   if(!targets.includes(label))continue;
-   const parent=b.parentElement;
-   if(parent&&(parent.matches('nav,.bottom-nav,.mobile-nav,[class*="bottomNav"],[class*="bottom-nav"]')||b.dataset.menu==='chat'||b.dataset.menu==='move'||b.dataset.menu==='area')){b.style.setProperty('display','none','important');continue;}
-   if(b.dataset.menu==='chat'||b.dataset.menu==='move'){b.style.setProperty('display','none','important');}
+   const menu=(b.dataset.menu||'').toLowerCase();
+   const footer=b.closest('nav,[class*="bottom"],[class*="footer"],[id*="bottom"],[id*="footer"]');
+   if(menu==='chat'||menu==='move'||menu==='area'||(footer&&['대화','이동','구역 이동','구역이동'].includes(label))){
+    b.style.setProperty('display','none','important');
+    b.setAttribute('aria-hidden','true');
+    b.tabIndex=-1;
+   }
   }
  }
  document.addEventListener('hm-v175-state',cleanMobileFooter);
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',cleanMobileFooter,{once:true});else cleanMobileFooter();
+ const footerObserver=new MutationObserver(()=>cleanMobileFooter());
+ const startFooterObserver=()=>footerObserver.observe(document.body,{childList:true,subtree:true});
+ if(document.body)startFooterObserver();else document.addEventListener('DOMContentLoaded',startFooterObserver,{once:true});
  // CH02 rebuild v1: retain ONLY the approved ward photograph and create four
  // invisible object hit areas. Old V172 ward hotspots and menus are not used.
  const rebuildStyle=document.createElement('style');
