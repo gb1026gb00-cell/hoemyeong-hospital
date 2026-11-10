@@ -38,7 +38,7 @@
     if(m.type==='reception_result')showReceptionAnswerResult(m);
     if(m.type==='ch02_certificate'&&active)showCh02Certificate(m);
     if(m.type==='ch02_ecg_archive'&&active)showCh02ECG(m);
-    if(m.type==='ch02_bed_tags'&&phase==='ch02')showCh02BedTags(m);
+    if(m.type==='ch02_bed_tags'&&active)showCh02BedTags(m);
     if(m.type==='ch02_new_result'&&m.site==='answer'){
      const status=document.getElementById('hmCh02NewStatus');if(status)status.textContent=m.message||'';
      if(m.ok&&m.scene==='death_record_invalidated')showCh02Clear();
@@ -821,7 +821,7 @@
      ch02Send('ch02_new_inspect',{site});
      if(site==='certificate'){document.getElementById('hmCh02NewDialog')?.remove();}
      if(site==='ecg')document.getElementById('hmCh02NewDialog')?.remove();
-     if(site==='eight')ch02Dialog('인식표 확인 중','8번 병상에 숨겨진 인식표와 장비 배정 기록을 확인하고 있습니다.');
+     if(site==='eight')document.getElementById('hmCh02NewDialog')?.remove();
      if(site==='underbed')ch02HandPending=true;
     },true);
     layer.append(btn);
@@ -857,7 +857,7 @@
    if(site==='underbed')ch02HandPending=true;
    else if(site==='certificate')document.getElementById('hmCh02NewDialog')?.remove();
    else if(site==='ecg')document.getElementById('hmCh02NewDialog')?.remove();
-   else ch02Dialog('인식표 확인 중','8번 병상 인식표를 확인하고 있습니다.');
+   else document.getElementById('hmCh02NewDialog')?.remove();
    ch02LegacyIntercepting=false;
    break;
   }
