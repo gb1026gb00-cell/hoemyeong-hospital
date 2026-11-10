@@ -17,6 +17,10 @@
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
     if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity)))receptionAnswerLength=Number(m.capacity)/2+3;active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='joined'&&typeof m.isHost==='boolean')ch02IsHost=m.isHost;
+    if(m.type==='error'&&phase==='ch02'){
+     const popup=document.getElementById('hmCh02NewDialog');
+     if(popup&&/협동 진행 대기|최소 2명|연결/.test(m.message||''))ch02Dialog('조사원 연결 대기',m.message);
+    }
     if(m.type==='ch03_result'&&m.ok===false&&phase==='ch02_cleared'){
      const status=document.getElementById('hmCh02TransitionStatus');
      if(status)status.textContent=m.message||'엘리베이터 호출을 완료하지 못했습니다.';
@@ -223,7 +227,7 @@
   const title=document.createElement('h2');title.textContent='접수대 · 봉인 번호';title.style.cssText='font:700 22px serif;margin:12px 0 8px';
   const regulation=document.createElement('div');
   regulation.style.cssText='margin:18px 0 16px;padding:18px 10px;border-top:1px solid #78666d;border-bottom:1px solid #78666d;text-align:center;color:#f0e4e6;font:15px/2.1 serif;white-space:pre-line';
-  regulation.textContent='回明病院 · 접수 기록 보안 지침\\n\\n제01조 · 봉인 해제 절차\\n\\n비친 것을 먼저 헤아리고,\\n\\n잠긴 것의 빈자리를 채운 뒤,\\n\\n마지막으로 남겨진 기록을 대조하라.\\n\\n※ 순서를 어길 경우 봉인은 해제되지 않습니다.';
+  regulation.textContent='回明病院 · 접수 기록 보안 지침\n\n제01조 · 봉인 해제 절차\n\n비친 것을 먼저 헤아리고,\n\n잠긴 것의 빈자리를 채운 뒤,\n\n마지막으로 남겨진 기록을 대조하라.\n\n※ 순서를 어길 경우 봉인은 해제되지 않습니다.';
   const guide=document.createElement('p');guide.textContent='거울의 얼룩, 캐비닛의 빈자리, 접수명부의 인원을 팀원들과 대조해 봉인 번호를 채우세요.';guide.style.cssText='font:13px/1.8 system-ui;color:#c4b8be';
   const inputs=[],cells=document.createElement('div');cells.style.cssText='display:grid;grid-template-columns:repeat('+receptionAnswerLength+',minmax(0,1fr));gap:6px;margin:20px 0 13px';
   for(let i=0;i<receptionAnswerLength;i++){
@@ -659,6 +663,7 @@
  let ch02HandPending=false;
  function ch02Send(action,extra={}){
   if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action,...extra}));
+  else if(phase==='ch02')ch02Dialog('연결 확인 필요','협동 서버에 연결되지 않았습니다. 접속 상태를 확인해 주세요.');
  }
  function showCh02BedTags(message){
   document.getElementById('hmCh02NewDialog')?.remove();
