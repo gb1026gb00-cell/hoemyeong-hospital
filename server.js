@@ -714,13 +714,8 @@ wss.on('connection',ws=>{
     const lines=clues[object][side];
     send(ws,{type:'reception_clue',object,label:{desk:'접수대',mirror:'거울',cabinet:'캐비닛',ledger:'접수명부'}[object],lines,shadowCount:object==='mirror'?(side===0?4:6):null});
     if(object==='desk'){
-     // Exactly once per investigator per game room; a newly created room
-     // has its own receptionCoop state, even in the same browser.
-     if(!Array.isArray(p.deskScareSeen))p.deskScareSeen=[];
-     if(!p.deskScareSeen.includes(player.role)){
-      p.deskScareSeen.push(player.role);
-      send(ws,{type:'horror_video',id:'RECEPTION_HAND',scope:'self'});
-     }
+     // Do not suppress the scare if the browser failed to load it previously.
+     send(ws,{type:'horror_video',id:'RECEPTION_HAND',scope:'self'});
     }
     return;
    }
