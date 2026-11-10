@@ -108,6 +108,7 @@
     handleHospitalSoundEvent(m);
     if(m.type==='chapter_event'&&m.event==='blackout'){document.getElementById('hmCh01GroupIntro')?.remove();appendCh01StoryChat();}
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
+    if(m.type==='horror_video'&&m.id==='G06'&&phase==='ch03')playCh03ElevatorVideo();
     if(m.type==='horror_video'&&m.id==='G01')playReceptionScare();
     // Drawer video is triggered only by an explicit scene drawer click, never by a clue response.
     if(m.type==='chat'){const box=$('hmV174ChatLog');if(box){const line=document.createElement('div');line.textContent=(Number.isInteger(m.item?.character)&&m.item.character>=0&&m.item.character<8?['홍중','성화','윤호','여상','산','민기','우영','종호'][m.item.character]+': ':(m.item?.role!==undefined?'조사원 '+(m.item.role+1)+': ':''))+(m.item?.text||m.item?.message||'');box.append(line);box.scrollTop=box.scrollHeight;}}
@@ -306,6 +307,20 @@
   };
   card.append(result,run);overlay.append(card);document.body.append(overlay);
  }
+
+ let ch03VideoSeen=false;
+ function playCh03ElevatorVideo(){
+  document.getElementById('hmCh03G06')?.remove();
+  const overlay=document.createElement('div');overlay.id='hmCh03G06';
+  overlay.style.cssText='position:fixed;inset:0;z-index:2147483650;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#e8dfdb;font:14px system-ui';
+  const video=document.createElement('video');video.src='/G06.mp4';video.autoplay=true;video.playsInline=true;video.controls=false;video.preload='auto';video.style.cssText='width:100%;max-height:90dvh;object-fit:contain';
+  const info=document.createElement('div');info.textContent='엘리베이터 내부 감시 기록 재생 중';info.style.cssText='padding:12px;color:#cbbbc0;text-align:center';
+  const finish=()=>{ch03VideoSeen=true;overlay.remove();const form=document.getElementById('hmCh03CodeForm');if(form)form.hidden=false;const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent='환자복의 형체가 사라졌다. 계산한 운행 코드를 입력하십시오.';};
+  video.addEventListener('ended',finish,{once:true});
+  video.addEventListener('error',()=>{info.textContent='영상 재생에 실패했습니다. 운행 코드를 입력할 수 있습니다.';finish();},{once:true});
+  overlay.append(video,info);document.body.append(overlay);
+  video.play().catch(()=>{video.muted=true;video.play().catch(()=>{info.textContent='자동재생이 차단되었습니다. 영상을 눌러 재생하십시오.';video.controls=true;});});
+ }
  function mountIndependentCh03(){
   const old=document.getElementById('hmIndependentCh03');
   if(!active||phase!=='ch03'){old?.remove();return;}
@@ -335,15 +350,15 @@
    b.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();sendInvestigation(action,extra,label);});
    bottom.append(b);
   }
-  control('층수 버튼','ch03_explore',{object:'panel'});
+  const elevatorButton=document.createElement('button');elevatorButton.type='button';elevatorButton.textContent='엘리베이터 버튼 · 운행 시작';elevatorButton.style.cssText='min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c;color:#f5edf3;font:600 14px system-ui;cursor:pointer';elevatorButton.onclick=()=>sendInvestigation('ch03_video',{},'엘리베이터');bottom.append(elevatorButton);
   const mirrorButton=document.createElement('button');mirrorButton.type='button';mirrorButton.textContent='거울 닦기';mirrorButton.style.cssText='min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c;color:#f5edf3;font:600 14px system-ui;cursor:pointer';mirrorButton.onclick=openCh03Mirror;bottom.append(mirrorButton);
   control('스피커','ch03_explore',{object:'speaker'});
   const directoryButton=document.createElement('button');directoryButton.type='button';directoryButton.textContent='거울 아래 층수 안내문';directoryButton.style.cssText='min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c;color:#f5edf3;font:600 14px system-ui;cursor:pointer';directoryButton.onclick=openCh03FloorDirectory;bottom.append(directoryButton);
   const calculatorButton=document.createElement('button');calculatorButton.type='button';calculatorButton.textContent='우측 아래 기호 계산판';calculatorButton.style.cssText='min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c;color:#f5edf3;font:600 14px system-ui;cursor:pointer';calculatorButton.onclick=openCh03SymbolCalculator;bottom.append(calculatorButton);
-  const form=document.createElement('form');form.style.cssText='grid-column:1/-1;display:flex;gap:8px';
-  const input=document.createElement('input');input.placeholder='세 자리 암호';input.inputMode='numeric';input.maxLength=3;input.autocomplete='off';input.style.cssText='min-width:0;flex:1;padding:12px;background:#161119;color:#fff;border:1px solid #766477;border-radius:6px;font-size:16px';
+  const form=document.createElement('form');form.id='hmCh03CodeForm';form.hidden=!ch03VideoSeen;form.style.cssText='grid-column:1/-1;display:flex;gap:8px';
+  const input=document.createElement('input');input.placeholder='운행 코드 입력';input.inputMode='numeric';input.maxLength=2;input.autocomplete='off';input.style.cssText='min-width:0;flex:1;padding:12px;background:#161119;color:#fff;border:1px solid #766477;border-radius:6px;font-size:16px';
   const submit=document.createElement('button');submit.type='submit';submit.textContent='암호 입력';submit.style.cssText='padding:12px 15px;background:#4b354e;color:#fff;border:1px solid #a18ba5;border-radius:6px;font-size:14px';
-  form.addEventListener('submit',ev=>{ev.preventDefault();ev.stopPropagation();if(!/^\\d{3}$/.test(input.value.trim())){note.textContent='세 자리 숫자를 입력하세요.';return;}sendInvestigation('ch03_submit',{answer:input.value.trim()},'암호');});
+  form.addEventListener('submit',ev=>{ev.preventDefault();ev.stopPropagation();if(!/^[0-9]{2}$/.test(input.value.trim())){note.textContent='두 자리 운행 코드를 입력하세요.';return;}sendInvestigation('ch03_submit',{answer:input.value.trim()},'암호');});
   form.append(input,submit);bottom.append(form);root.append(bottom);
   document.body.append(root);
  }
@@ -1425,7 +1440,7 @@
  if(chatButton)chatButton.addEventListener('click',openTeamChat,true);
  function mountTeamChatButton(){
   let b=$('hmV174ChatFloating');
-  if(!b){b=document.createElement('button');b.id='hmV174ChatFloating';b.type='button';b.textContent='💬 팀 채팅';b.setAttribute('aria-label','팀원과 대화하기');b.style.cssText='position:fixed!important;right:12px!important;bottom:calc(20px + env(safe-area-inset-bottom))!important;z-index:999992!important;display:block;padding:12px 16px;border:1px solid #b39bc1;border-radius:24px;background:#25192ef2;color:#fff;font:700 14px system-ui;box-shadow:0 5px 18px #000b;touch-action:manipulation';b.addEventListener('click',openTeamChat);document.body.append(b);}
+  if(!b){b=document.createElement('button');b.id='hmV174ChatFloating';b.type='button';b.textContent='💬 팀 채팅';b.setAttribute('aria-label','팀원과 대화하기');b.style.cssText='position:fixed!important;right:12px!important;bottom:calc(20px + env(safe-area-inset-bottom))!important;z-index:2147483200!important;display:block;padding:12px 16px;border:1px solid #b39bc1;border-radius:24px;background:#25192ef2;color:#fff;font:700 14px system-ui;box-shadow:0 5px 18px #000b;touch-action:manipulation';b.addEventListener('click',openTeamChat);document.body.append(b);}
   b.hidden=!active;b.style.display=active?'block':'none';
  }
  document.addEventListener('hm-v175-state',mountTeamChatButton);
