@@ -591,8 +591,46 @@ wss.on('connection',ws=>{
     }
     c.solved=true;ch.phase='finished';broadcast(r,{type:'ch06_event',event:'cleared',message:'여덟 번째 문이 열린다. 기록에는 208호가 비어 있었다. 그러나 구조 요청은 그 안에서 시작됐다. 문 너머에는 회명병원의 처음 접수실이 있다. END — 귀환.'});broadcast(r,state(r));return;
    }
+   // Cooperative reception ledger: three two-digit entries, distributed across
+   // all investigators; the six-digit solution is server-validated.
+   if(m.action==='reception_clue'&&ch.phase==='separated'){
+    const p=ch.receptionCoop;if(!p)return;
+    const object=String(m.object||'');
+    if(!['desk','mirror','cabinet','ledger'].includes(object))return;
+    const roles=[...r.clients].map(c=>c.role).sort((a,b)=>a-b);
+    const position=roles.indexOf(player.role);
+    if(position<0)return;
+    const owned=p.entries.filter((e,i)=>i%roles.length===position);
+    const labels={desk:'접수대',mirror:'거울',cabinet:'캐비닛',ledger:'접수명부'};
+    const lines=object==='ledger'
+     ?['명부의 오래된 문구: 「원은 처음, 사각형은 다음, 삼각형은 마지막.」','각 기호의 두 자리 접수번호를 이 순서대로 이어 붙여라.']
+     :owned.length?owned.map(e=>object==='desk'?'접수번호 '+e.number:object==='mirror'?'유리에 새겨진 기호 '+e.symbol: '보관함 꼬리표 '+e.symbol+' / 접수번호 '+e.number)
+     :['이곳에는 당신에게만 보이는 기록이 없다. 다른 조사원에게 물어보세요.'];
+    send(ws,{type:'reception_clue',object,label:labels[object],lines});
+    if(object==='desk'){
+     if(!Array.isArray(p.g01Witnessed))p.g01Witnessed=[];
+     if(!p.g01Witnessed.includes(player.role)){p.g01Witnessed.push(player.role);send(ws,{type:'horror_video',id:'G01',scope:'self'});}
+    }
+    return;
+   }
+   if(m.action==='reception_submit'&&ch.phase==='separated'){
+    const p=ch.receptionCoop;if(!p)return;
+    const attempt=String(m.answer||'').trim();
+    if(!/^\\d{6}$/.test(attempt))return send(ws,{type:'reception_result',ok:false,message:'접수번호 세 개를 순서대로 이어 붙인 여섯 자리 숫자를 입력하세요.'});
+    if(attempt!==p.answer)return send(ws,{type:'reception_result',ok:false,message:'명부의 기호 순서와 각 조사원의 접수번호를 다시 대조하세요.'});
+    if(!p.confirmed.includes(player.role))p.confirmed.push(player.role);
+    broadcast(r,{type:'reception_result',ok:true,message:'접수번호 대조 성공. '+p.confirmed.length+'명의 조사원이 확인했습니다.'});
+    const online=[...r.clients].filter(c=>c.ws?.readyState===WebSocket.OPEN);
+    if(online.length>=2&&online.every(c=>p.confirmed.includes(c.role))){
+     ch.ecgSolved=true;ch.solved=online.map(c=>c.role);ch.phase='escaped';
+     broadcast(r,{type:'chapter_event',event:'escape'});
+     broadcast(r,{type:'reception_result',ok:true,complete:true,message:'접수대 봉인이 풀렸다. 서류함에서 제0유물 파편을 찾아 다음 구역으로 이동하세요.'});
+    }
+    broadcast(r,state(r));persist();return;
+   }
    if(m.action==='bell'&&ch.phase==='reception'){
     ch.phase='separated';ch.bellBy=player.role;
+    {const symbols=['○','□','△'];const entries=symbols.map(symbol=>({symbol,number:String(10+randomBytes(1)[0]%90)}));ch.receptionCoop={entries,answer:entries.map(e=>e.number).join(''),confirmed:[],g01Witnessed:[]};}
     broadcast(r,{type:'chapter_event',event:'blackout',by:player.role});broadcast(r,{type:'horror_video',id:'G08',scope:'all'});broadcast(r,state(r));return;
    }
    if(m.action==='solve'&&ch.phase==='separated'){
