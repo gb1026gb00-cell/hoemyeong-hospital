@@ -111,7 +111,7 @@
     if(m.type==='mandatory_video')showMandatoryVideo(m.id,m.video);
     if(m.type==='mandatory_video_progress'&&m.id===mandatoryGateId){const status=document.getElementById('hmMandatoryVideoStatus');if(status)status.textContent='영상 시청 완료 '+m.done.length+' / '+m.online.length+'명 · 나머지 조사원 대기';}
     if(m.type==='ch03_event'&&m.event==='video'){ch03VideoSeen=true;const form=document.getElementById('hmCh03CodeForm');if(form){form.hidden=false;form.style.display='flex';}}
-    if((m.type==='state'||m.type==='joined')&&m.chapter?.videoGate){const gate=m.chapter.videoGate;const done=gate.done||[];if(done.includes(ch02AssignedRole)){showMandatoryVideo(gate.id,gate.video);const video=document.querySelector('#hmMandatoryVideo video');if(video){video.pause();video.removeAttribute('src');video.load();}const status=document.getElementById('hmMandatoryVideoStatus');if(status)status.textContent='이미 시청 완료 · 다른 조사원을 기다리는 중…';}else showMandatoryVideo(gate.id,gate.video);}
+    if((m.type==='state'||m.type==='joined')&&m.chapter?.videoGate){const gate=m.chapter.videoGate;const done=gate.done||[];if(done.includes(ch02AssignedRole)){if(mandatoryGateId!==gate.id||!document.getElementById('hmMandatoryVideo'))showMandatoryVideo(gate.id,gate.video);const video=document.querySelector('#hmMandatoryVideo video');if(video){video.pause();video.hidden=true;video.removeAttribute('src');}const retry=document.querySelector('#hmMandatoryVideo button');if(retry)retry.hidden=true;const status=document.getElementById('hmMandatoryVideoStatus');if(status)status.textContent='이미 시청 완료 · 다른 조사원을 기다리는 중…';}else showMandatoryVideo(gate.id,gate.video);}
     if((m.type==='state'||m.type==='joined')&&!m.chapter?.videoGate&&mandatoryGateId)clearMandatoryVideo();
     if(m.type==='ch03_event'&&m.event==='cleared'){phase='ch03_video_wait';}
     if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2){ch03FragmentCollected=true;const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent='제0유물 파편이 공동 소지품에 등록되었습니다.';}
@@ -338,7 +338,7 @@
    if(acknowledged)return;acknowledged=true;
    status.textContent='영상 시청 완료 · 다른 조사원을 기다리는 중…';
    retry.hidden=true;video.controls=false;
-   if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'mandatory_video_done',id}));else status.textContent='영상 시청 완료 · 연결 복구 후 확인됩니다.';
+   if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'mandatory_video_done',id}));else {acknowledged=false;status.textContent='연결이 끊어졌습니다. 재접속 후 시청 완료를 다시 확인합니다.';}
   };
   video.addEventListener('ended',completed);
   video.addEventListener('error',()=>{status.textContent='영상을 불러오지 못했습니다. 다시 재생을 눌러주세요.';retry.hidden=false;});
