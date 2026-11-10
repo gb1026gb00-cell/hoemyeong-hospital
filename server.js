@@ -221,6 +221,9 @@ function leave(c){if(!c.room)return;const r=rooms.get(c.room);if(!r)return;
  if(ch?.ch04?.votes)ch.ch04.votes=ch.ch04.votes.filter(role=>role!==c.role);
  if(ch?.ch06?.switches)ch.ch06.switches=ch.ch06.switches.filter(role=>role!==c.role);
  updateSenseAssignments(r);broadcast(r,state(r));return}
+ // Preserve pre-start identity and host authority on accidental disconnect.
+ // Only the original private reconnect token can reclaim this role.
+ c.ws=null;c.offlineAt=Date.now();broadcast(r,state(r));return;
  r.clients.delete(c);c.room=null;if(r.host===c)r.host=[...r.clients][0]||null;
  if(!r.clients.size){rooms.delete(r.code);persist()}else broadcast(r,state(r));
 }
@@ -244,13 +247,14 @@ wss.on('connection',ws=>{
    const character=Number.isInteger(m.character)?m.character:m.role;
    if(character<0||character>7)return send(ws,{type:'error',message:'캐릭터 선택 오류'});
    let r=rooms.get(m.room);
-   if(r&&r.started){
+   if(r&&m.token){
     const old=[...r.clients].find(x=>x.token&&x.token===m.token);
-    if(!old)return send(ws,{type:'error',message:'게임이 시작되어 신규 입장할 수 없습니다.'});
+    if(!old){if(r.started)return send(ws,{type:'error',message:'게임이 시작되어 신규 입장할 수 없습니다.'});}else{
     if(old.ws&&old.ws.readyState===WebSocket.OPEN)return send(ws,{type:'error',message:'이미 접속 중인 참가자입니다.'});
     old.ws=ws;old.offlineAt=0;c.room=null;ws.player=old;
-    send(ws,{...state(r),type:'joined',token:old.token,resumed:true,yourRole:old.role,isHost:old===r.host,senses:assignedSenses(r,old.role).map(x=>x.sense)});updateSenseAssignments(r);broadcast(r,state(r));return;
+    send(ws,{...state(r),type:'joined',token:old.token,resumed:true,yourRole:old.role,isHost:old===r.host,senses:assignedSenses(r,old.role).map(x=>x.sense)});updateSenseAssignments(r);broadcast(r,state(r));return;}
    }
+   if(r&&r.started)return send(ws,{type:'error',message:'게임이 시작되어 신규 입장할 수 없습니다.'});
    // Recover a recent numeric invitation if an ephemeral server restarted.
    // This does not restore already-started games or replace persistent storage.
    if(!r&&/^[0-9]{12}$/.test(m.room)){
