@@ -39,8 +39,8 @@
      if(status)status.textContent=m.message||'파편 수집 상태를 확인해 주세요.';
     }
     if((m.type==='state'||m.type==='joined')&&m.chapter?.phase==='ch02_cleared'&&!document.getElementById('hmCh02ClearScene'))showCh02Clear();
-    if(m.type==='ch04_event'&&m.event==='enter'){document.getElementById('hmCh03ToCh04Video')?.remove();ch03ToCh04Playing=false;appendCh04StoryChat();}
-    if((m.type==='state'||m.type==='joined')&&m.chapter?.phase==='ch04')appendCh04StoryChat();
+    if(m.type==='ch04_event'&&m.event==='enter'){if(!ch03ToCh04Playing)appendCh04StoryChat();}
+    if((m.type==='state'||m.type==='joined')&&m.chapter?.phase==='ch04'&&!ch03ToCh04Playing)appendCh04StoryChat();
     if(m.type==='ch03_event'&&m.event==='enter'){
      phase='ch03';
      const image=document.getElementById('sceneImage');
@@ -363,7 +363,9 @@
   video.style.cssText='width:100%;max-height:90dvh;object-fit:contain';
   const info=document.createElement('div');info.textContent='기록보관실 이동 영상 · G02';info.style.cssText='padding:12px;text-align:center;color:#cbbbc0';
   video.addEventListener('ended',()=>{
-   info.textContent='영상 시청 완료 · 다른 조사원을 기다리는 중…';
+   info.textContent='영상 시청 완료 · CH.04 입장 중…';
+    overlay.remove();ch03ToCh04Playing=false;
+    if(phase==='ch04')appendCh04StoryChat();
    if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'ch03_transition_video_done'}));
   },{once:true});
   video.addEventListener('error',()=>{info.textContent='G02 영상을 불러오지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.';video.controls=true;},{once:true});
