@@ -103,14 +103,14 @@
   if(overlay)return;
   overlay=document.createElement('div');overlay.id='hmCh01GroupIntro';
   overlay.style.cssText='position:fixed;inset:0;z-index:999985;background:#050505;color:#f5f5f5;display:flex;justify-content:center;align-items:center;padding:14px;box-sizing:border-box;font:14px/1.5 system-ui';
-  const phone=document.createElement('section');phone.style.cssText='width:min(500px,100%);height:min(720px,92dvh);display:flex;flex-direction:column;background:#101010;border:1px solid #343434;border-radius:15px;overflow:hidden;box-shadow:0 16px 50px #000';
+  const phone=document.createElement('section');phone.style.cssText='width:min(500px,100%);height:min(650px,78dvh);display:flex;flex-direction:column;background:#101010;border:1px solid #343434;border-radius:15px;overflow:hidden;box-shadow:0 16px 50px #000';
   const head=document.createElement('header');head.textContent='회명병원 · 단체 대화 (9)';head.style.cssText='padding:17px 19px;border-bottom:1px solid #303030;font-weight:700;text-align:center';phone.append(head);
   const thread=document.createElement('div');thread.style.cssText='flex:1;overflow:auto;padding:17px 15px;display:flex;flex-direction:column;gap:11px';
   const dialogue=[['홍중','다들 도착했어? 아직 안 온 사람 있어?'],['성화','여기 정말 폐병원 맞아? 불은 켜져 있네.'],['윤호','홍중이 형, 우리 다 들어왔어. 일단 같이 움직이자.'],['민기','성화 형, 아까 복도에서 발소리 못 들었어?'],['여상','나도 들었어. 우리 말고 누가 더 있는 것 같은데.'],['종호','형들, 출입문이 안 열려.'],['우영','산아, 너 아까 문 잠갔어?'],['산','아니, 안 잠갔어. 홍중이 형, 접수대에 뭔가 있어.']];
   for(const [name,message] of dialogue){const row=document.createElement('div');row.style.cssText='display:flex;flex-direction:column;align-items:flex-start;gap:4px';const label=document.createElement('span');label.textContent=name;label.style.cssText='font-size:12px;color:#bcbcbc';const bubble=document.createElement('div');bubble.textContent=message;bubble.style.cssText='max-width:90%;background:#292929;border-radius:4px 13px 13px 13px;padding:10px 13px;color:#f5f5f5;white-space:pre-wrap';row.append(label,bubble);thread.append(row);}
   phone.append(thread);
   overlay.style.pointerEvents='none';phone.style.pointerEvents='none';
-  phone.style.paddingBottom='75px';
+  phone.style.paddingBottom='0';
   overlay.append(phone);document.body.append(overlay);
  }
  // CH02 intro appears once per chapter entry. Closing it never sends a chapter action.
@@ -687,6 +687,21 @@
   const object=String(target.dataset.object||target.dataset.site||target.dataset.station||'').toLowerCase();
   if(action==='ch02_explore'&&['bed','patient_record','chart','record'].includes(object))openCh02CertificatePreview();
  },true);
+ // Keep the approved four-button mobile footer but remove the redundant chat
+ // and area-movement entries; floating team chat remains available.
+ function cleanMobileFooter(){
+  const targets=['구역 이동','구역이동','이동','대화'];
+  for(const b of document.querySelectorAll('button,[role="button"]')){
+   if(b.id==='hmV174ChatFloating'||b.closest('#hmV174Chat,#hmCh01GroupIntro,#hmCh02GroupIntro,.hmLaterStoryIntro'))continue;
+   const label=(b.textContent||'').replace(/\\s+/g,' ').trim();
+   if(!targets.includes(label))continue;
+   const parent=b.parentElement;
+   if(parent&&(parent.matches('nav,.bottom-nav,.mobile-nav,[class*="bottomNav"],[class*="bottom-nav"]')||b.dataset.menu==='chat'||b.dataset.menu==='move'||b.dataset.menu==='area')){b.style.setProperty('display','none','important');continue;}
+   if(b.dataset.menu==='chat'||b.dataset.menu==='move'){b.style.setProperty('display','none','important');}
+  }
+ }
+ document.addEventListener('hm-v175-state',cleanMobileFooter);
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',cleanMobileFooter,{once:true});else cleanMobileFooter();
  // CH02 rebuild v1: retain ONLY the approved ward photograph and create four
  // invisible object hit areas. Old V172 ward hotspots and menus are not used.
  const rebuildStyle=document.createElement('style');
@@ -747,7 +762,7 @@
  document.addEventListener('hm-v175-state',guardCh02Horror);
  // CH02 standalone investigation layer; approved scene photo remains untouched.
  const ch02Css=document.createElement('style');
- ch02Css.textContent='html.hm-ch02-clean #ch02PuzzlePanel,html.hm-ch02-clean .hm-object-guide,html.hm-ch02-clean .narrative,html.hm-ch02-clean #sceneNarrative,html.hm-ch02-clean #sceneDescription,html.hm-ch02-clean #sceneText,html.hm-ch02-clean .scene-caption{display:none!important}html.hm-ch02-clean #mainScene>:not(img):not(#hmCh02NewLayer):not(#hmWardScene){display:none!important}html.hm-ch02-clean #hmCh02NewLayer{display:none!important}#hmCh02NewLayer{position:absolute;inset:0;z-index:999;pointer-events:none}#hmCh02NewLayer button{position:absolute;pointer-events:auto;background:transparent;border:0;color:transparent;font-size:0;touch-action:manipulation}#hmCh02NewLayer button:focus-visible{outline:2px solid #e9c6d7}';
+ ch02Css.textContent='html.hm-ch02-clean #ch02PuzzlePanel,html.hm-ch02-clean .hm-object-guide,html.hm-ch02-clean .narrative,html.hm-ch02-clean #sceneNarrative,html.hm-ch02-clean #sceneDescription,html.hm-ch02-clean #sceneText,html.hm-ch02-clean .scene-caption{display:none!important}html.hm-ch02-clean #hmCh02NewLayer{display:block!important}#hmCh02NewLayer{position:absolute;inset:0;z-index:5000;pointer-events:none}#hmCh02NewLayer button{position:absolute;pointer-events:auto;background:transparent;border:0;color:transparent;font-size:0;touch-action:manipulation}#hmCh02NewLayer button:focus-visible{outline:2px solid #e9c6d7}';
  document.head.append(ch02Css);
  let ch02HandPending=false;
  function ch02Send(action,extra={}){
@@ -913,7 +928,7 @@
   wrap.append(card);document.body.append(wrap);
  }
  function mountCh02New(){
-  const scene=document.getElementById('mainScene');if(!scene)return;
+  const scene=document.getElementById('hmWardScene')||document.getElementById('mainScene');if(!scene)return;
   let layer=document.getElementById('hmCh02NewLayer');
   if(!layer){
    layer=document.createElement('div');layer.id='hmCh02NewLayer';
@@ -940,6 +955,7 @@
    scene.append(layer);
   }
   layer.hidden=!(active&&phase==='ch02');
+  if(active&&phase==='ch02')layer.style.setProperty('display','block','important');
  }
  // Legacy V172 death-certificate modal can still be opened by its original
  // event handler. Detect that exact obsolete document and replace it with the
