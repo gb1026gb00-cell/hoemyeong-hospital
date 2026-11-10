@@ -297,6 +297,28 @@
  const legacyWatcher=new MutationObserver(()=>{if(active&&['reception','separated'].includes(phase))requestAnimationFrame(hideLegacyCh01Record);});
  legacyWatcher.observe(document.body||document.documentElement,{childList:true,subtree:true});
 
+
+ // The V172 original scene contains the desk drawer hotspot, but no plain
+ // desk hotspot. Keep the real drawer/video and add a separate seal desk input.
+ function ensureReceptionDesk(){
+  let original=$('deskButton');
+  if(!original)return;
+  if(!original.dataset.hmDrawerOriginal){
+   original.dataset.hmDrawerOriginal='1';
+   original.dataset.object='drawer';
+   original.setAttribute('aria-label','접수대 서랍');
+  }
+  if($('hmReceptionDeskSealButton'))return;
+  const seal=document.createElement('button');seal.id='hmReceptionDeskSealButton';
+  seal.type='button';seal.textContent='접수대 · 봉인 번호 입력';
+  seal.dataset.object='desk';seal.setAttribute('aria-label','접수대');
+  seal.style.cssText='position:absolute;right:7%;bottom:14%;z-index:35;min-height:46px;padding:10px 12px;background:#291923ec;border:1px solid #ac91a2;border-radius:8px;color:#f6e7ef;font:700 13px system-ui;box-shadow:0 0 16px #000;touch-action:manipulation';
+  original.parentElement?.append(seal);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureReceptionDesk,{once:true});else ensureReceptionDesk();
+ document.addEventListener('hm-v175-started',ensureReceptionDesk);
+ document.addEventListener('hm-v175-state',ensureReceptionDesk);
+
  // The one canonical CH01 inspection screen replaces the old text clue sheet.
  // It renders only the evidence the player can observe, not the server answer.
  function showSceneClue(message){
@@ -358,12 +380,13 @@
   const target=origin.closest('button,[role="button"],[data-action],[data-object],[data-hotspot],[aria-label]');
   if(!target||target.closest('#ch01PuzzlePanel,#hmReceptionCoop,[data-menu]'))return;
   const label=(target.getAttribute('aria-label')||target.getAttribute('title')||target.textContent||'').replace(/\s+/g,' ').trim().replace(/^[◈▤📋📖]\s*/u,'');
-  const raw=String(target.dataset.object||target.dataset.action||target.dataset.hotspot||'').toLowerCase().trim();
+  const raw=String(target.dataset.object||target.dataset.obj||target.dataset.action||target.dataset.hotspot||'').toLowerCase().trim();
   let object=null;
   if(/^(?:접수\s*명부|접수\s*명부 조사|접수\s*명부 열기)$/.test(label))object='ledger';
   else if(/^(?:거울|균열 난 거울|거울 조사)$/.test(label))object='mirror';
   else if(/^(?:캐비닛|잠긴 캐비닛|보관함|잠긴 보관함|서류함)$/.test(label))object='cabinet';
   else if(/^(?:접수대 서랍|서랍)$/.test(label))object='drawer';
+  else if(/^접수대 · 봉인 번호 입력$/.test(label))object='desk';
   else if(/^(?:접수대|접수대 조사|봉인 번호 입력)$/.test(label))object='desk';
   else object={ledger:'ledger',mirror:'mirror',cabinet:'cabinet',drawer:'drawer',reception_drawer:'drawer',desk:'desk',reception_desk:'desk'}[raw]||null;
   if(!object)return;
