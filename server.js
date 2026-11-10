@@ -329,6 +329,9 @@ wss.on('connection',ws=>{
       send(ws,{type:'horror_video',id:'G01',scope:'self'});
      }
     }
+    // Original V172 investigation uses "inspect", not reception_clue.
+    // Trigger the drawer scare from the original desk inspection as well.
+    if(m.object==='desk')send(ws,{type:'horror_video',id:'RECEPTION_HAND',scope:'self'});
     if(!found.includes(m.object))found.push(m.object);
     const ordered=[...r.clients].sort((a,b)=>a.role-b.role);
     const index=ordered.findIndex(x=>x.role===player.role),target=ordered[(index+1)%ordered.length];
