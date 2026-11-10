@@ -20,7 +20,11 @@ function persist(){if(!ROOM_SAVE_PATH)return;try{roomStorage.save(ROOM_SAVE_PATH
 // Numeric room IDs are allocated only by the server. A durable counter is
 // stored beside room snapshots; this requires ROOM_SAVE_PATH on persistent disk.
 const roomCounterFile=ROOM_SAVE_PATH?ROOM_SAVE_PATH+'.counter':null;
-let roomCounter=0;
+// Without durable storage, seed from wall-clock time so a cold start never
+// reissues 0001 to a different room. Persistent deployments keep 0001, 0002...
+// through their on-disk counter. The fallback is numeric and monotonically
+// increases within each running process.
+let roomCounter=roomCounterFile?0:Date.now();
 if(roomCounterFile){
  try{roomCounter=Math.max(0,Number(require('fs').readFileSync(roomCounterFile,'utf8'))||0)}catch(e){if(e.code!=='ENOENT')console.error('Room counter read error',e.message)}
 }
