@@ -323,7 +323,7 @@
  let ch03VideoSeen=false;
  let mandatoryGateId=null;
  function showMandatoryVideo(id,asset){
-  if(!id||!/^G(?:0[1-9]|1[0-8])$/.test(asset))return;
+  if(!id||!(/^(?:G(?:0[1-9]|1[0-8])|H0[1-4])$/).test(asset))return;
   if(mandatoryGateId===id&&document.getElementById('hmMandatoryVideo'))return;
   mandatoryGateId=id;
   document.getElementById('hmMandatoryVideo')?.remove();
