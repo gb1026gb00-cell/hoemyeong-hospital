@@ -346,7 +346,7 @@
   overlay.style.cssText='position:fixed;inset:0;z-index:2147483652;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#eee;font:14px system-ui';
   const video=document.createElement('video');video.src='/'+encodeURIComponent(id)+'.mp4';video.playsInline=true;video.autoplay=true;video.preload='auto';video.controls=false;
   video.style.cssText='width:100%;max-height:90dvh;object-fit:contain';
-  const info=document.createElement('p');info.textContent='CH.0'+(to-1)+' → CH.0'+to+' · 전환 영상';info.style.cssText='padding:12px;text-align:center';
+  const info=document.createElement('p');info.textContent='';info.hidden=true;info.style.cssText='padding:12px;text-align:center';
   const finish=()=>overlay.remove();
   video.addEventListener('ended',finish,{once:true});
   video.addEventListener('error',()=>{info.textContent='전환 영상 파일을 불러오지 못했습니다. 영상 파일 배포 상태를 확인해 주세요.';const b=document.createElement('button');b.textContent='영상 로드 실패 · 다음 챕터 계속';b.style.cssText='padding:12px;background:#342a37;color:#fff;border:1px solid #aaa';b.onclick=finish;overlay.append(b);},{once:true});
@@ -361,7 +361,7 @@
   overlay.style.cssText='position:fixed;inset:0;z-index:2147483651;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#e8dfdb;font:14px system-ui';
   const video=document.createElement('video');video.src='/G02.mp4';video.autoplay=true;video.playsInline=true;video.controls=false;video.preload='auto';
   video.style.cssText='width:100%;max-height:90dvh;object-fit:contain';
-  const info=document.createElement('div');info.textContent='기록보관실 이동 영상 · G02';info.style.cssText='padding:12px;text-align:center;color:#cbbbc0';
+  const info=document.createElement('div');info.textContent='';info.hidden=true;info.style.cssText='padding:12px;text-align:center;color:#cbbbc0';
   video.addEventListener('ended',()=>{
    info.textContent='영상 시청 완료 · CH.04 입장 중…';
     overlay.remove();ch03ToCh04Playing=false;
@@ -465,19 +465,13 @@
   // cannot shift a touch target relative to its photographed object.
   hotspot('거울 문지르기',5,12,19,58,openCh03Mirror);
   const fragmentHotspot=hotspot('거울 오른쪽 테두리 틈 · 제0유물 조사',24,19,9,43,()=>sendInvestigation('ch03_fragment',{},'거울 가장자리'));fragmentHotspot.style.zIndex='3';
-  hotspot('오른쪽 벽 층별 안내문',76,12,18,48,openCh03FloorDirectory);
-  hotspot('오른쪽 아래 기호 계산판',80,72,18,22,openCh03SymbolCalculator);
-  hotspot('엘리베이터 운행 버튼',68,46,8,15,()=>sendInvestigation('ch03_video',{},'엘리베이터'));
+  hotspot('오른쪽 벽 층별 안내문',73,18,17,42,openCh03FloorDirectory);
+  hotspot('오른쪽 아래 기호 계산판',0,72,25,27,openCh03SymbolCalculator);
+  hotspot('엘리베이터 운행 버튼',64,40,10,24,()=>sendInvestigation('ch03_video',{},'엘리베이터'));
   const inventory=document.createElement('button');inventory.type='button';inventory.id='hmCh03Inventory';inventory.style.cssText='grid-column:1/-1;padding:10px 12px;border:1px solid #766477;border-radius:7px;background:#211b28;color:#f4e8f1;font:600 14px system-ui;text-align:left';
   const updateInventory=()=>{const progress=document.getElementById('artifactProgress')?.textContent||'제0유물 파편 수집함';inventory.textContent='🎒 '+progress+(ch03FragmentCollected?' · 거울 파편 획득':' · 거울 파편 미획득');};
   inventory.addEventListener('click',()=>{updateInventory();const original=document.getElementById('tabInventory');if(original){root.style.setProperty('display','none','important');original.click();const restore=()=>root.style.setProperty('display','flex','important');const close=document.createElement('button');close.type='button';close.textContent='← 엘리베이터 화면으로 돌아가기';close.style.cssText='position:fixed;top:12px;right:12px;z-index:2147483001;padding:12px;background:#211b28;color:white;border:1px solid #766477;border-radius:6px';close.onclick=()=>{close.remove();restore();};document.body.append(close);}else note.textContent='공동 소지품 화면을 찾을 수 없습니다.';});
   bottom.append(inventory);updateInventory();
-  // Always provide usable controls when photographed objects are cropped or missing.
-  const mirrorButton=document.createElement('button');mirrorButton.type='button';mirrorButton.textContent='거울 조사';mirrorButton.style.cssText='min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c;color:#f5edf3;font:600 14px system-ui';mirrorButton.addEventListener('click',openCh03Mirror);bottom.append(mirrorButton);
-  control('제0유물 파편 수집','ch03_fragment',{});
-  const directoryButton=document.createElement('button');directoryButton.type='button';directoryButton.textContent='층별 안내문 조사';directoryButton.style.cssText=mirrorButton.style.cssText;directoryButton.onclick=()=>openCh03FloorDirectory();bottom.append(directoryButton);
-  const calcButton=document.createElement('button');calcButton.type='button';calcButton.textContent='기호 계산판 조사';calcButton.style.cssText=mirrorButton.style.cssText;calcButton.onclick=()=>openCh03SymbolCalculator();bottom.append(calcButton);
-  control('엘리베이터 버튼 작동','ch03_video',{});
   const form=document.createElement('form');form.id='hmCh03CodeForm';form.hidden=!ch03VideoSeen;form.style.cssText='grid-column:1/-1;display:'+(ch03VideoSeen?'flex':'none')+';gap:8px';
   const input=document.createElement('input');input.placeholder='운행 코드 입력';input.inputMode='numeric';input.maxLength=2;input.autocomplete='off';input.style.cssText='min-width:0;flex:1;padding:12px;background:#161119;color:#fff;border:1px solid #766477;border-radius:6px;font-size:16px';
   const submit=document.createElement('button');submit.type='submit';submit.textContent='암호 입력';submit.style.cssText='padding:12px 15px;background:#4b354e;color:#fff;border:1px solid #a18ba5;border-radius:6px;font-size:14px';
