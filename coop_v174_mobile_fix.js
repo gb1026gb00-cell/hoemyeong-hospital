@@ -111,6 +111,7 @@
     if(m.type==='chapter_event'&&m.event==='blackout'){document.getElementById('hmCh01GroupIntro')?.remove();appendCh01StoryChat();}
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
     if(m.type==='horror_video'&&m.id==='G06'&&phase==='ch03')playCh03ElevatorVideo();
+    if(m.type==='chapter_transition_video'&&(m.from===1||m.from===2))playChapterEntryVideo(m.video,m.to);
     if(m.type==='ch03_event'&&m.event==='transition_video')playCh03ToCh04Video();
     if(m.type==='ch03_event'&&m.event==='cleared'){phase='ch03_cleared';showCh03Cleared();}
     if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2){ch03FragmentCollected=true;const inv=document.getElementById('hmCh03Inventory');if(inv)inv.textContent='🎒 제0유물 파편 수집함 · 거울 파편 획득';const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent='제0유물 파편이 공동 소지품에 등록되었습니다.';}
@@ -338,6 +339,20 @@
   card.append(result,run);overlay.append(card);document.body.append(overlay);
  }
 
+ // Chapter entry cinematic stays on screen until local playback finishes.
+ function playChapterEntryVideo(id,to){
+  if(!['H03(1)','G13(2)'].includes(id)||document.getElementById('hmChapterEntryVideo'))return;
+  const overlay=document.createElement('div');overlay.id='hmChapterEntryVideo';
+  overlay.style.cssText='position:fixed;inset:0;z-index:2147483652;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#eee;font:14px system-ui';
+  const video=document.createElement('video');video.src='/'+encodeURIComponent(id)+'.mp4';video.playsInline=true;video.autoplay=true;video.preload='auto';video.controls=false;
+  video.style.cssText='width:100%;max-height:90dvh;object-fit:contain';
+  const info=document.createElement('p');info.textContent='CH.0'+(to-1)+' → CH.0'+to+' · 전환 영상';info.style.cssText='padding:12px;text-align:center';
+  const finish=()=>overlay.remove();
+  video.addEventListener('ended',finish,{once:true});
+  video.addEventListener('error',()=>{info.textContent='전환 영상 파일을 불러오지 못했습니다. 영상 파일 배포 상태를 확인해 주세요.';const b=document.createElement('button');b.textContent='영상 로드 실패 · 다음 챕터 계속';b.style.cssText='padding:12px;background:#342a37;color:#fff;border:1px solid #aaa';b.onclick=finish;overlay.append(b);},{once:true});
+  overlay.append(video,info);document.body.append(overlay);
+  video.play().catch(()=>{video.muted=true;video.play().catch(()=>{info.textContent='자동재생이 차단됐습니다. 영상을 눌러 재생하세요.';video.controls=true;});});
+ }
  let ch03ToCh04Playing=false;
  function playCh03ToCh04Video(){
   if(ch03ToCh04Playing||document.getElementById('hmCh03ToCh04Video'))return;
