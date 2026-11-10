@@ -315,7 +315,7 @@
   overlay.style.cssText='position:fixed;inset:0;z-index:2147483650;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#e8dfdb;font:14px system-ui';
   const video=document.createElement('video');video.src='/G06.mp4';video.autoplay=true;video.playsInline=true;video.controls=false;video.preload='auto';video.style.cssText='width:100%;max-height:90dvh;object-fit:contain';
   const info=document.createElement('div');info.textContent='엘리베이터 내부 감시 기록 재생 중';info.style.cssText='padding:12px;color:#cbbbc0;text-align:center';
-  const finish=()=>{ch03VideoSeen=true;overlay.remove();const form=document.getElementById('hmCh03CodeForm');if(form)form.hidden=false;const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent='환자복의 형체가 사라졌다. 계산한 운행 코드를 입력하십시오.';};
+  const finish=()=>{ch03VideoSeen=true;overlay.remove();const form=document.getElementById('hmCh03CodeForm');if(form){form.hidden=false;form.style.display='flex';}const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent='환자복의 형체가 사라졌다. 계산한 운행 코드를 입력하십시오.';};
   video.addEventListener('ended',finish,{once:true});
   video.addEventListener('error',()=>{info.textContent='영상 재생에 실패했습니다. 운행 코드를 입력할 수 있습니다.';finish();},{once:true});
   overlay.append(video,info);document.body.append(overlay);
@@ -355,7 +355,7 @@
   control('스피커','ch03_explore',{object:'speaker'});
   const directoryButton=document.createElement('button');directoryButton.type='button';directoryButton.textContent='거울 아래 층수 안내문';directoryButton.style.cssText='min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c;color:#f5edf3;font:600 14px system-ui;cursor:pointer';directoryButton.onclick=openCh03FloorDirectory;bottom.append(directoryButton);
   const calculatorButton=document.createElement('button');calculatorButton.type='button';calculatorButton.textContent='우측 아래 기호 계산판';calculatorButton.style.cssText='min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c;color:#f5edf3;font:600 14px system-ui;cursor:pointer';calculatorButton.onclick=openCh03SymbolCalculator;bottom.append(calculatorButton);
-  const form=document.createElement('form');form.id='hmCh03CodeForm';form.hidden=!ch03VideoSeen;form.style.cssText='grid-column:1/-1;display:flex;gap:8px';
+  const form=document.createElement('form');form.id='hmCh03CodeForm';form.hidden=!ch03VideoSeen;form.style.cssText='grid-column:1/-1;display:'+(ch03VideoSeen?'flex':'none')+';gap:8px';
   const input=document.createElement('input');input.placeholder='운행 코드 입력';input.inputMode='numeric';input.maxLength=2;input.autocomplete='off';input.style.cssText='min-width:0;flex:1;padding:12px;background:#161119;color:#fff;border:1px solid #766477;border-radius:6px;font-size:16px';
   const submit=document.createElement('button');submit.type='submit';submit.textContent='암호 입력';submit.style.cssText='padding:12px 15px;background:#4b354e;color:#fff;border:1px solid #a18ba5;border-radius:6px;font-size:14px';
   form.addEventListener('submit',ev=>{ev.preventDefault();ev.stopPropagation();if(!/^[0-9]{2}$/.test(input.value.trim())){note.textContent='두 자리 운행 코드를 입력하세요.';return;}sendInvestigation('ch03_submit',{answer:input.value.trim()},'암호');});
@@ -1428,7 +1428,7 @@
   if(e){e.preventDefault();e.stopImmediatePropagation();}
   let box=$('hmV174Chat');if(!box){
    box=document.createElement('section');box.id='hmV174Chat';box.setAttribute('role','dialog');box.setAttribute('aria-label','협동 대화');
-   box.style.cssText='position:fixed;z-index:350;inset:auto 12px calc(85px + env(safe-area-inset-bottom)) 12px;max-height:55vh;overflow:auto;background:#211729;color:#fff;border:1px solid #9178a3;border-radius:14px;padding:15px;box-shadow:0 10px 35px #000b';
+   box.style.cssText='position:fixed;z-index:2147483400;inset:auto 12px calc(85px + env(safe-area-inset-bottom)) 12px;max-height:55vh;overflow:auto;background:#211729;color:#fff;border:1px solid #9178a3;border-radius:14px;padding:15px;box-shadow:0 10px 35px #000b';
    box.innerHTML='<strong>팀 대화</strong><button type="button" id="hmV174ChatClose" style="float:right">닫기 ×</button><div id="hmV174ChatLog" style="max-height:28vh;overflow:auto;margin:12px 0;white-space:pre-wrap"></div><div style="display:flex;gap:7px"><input id="hmV174ChatInput" maxlength="180" placeholder="팀원에게 메시지" style="flex:1;min-width:0;padding:10px;background:#120f18;color:white;border:1px solid #9178a3;border-radius:8px"><button id="hmV174ChatSend" type="button">전송</button></div>';
    document.body.append(box);
    $('hmV174ChatClose').onclick=()=>box.hidden=true;
