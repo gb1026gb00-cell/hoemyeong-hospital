@@ -552,7 +552,7 @@
    pendingEcho={chapter:data.chapter,message:data.message.slice(0,100)};
    flushEcho();
  }
- window.hmMedia={handle(data){if(!data||!data.type)return;if(data.type==='horror_video')playVideo(String(data.id||''));if(data.type==='chapter_voice')playVoice(data.chapter);if(data.type==='hospital_echo')playEcho(data);}};
+ window.hmMedia={handle(data){if(!data||!data.type)return;if(data.type==='horror_video' && String(data.id||'')!=='G06')playVideo(String(data.id||''));if(data.type==='chapter_voice')playVoice(data.chapter);if(data.type==='hospital_echo')playEcho(data);}};
 })();
 </script>
 </body>
