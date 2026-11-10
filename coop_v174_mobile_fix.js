@@ -16,7 +16,7 @@
   constructor(...args){super(...args);socket=this;
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
-    if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity))){receptionAnswerLength=Number(m.capacity)/2+3;ch02RoomCapacity=Number(m.capacity);}if(Array.isArray(m.roles))ch02RoomRoles=m.roles.filter(Number.isInteger).slice().sort((a,b)=>a-b);active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
+    if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity))){receptionAnswerLength=Number(m.capacity)/2+3;ch02RoomCapacity=Number(m.capacity);}if(Array.isArray(m.roles))ch02RoomRoles=m.roles.filter(Number.isInteger).slice().sort((a,b)=>a-b);active=!!m.started;phase=m.chapter?.phase||phase;if(Array.isArray(m.artifactFragments))ch03FragmentCollected=m.artifactFragments.includes(2);updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='joined'&&typeof m.isHost==='boolean')ch02IsHost=m.isHost;
     if((m.type==='joined'||m.type==='state')&&m.yourRole!==undefined&&m.yourRole!==null&&Number.isInteger(Number(m.yourRole)))ch02AssignedRole=Number(m.yourRole);
     if(m.type==='ch02_certificate'&&Number.isInteger(Number(m.role)))ch02AssignedRole=Number(m.role);
@@ -336,10 +336,10 @@
   root=document.createElement('section');root.id='hmCh03Cleared';
   root.style.cssText='position:fixed;inset:0;z-index:2147483000;background:#09090b;color:#eee7df;display:flex;flex-direction:column;overflow:auto;font:14px/1.5 system-ui';
   const title=document.createElement('header');title.textContent='03. 엘리베이터 · 운행 코드 승인';title.style.cssText='padding:16px;text-align:center;border-bottom:1px solid #4c4346';root.append(title);
-  const scene=document.createElement('div');scene.style.cssText='position:relative;width:100%;aspect-ratio:16/9;max-height:52dvh;flex:none;background:#070709';
+  const scene=document.createElement('div');scene.style.cssText='position:relative;width:100%;aspect-ratio:16/9;flex:none;background:#070709';
   const photo=document.createElement('img');photo.src='/elevator_hall.webp';photo.alt='엘리베이터 내부';photo.style.cssText='width:100%;height:100%;object-fit:cover;display:block';scene.append(photo);
   const mirror=document.createElement('button');mirror.type='button';mirror.setAttribute('aria-label','거울 가장자리의 틈 조사');
-  mirror.style.cssText='position:absolute;left:7%;top:14%;width:30%;height:73%;border:1px solid #ffffff44;background:#ffffff08;cursor:pointer;touch-action:manipulation';
+  mirror.style.cssText='position:absolute;left:6%;top:12%;width:30%;height:58%;border:0;background:transparent;cursor:pointer;touch-action:manipulation';
   mirror.onclick=()=>{
    const status=document.getElementById('hmCh03ClearedStatus');
    if(status)status.textContent='거울 가장자리의 틈을 조사하는 중…';
@@ -368,14 +368,14 @@
   root.style.cssText='position:fixed!important;inset:0!important;z-index:2147483000!important;background:#080709;color:#e9e3dd;display:flex!important;flex-direction:column;font:14px/1.5 system-ui;overflow-y:auto;overscroll-behavior:contain;pointer-events:auto!important';
   const header=document.createElement('header');header.textContent='03. 엘리베이터 · 回明病院';
   header.style.cssText='flex:none;padding:13px 18px;background:#0d0d10;border-bottom:1px solid #494149;letter-spacing:1px;text-align:center';root.append(header);
-  const scene=document.createElement('div');scene.style.cssText='position:relative;flex:none;width:100%;aspect-ratio:16/9;max-height:48dvh;overflow:hidden;background:#09080a';
+  const scene=document.createElement('div');scene.style.cssText='position:relative;flex:none;width:100%;aspect-ratio:16/9;overflow:hidden;background:#09080a';
   const photo=document.createElement('img');photo.src='/elevator_hall.webp';photo.alt='낡은 회명병원 엘리베이터';photo.style.cssText='width:100%;height:100%;object-fit:cover;display:block;pointer-events:none';scene.append(photo);
   // Irregular damp grime on the floor directory; no fabricated readable text.
   const grime=document.createElement('div');grime.setAttribute('aria-hidden','true');
   grime.style.cssText='position:absolute;left:76%;top:10%;width:17%;height:76%;pointer-events:none;opacity:.9;mix-blend-mode:multiply;background:radial-gradient(ellipse at 23% 15%,#070a09 0%,#161e1a 18%,transparent 46%),radial-gradient(ellipse at 78% 43%,#080b09 0%,#161d18 23%,transparent 53%),radial-gradient(ellipse at 42% 73%,#060807 0%,#18211c 27%,transparent 60%),linear-gradient(102deg,transparent 5%,#101411a8 39%,transparent 72%);filter:blur(2px)';scene.append(grime);
   root.append(scene);
   const bottom=document.createElement('div');bottom.style.cssText='flex:none;padding:13px 16px 24px;background:#100d12;border-top:1px solid #494149;display:grid;grid-template-columns:1fr 1fr;gap:10px';
-  const note=document.createElement('div');note.id='hmIndependentCh03Note';note.textContent='조사 지점을 누르면 서버의 기록이 표시됩니다. 서로 다른 조사원의 단서를 대조하세요.';note.style.cssText='grid-column:1/-1;min-height:52px;white-space:pre-wrap;color:#d9c9d5;padding:10px;background:#1e1721;border:1px solid #4b394d;border-radius:6px';bottom.append(note);
+  const note=document.createElement('div');note.id='hmIndependentCh03Note';note.textContent='사진 속 거울·안내문·계산판·엘리베이터 버튼을 직접 눌러 조사하세요.';note.style.cssText='grid-column:1/-1;min-height:52px;white-space:pre-wrap;color:#d9c9d5;padding:10px;background:#1e1721;border:1px solid #4b394d;border-radius:6px';bottom.append(note);
   function sendInvestigation(action,extra,label){
    note.textContent=label+' 조사 요청 중…';
    if(socket?.readyState===NativeWS.OPEN){socket.send(JSON.stringify({type:'chapter',action,...extra}));}
@@ -387,11 +387,20 @@
    b.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();sendInvestigation(action,extra,label);});
    bottom.append(b);
   }
-  const elevatorButton=document.createElement('button');elevatorButton.type='button';elevatorButton.textContent='엘리베이터 버튼 · 운행 시작';elevatorButton.style.cssText='min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c;color:#f5edf3;font:600 14px system-ui;cursor:pointer';elevatorButton.onclick=()=>sendInvestigation('ch03_video',{},'엘리베이터');bottom.append(elevatorButton);
-  const mirrorButton=document.createElement('button');mirrorButton.type='button';mirrorButton.textContent='거울 닦기';mirrorButton.style.cssText='min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c;color:#f5edf3;font:600 14px system-ui;cursor:pointer';mirrorButton.onclick=openCh03Mirror;bottom.append(mirrorButton);
-  control('스피커','ch03_explore',{object:'speaker'});
-  const directoryButton=document.createElement('button');directoryButton.type='button';directoryButton.textContent='거울 아래 층수 안내문';directoryButton.style.cssText='min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c;color:#f5edf3;font:600 14px system-ui;cursor:pointer';directoryButton.onclick=openCh03FloorDirectory;bottom.append(directoryButton);
-  const calculatorButton=document.createElement('button');calculatorButton.type='button';calculatorButton.textContent='우측 아래 기호 계산판';calculatorButton.style.cssText='min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c;color:#f5edf3;font:600 14px system-ui;cursor:pointer';calculatorButton.onclick=openCh03SymbolCalculator;bottom.append(calculatorButton);
+
+  // Transparent accessible hotspots: scene objects, not a separate control grid.
+  function hotspot(label,left,top,width,height,action){
+   const button=document.createElement('button');button.type='button';button.setAttribute('aria-label',label);button.title=label;
+   button.style.cssText='position:absolute;left:'+left+'%;top:'+top+'%;width:'+width+'%;height:'+height+'%;background:transparent;border:0;cursor:pointer;touch-action:manipulation;z-index:2';
+   button.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();action();});
+   button.addEventListener('focus',()=>button.style.outline='2px solid #d6b3bb');
+   button.addEventListener('blur',()=>button.style.outline='none');
+   scene.append(button);return button;
+  }
+  hotspot('거울 문지르기',6,12,30,58,openCh03Mirror);
+  hotspot('거울 아래 층별 안내문',7,71,33,24,openCh03FloorDirectory);
+  hotspot('우측 아래 기호 계산판',71,67,25,29,openCh03SymbolCalculator);
+  hotspot('엘리베이터 운행 버튼',76,14,20,46,()=>sendInvestigation('ch03_video',{},'엘리베이터'));
   const form=document.createElement('form');form.id='hmCh03CodeForm';form.hidden=!ch03VideoSeen;form.style.cssText='grid-column:1/-1;display:'+(ch03VideoSeen?'flex':'none')+';gap:8px';
   const input=document.createElement('input');input.placeholder='운행 코드 입력';input.inputMode='numeric';input.maxLength=2;input.autocomplete='off';input.style.cssText='min-width:0;flex:1;padding:12px;background:#161119;color:#fff;border:1px solid #766477;border-radius:6px;font-size:16px';
   const submit=document.createElement('button');submit.type='submit';submit.textContent='암호 입력';submit.style.cssText='padding:12px 15px;background:#4b354e;color:#fff;border:1px solid #a18ba5;border-radius:6px;font-size:14px';
