@@ -3,7 +3,9 @@
 // The approved V172 source is hoemyeong_V172_multiplayer_integration_candidate.zip.
 // Do not replace these assertions with placeholder markup or remove them to force green CI.
 const fs=require('node:fs');
-const html=fs.readFileSync('index.html','utf8');
+const html=fs.readFileSync('approved-v172.html','utf8');
+const server=fs.readFileSync('server.js','utf8');
+if(!server.includes("pathname==='/play'"))throw Error('Approved UI is not served at /play');
 const required={
   'approved chapter scene shell':'hmPlaySheet',
   'chapter 6 finale':'hmFinal06',
