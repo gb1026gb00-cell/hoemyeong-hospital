@@ -132,7 +132,7 @@
     }
     if((m.type==='chapter_event'&&m.event==='escape')||((m.type==='state'||m.type==='joined')&&m.chapter&&['escaped','ch02','ch03','ch04','ch05','ch06','finished'].includes(m.chapter.phase))){$('hmReceptionCodeModal')?.remove();$('hmCh01InspectionScreen')?.remove();}
     handleHospitalSoundEvent(m);
-    if(m.type==='chapter_event'&&m.event==='blackout'){document.getElementById('hmCh01GroupIntro')?.remove();appendCh01StoryChat();}
+    if(m.type==='chapter_event'&&m.event==='blackout'){document.getElementById('hmCh01GroupIntro')?.remove();phase='separated';refreshIntegratedChat();}
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
     if(m.type==='horror_video'&&m.id==='G06'&&phase==='ch03')playCh03ElevatorVideo();
     if(m.type==='chapter_transition_video'&&(m.from===1||m.from===2))playChapterEntryVideo(m.video,m.to);
@@ -540,7 +540,9 @@
  function refreshIntegratedChat(){
   const log=$('hmV174ChatLog');if(!log)return;
   const key=phase==='ch03_cleared'?'ch03':phase==='ch04_cleared'?'ch04':phase==='ch05_cleared'?'ch05':phase;
-  const story=laterStory[key]||[];
+  const ch01Arrival=[['홍중','다들 도착했어? 아직 안 온 사람 있어?'],['성화','여기 정말 폐병원 맞아? 불은 켜져 있네.'],['윤호','홍중이 형, 우리 다 들어왔어. 일단 같이 움직이자.'],['민기','성화 형, 아까 복도에서 발소리 못 들었어?'],['여상','나도 들었어. 우리 말고 누가 더 있는 것 같은데.'],['종호','형들, 출입문이 안 열려.'],['우영','산아, 너 아까 문 잠갔어?'],['산','아니, 안 잠갔어. 홍중이 형, 접수대에 뭔가 있어.']];
+  const ch01Blackout=[['우영','형들, 다들 어디 갔어?!?! 산아, 너도 안 보여!'],['민기','윤호야, 나 혼자야. 이거 장난 아니지?'],['종호','홍중이 형, 내 쪽 문이 잠겼어.'],['여상','성화 형, 목소리는 들려? 서로 위치부터 확인하자.'],['윤호','다들 움직이지 마. 지금 보이는 것부터 채팅에 적어.'],['성화','종호야, 괜찮아? 문은 억지로 열지 마.'],['산','우영아, 나 여기 있어. 근데 너한테 갈 수가 없어.'],['홍중','일단 침착해. 각자 찾은 단서를 여기 공유해.']];
+  const story=key==='reception'?ch01Arrival:key==='separated'?[...ch01Arrival,...ch01Blackout]:laterStory[key]||[];
   log.replaceChildren();
   const title=document.createElement('div');title.textContent='CH.'+({'ch03':'03','ch04':'04','ch05':'05','ch06':'06'}[key]||'01')+' · 기존 단체 대화';title.style.cssText='text-align:center;color:#cdb5d5;padding:8px';log.append(title);
   for(const [name,msg] of story){const row=document.createElement('div');row.style.cssText='margin:9px 0';const label=document.createElement('small');label.textContent=name;label.style.cssText='display:block;color:#bcaec2';const bubble=document.createElement('div');bubble.textContent=msg;bubble.style.cssText='display:inline-block;max-width:88%;background:#39313e;padding:9px 12px;border-radius:4px 12px 12px 12px';row.append(label,bubble);log.append(row);}
