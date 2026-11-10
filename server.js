@@ -517,6 +517,20 @@ wss.on('connection',ws=>{
      const assigned=count===2?[records.slice(0,2),records.slice(2,4)][role]:count===4?[records[role]]:role<4?[records[role]]:[verification[role-4]];
      send(ws,{type:'ch02_certificate',role,capacity:count,records:assigned});
     }
+    if(site==='ecg'){
+     // Device IDs deliberately do not identify patients: bed-end registry links them.
+     const archive=[
+      {device:'ECG-01',last:'03:09',signal:'정상 맥박 지속',flag:'사망 처리 후에도 기록됨'},
+      {device:'ECG-02',last:'03:21',signal:'정상 맥박 지속',flag:'사망 처리 후에도 기록됨'},
+      {device:'ECG-03',last:'03:17',signal:'정상 맥박 지속',flag:'사망 처리 후에도 기록됨'},
+      {device:'ECG-04',last:'03:14',signal:'정상 맥박 지속',flag:'사망 처리 후에도 기록됨'}
+     ];
+     const count=[2,4,8].includes(r.capacity)?r.capacity:2;
+     const role=player.role%count;
+     // In 8-player rooms, the verification team owns the ECG originals.
+     const assigned=count===2?archive.slice(role*2,role*2+2):count===4?[archive[role]]:role>=4?[archive[role-4]]:[];
+     send(ws,{type:'ch02_ecg_archive',role,capacity:count,records:assigned,locked:count===8&&role<4});
+    }
     send(ws,{type:'ch02_new_result',site,ok:true,role:player.role,message:site==='certificate'?'사망진단서의 발급 기록이 발견되었다.':site==='ecg'?'심전도 기록에 생존 신호가 남아 있다.':site==='eight'?'침대 끝의 8번 표식 아래 문서 배열 단서가 있다.':'침대 아래의 검은 손자국이 움직인다.'});
     if(site==='underbed'&&!ch.ch02.newScareRoles?.includes(player.role)){
      ch.ch02.newScareRoles=ch.ch02.newScareRoles||[];ch.ch02.newScareRoles.push(player.role);
