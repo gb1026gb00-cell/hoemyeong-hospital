@@ -86,7 +86,7 @@
     if(creating)return;
     creating=true;createButton.disabled=true;createButton.textContent='조사실 번호 발급 중…';
     try{
-     const response=await fetch('/api/rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({capacity:Number($('hmCapacity')?.value||2),drawerTest:location.pathname==='/play-drawer-test'})});
+     const response=await fetch('/api/rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({capacity:Number($('hmCapacity')?.value||2)})});
      if(!response.ok)throw Error('번호 발급 실패');
      const result=await response.json();
      if(!/^[0-9]{4,}$/.test(result.code))throw Error('발급된 코드가 올바르지 않습니다.');
@@ -96,7 +96,7 @@
      createButton.textContent='발급된 '+result.code+'번 조사실 입장';
      const info=$('hmV175RoomInfo')||document.createElement('p');info.id='hmV175RoomInfo';
      info.style.cssText='padding:10px;border:1px solid #8b738f;border-radius:8px;color:#fff;font-size:13px;line-height:1.7';
-     const invite=new URL(location.pathname==='/play-drawer-test'?'/play-drawer-test':'/play',location.origin);invite.searchParams.set('room',result.code);
+     const invite=new URL('/play',location.origin);invite.searchParams.set('room',result.code);
      info.textContent='조사실 코드: '+result.code+' · 친구에게 코드를 알려주거나 아래 초대 링크를 공유하세요.';
      const share=document.createElement('button');share.type='button';share.textContent='초대 링크 복사';share.style.cssText='min-height:42px;margin-top:8px;border:1px solid #81678d;border-radius:8px;background:#33243c;color:white';
      share.onclick=()=>navigator.clipboard?.writeText(invite.href).then(()=>{share.textContent='초대 링크 복사 완료';}).catch(()=>{share.textContent=invite.href;});
