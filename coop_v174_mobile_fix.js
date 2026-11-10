@@ -1042,6 +1042,12 @@
  // Single CH02 investigation path: pointer -> server -> existing document renderer.
  // Capture on window so legacy document handlers cannot swallow mobile touches.
  let ch02LastPointer=0;
+ let ch02UnderbedVisited=false;
+ // H01 media completion is not consistently forwarded by the original player.
+ // Preserve the video on first inspection; revisiting the same object always opens the code form.
+ document.addEventListener('ended',e=>{
+  if(phase==='ch02'&&ch02UnderbedVisited&&e.target instanceof HTMLVideoElement)showCh02Answer();
+ },true);
  window.addEventListener('pointerdown',e=>{
   if(!active||phase!=='ch02'||(e.pointerType==='mouse'&&e.button!==0))return;
   if(document.getElementById('hmCh02GroupIntro')||document.getElementById('hmCh02NewDialog')||document.getElementById('hmCh02ClearScene'))return;
@@ -1067,6 +1073,12 @@
   }
   if(site==='ecg'||site==='eight'){
    openLocalCh02Clue(site);
+   return;
+  }
+  if(site==='underbed'){
+   if(ch02UnderbedVisited){showCh02Answer();return;}
+   ch02UnderbedVisited=true;
+   ch02Send('ch02_new_inspect',{site});
    return;
   }
   ch02Send('ch02_new_inspect',{site});
