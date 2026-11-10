@@ -41,6 +41,11 @@
      if(scene){scene.style.backgroundImage='url("/elevator_hall.webp")';scene.dataset.hmChapterScene='ch03';}
      const bg=scene?.querySelector('.bg');
      if(bg){bg.style.backgroundImage='url("/elevator_hall.webp")';bg.dataset.hmImageKey='ch03-elevator';}
+     // The actual /play client uses an <img>, not a CSS background.
+     const actualImage=document.getElementById('sceneImage');
+     if(actualImage&&actualImage.getAttribute('src')!=='/elevator_hall.webp'){
+      actualImage.src='/elevator_hall.webp';actualImage.alt='회명병원 엘리베이터';
+     }
     }
     if(m.type==='ch03_event'&&m.event==='enter'){
      document.getElementById('hmCh02ClearScene')?.remove();
