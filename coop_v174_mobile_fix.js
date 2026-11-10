@@ -39,6 +39,7 @@
      if(status)status.textContent=m.message||'파편 수집 상태를 확인해 주세요.';
     }
     if((m.type==='state'||m.type==='joined')&&m.chapter?.phase==='ch02_cleared'&&!document.getElementById('hmCh02ClearScene'))showCh02Clear();
+    if(m.type==='ch04_event'&&m.event==='enter'){document.getElementById('hmCh03ToCh04Video')?.remove();ch03ToCh04Playing=false;}
     if(m.type==='ch03_event'&&m.event==='enter'){
      phase='ch03';
      const image=document.getElementById('sceneImage');
@@ -109,6 +110,7 @@
     if(m.type==='chapter_event'&&m.event==='blackout'){document.getElementById('hmCh01GroupIntro')?.remove();appendCh01StoryChat();}
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
     if(m.type==='horror_video'&&m.id==='G06'&&phase==='ch03')playCh03ElevatorVideo();
+    if(m.type==='ch03_event'&&m.event==='transition_video')playCh03ToCh04Video();
     if(m.type==='ch03_event'&&m.event==='cleared'){phase='ch03_cleared';showCh03Cleared();}
     if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2){ch03FragmentCollected=true;const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent='제0유물 파편이 공동 소지품에 등록되었습니다.';}
     if(m.type==='ch03_result'&&m.ok===false&&phase==='ch03'){const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent=m.message||'조사 요청을 완료하지 못했습니다.';}
@@ -315,6 +317,23 @@
   card.append(result,run);overlay.append(card);document.body.append(overlay);
  }
 
+ let ch03ToCh04Playing=false;
+ function playCh03ToCh04Video(){
+  if(ch03ToCh04Playing||document.getElementById('hmCh03ToCh04Video'))return;
+  ch03ToCh04Playing=true;
+  const overlay=document.createElement('div');overlay.id='hmCh03ToCh04Video';
+  overlay.style.cssText='position:fixed;inset:0;z-index:2147483651;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#e8dfdb;font:14px system-ui';
+  const video=document.createElement('video');video.src='/G02.mp4';video.autoplay=true;video.playsInline=true;video.controls=false;video.preload='auto';
+  video.style.cssText='width:100%;max-height:90dvh;object-fit:contain';
+  const info=document.createElement('div');info.textContent='기록보관실 이동 영상 · G02';info.style.cssText='padding:12px;text-align:center;color:#cbbbc0';
+  video.addEventListener('ended',()=>{
+   info.textContent='영상 시청 완료 · 다른 조사원을 기다리는 중…';
+   if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'ch03_transition_video_done'}));
+  },{once:true});
+  video.addEventListener('error',()=>{info.textContent='G02 영상을 불러오지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.';video.controls=true;},{once:true});
+  overlay.append(video,info);document.body.append(overlay);
+  video.play().catch(()=>{video.muted=true;video.play().catch(()=>{info.textContent='자동재생이 차단되었습니다. 영상을 눌러 재생하세요.';video.controls=true;});});
+ }
  let ch03VideoSeen=false;
  function playCh03ElevatorVideo(){
   if(ch03VideoSeen||document.getElementById('hmCh03G06'))return;
