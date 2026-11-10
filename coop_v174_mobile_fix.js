@@ -54,6 +54,38 @@
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountDirectInvestigation,{once:true});else mountDirectInvestigation();
  const directObserver=new MutationObserver(()=>mountDirectInvestigation());
  directObserver.observe(document.documentElement,{childList:true,subtree:true});
+ // CH01 desk action is independent of the legacy call-bell and puzzle UI.
+ // Keep it visible after separation even when V172 uses a separate scene sheet.
+ function mountReceptionDeskAction(){
+  let b=$('hmDirectReceptionDesk');
+  if(!b){
+   b=document.createElement('button');b.id='hmDirectReceptionDesk';b.type='button';
+   b.textContent='접수대 서랍 조사';
+   b.style.cssText='position:fixed!important;left:50%!important;bottom:92px!important;transform:translateX(-50%)!important;z-index:999990!important;min-width:220px;max-width:90vw;padding:16px 22px;border:2px solid #bba0ad;border-radius:12px;background:#392536;color:#fff;font:700 16px system-ui;box-shadow:0 5px 25px #000b;cursor:pointer';
+   b.addEventListener('click',e=>{
+    e.preventDefault();e.stopImmediatePropagation();
+    if(!active||phase!=='separated'||socket?.readyState!==NativeWS.OPEN)return;
+    socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'desk'}));
+   },true);
+   document.body.append(b);
+  }
+  b.hidden=!(active&&phase==='separated');
+  b.style.display=b.hidden?'none':'block';
+ }
+ document.addEventListener('hm-v175-state',mountReceptionDeskAction);
+ document.addEventListener('hm-v175-started',mountReceptionDeskAction);
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountReceptionDeskAction,{once:true});else mountReceptionDeskAction();
+ // The approved V172 scene can be rendered after the server state arrives.
+ // Its existing desk hotspots should send the same command, not the bell action.
+ document.addEventListener('click',event=>{
+  if(!active||phase!=='separated'||socket?.readyState!==NativeWS.OPEN)return;
+  const el=event.target.closest?.('[data-object],[data-action],[data-ch01],[aria-label],[title]');
+  if(!el||el.id==='hmDirectReceptionDesk')return;
+  const descriptor=[el.dataset?.object,el.dataset?.action,el.dataset?.ch01,el.getAttribute('aria-label'),el.getAttribute('title')].filter(Boolean).join(' ').toLowerCase();
+  if(!/desk|reception_desk|접수대|서랍/.test(descriptor))return;
+  event.preventDefault();event.stopImmediatePropagation();
+  socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'desk'}));
+ },true);
  // Keep cinematic overlays as non-interactive layers. The source video
  // stays unchanged; native controls, fullscreen affordances and pinch zoom
  // are suppressed on all injected scare players.
