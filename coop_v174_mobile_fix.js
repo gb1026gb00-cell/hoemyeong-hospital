@@ -173,8 +173,8 @@
   retry.hidden=true;
   const finish=()=>{video.pause();overlay.remove();receptionHandPlaying=false;};
   video.addEventListener('ended',finish,{once:true});
-  video.addEventListener('error',finish,{once:true}); // Never trap the player if the asset is not deployed.
-  retry.onclick=()=>video.play().catch(()=>{retry.hidden=false;});
+  video.addEventListener('error',()=>{retry.textContent='영상 로딩 오류 · 다시 재생';retry.hidden=false;},{once:true});
+  retry.onclick=()=>{video.muted=false;video.play().catch(()=>{retry.hidden=false;retry.textContent='영상 재생하기';});};
   overlay.append(video,retry);document.body.append(overlay);
   video.play().catch(()=>{retry.hidden=false;});
  }
