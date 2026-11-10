@@ -332,7 +332,14 @@
   const section=document.createElement('section');section.id='hmReceptionCoop';
   section.style.cssText='margin:12px 0;padding:14px;border:1px solid #91677c;border-radius:12px;background:linear-gradient(#271820,#100d15);color:#f4e8ee';
   const title=document.createElement('strong');title.textContent='접수명부 · 여섯 자리 봉인';
-  const intro=document.createElement('p');intro.textContent='각자 보이는 물건이 다릅니다. 거울의 검은 얼룩을 세고, 캐비닛의 빈칸과 날짜별 명부를 팀원과 대조하세요. 접수대 서랍은 공포 연출입니다. 팀원과 공유해 여섯 칸을 완성하세요.';intro.style.cssText='font-size:12px;line-height:1.6;color:#d5c2ce';
+  const intro=document.createElement('p');intro.textContent='각자 보이는 물건이 다릅니다. 거울의 검은 얼룩을 세고, 캐비닛의 빈칸과 날짜별 명부를 팀원과 대조하세요. 팀원과 공유해 여섯 칸을 완성하세요.';intro.style.cssText='font-size:12px;line-height:1.6;color:#d5c2ce';
+  const notice=document.createElement('div');notice.id='hmReceptionSecurityNotice';
+  notice.style.cssText='margin:14px 0;padding:18px 14px;border:1px solid #766873;border-radius:5px;background:linear-gradient(140deg,#29232a,#16141a);color:#e5d8d9;box-shadow:inset 0 0 18px #08070a;font-family:serif;text-align:center;line-height:1.9';
+  const noticeHeader=document.createElement('div');noticeHeader.textContent='回明病院 · 접수 기록 보안 지침';noticeHeader.style.cssText='font-size:12px;letter-spacing:.08em;color:#b5a6aa';
+  const noticeTitle=document.createElement('div');noticeTitle.textContent='제01조 · 봉인 해제 절차';noticeTitle.style.cssText='font-size:16px;font-weight:bold;border-bottom:1px solid #514750;padding:8px 0;margin-bottom:9px';
+  const noticeBody=document.createElement('div');noticeBody.textContent='비친 것을 먼저 헤아리고,\\n잠긴 것의 빈자리를 채운 뒤,\\n마지막으로 남겨진 기록을 대조하라.';noticeBody.style.whiteSpace='pre-line';
+  const noticeFooter=document.createElement('div');noticeFooter.textContent='※ 순서를 어길 경우 봉인은 해제되지 않습니다.';noticeFooter.style.cssText='font-size:11px;color:#a69ba0;border-top:1px solid #514750;margin-top:12px;padding-top:9px';
+  notice.append(noticeHeader,noticeTitle,noticeBody,noticeFooter);
   const objects=document.createElement('div');objects.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0';
   for(const [object,label] of [['desk','📖 접수대'],['mirror','◈ 거울'],['cabinet','▤ 캐비닛'],['ledger','📋 접수명부']]){
    const b=document.createElement('button');b.type='button';b.textContent=label;
@@ -355,7 +362,7 @@
   const inputProxy=document.createElement('input');inputProxy.id='hmReceptionAnswer';inputProxy.type='hidden';
   const submit=document.createElement('button');submit.type='button';submit.textContent='접수대 봉인 해제';submit.style.cssText='width:100%;min-height:48px;margin-top:9px;border:1px solid #ac7a90;border-radius:9px;background:#5c3047;color:#fff;font-weight:bold';
   submit.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN)return;socket.send(JSON.stringify({type:'chapter',action:'reception_submit',answer:input.value.trim()}));};
-  section.append(title,intro,objects,output,hint,cells,inputProxy,submit);
+  section.append(title,intro,objects,output,hint,notice,cells,inputProxy,submit);
   const guide=$('hmCh01Guide');if(guide)guide.before(section);else panel.querySelector('strong')?.after(section);
   // Hide only the obsolete CH01 numeric form, retaining its DOM and all server
   // handlers for backward compatibility. Other chapters and artifacts untouched.
