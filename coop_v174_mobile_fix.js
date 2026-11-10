@@ -14,7 +14,7 @@
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
     if(m.type==='state'||m.type==='joined'){active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
-    if(m.type==='horror_video'&&m.id==='G08')armSeparation();
+    if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
     if(m.type==='chat'){const box=$('hmV174ChatLog');if(box){const line=document.createElement('div');line.textContent=(Number.isInteger(m.item?.character)&&m.item.character>=0&&m.item.character<8?['홍중','성화','윤호','여상','산','민기','우영','종호'][m.item.character]+': ':(m.item?.role!==undefined?'조사원 '+(m.item.role+1)+': ':''))+(m.item?.text||m.item?.message||'');box.append(line);box.scrollTop=box.scrollHeight;}}
    });
    this.addEventListener('close',()=>{if(socket===this){active=false;updateBell();updateConnectionStatus();}});
@@ -38,6 +38,43 @@
   const bell=document.querySelector('[data-action="bell"]');
   if(bell)bell.addEventListener('click',()=>{separationVoice.load();},{passive:true});
  },{once:true});
+ // A dedicated full-screen G08 transition prevents the reception scene from
+ // appearing immediately while the original media player fails or is blocked.
+ let separationPlaying=false;
+ function playForcedSeparation(){
+  if(separationPlaying)return;
+  separationPlaying=true;
+  const overlay=document.createElement('div');
+  overlay.id='hmForcedSeparation';
+  overlay.style.cssText='position:fixed;inset:0;z-index:999999;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;color:#f3dbe6';
+  const video=document.createElement('video');
+  video.playsInline=true;video.preload='auto';video.controls=false;
+  video.style.cssText='width:100%;height:100%;object-fit:contain';
+  video.src='https://gb1026gb00-cell.github.io/hoemyeong-hospital/G08.mp4';
+  const action=document.createElement('button');
+  action.type='button';action.textContent='강제 분리 영상 재생';
+  action.style.cssText='position:absolute;bottom:12%;padding:14px 22px;border:1px solid #9e5263;border-radius:10px;background:#2c131d;color:white;font:700 15px system-ui';
+  action.hidden=true;
+  overlay.append(video,action);document.body.append(overlay);
+  let done=false;
+  const finish=()=>{if(done)return;done=true;video.pause();separationVoice.pause();overlay.remove();separationPlaying=false;};
+  video.addEventListener('playing',()=>{action.hidden=true;pendingSeparation=true;startSeparationVoice();});
+  video.addEventListener('ended',finish);
+  video.addEventListener('error',()=>{action.hidden=false;action.textContent='영상 로드 실패 · 조사 계속하기';action.onclick=finish;});
+  action.addEventListener('click',()=>{if(video.error){finish();return;}video.play().catch(()=>{action.hidden=false;});});
+  video.volume=soundVolume();video.muted=soundVolume()===0;
+  video.play().catch(()=>{action.hidden=false;});
+ }
+ // G08 is owned by the transition above; all other approved horror videos
+ // continue through the original V172 media handler unchanged.
+ function installG08MediaRouting(){
+  const media=window.hmMedia;
+  if(!media||typeof media.handle!=='function'||media.__hmG08Routed)return;
+  const original=media.handle.bind(media);
+  media.handle=function(message){if(message?.type==='horror_video'&&message.id==='G08')return;return original(message);};
+  media.__hmG08Routed=true;
+ }
+ installG08MediaRouting();
  window.WebSocket=CoopSocket;
  // Only the approved 2/4/6/8-person capacities are selectable.
  function normalizeCapacityControls(){
