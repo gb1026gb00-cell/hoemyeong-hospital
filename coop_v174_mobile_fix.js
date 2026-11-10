@@ -256,7 +256,7 @@
   const labels=['접수실','진료실','검사실','기록보관실','수술실','입원병동','폐쇄병동','기계실'];
   for(let i=0;i<8;i++){
    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;min-height:39px;border-bottom:1px dashed #7e7067;padding:3px 8px;gap:10px;'+(i===floor-1?'background:#7c514b28;':'');
-   const name=document.createElement('span');name.textContent=String(i+1).padStart(2,'0')+'F  '+(i>=8-capacity?(i===floor-1&&ownSymbol!==null?ownSymbol:'???'):labels[i]);name.style.cssText='font:600 16px Georgia,serif;letter-spacing:.4px';
+   const name=document.createElement('span');name.textContent=String(i+1).padStart(2,'0')+'F  '+(i>=8-capacity?(i===floor-1&&ownSymbol!==null?'': '???'):labels[i]);name.style.cssText='font:600 16px Georgia,serif;letter-spacing:.4px';
    const stamp=document.createElement('span');stamp.style.cssText='font:bold 23px Georgia,serif;color:#702d2a;min-width:40px;text-align:center;transform:rotate(-8deg)';
    stamp.textContent=i===floor-1&&ownSymbol!==null?ownSymbol:'';
    row.append(name,stamp);paper.append(row);
@@ -383,7 +383,7 @@
  function mountIndependentCh03(){
   const old=document.getElementById('hmIndependentCh03');
   if(!active||phase!=='ch03'){old?.remove();return;}
-  if(old){old.style.setProperty('display','flex','important');return;}
+  if(old){old.style.setProperty('display','flex','important');const form=old.querySelector('#hmCh03CodeForm');if(form&&ch03VideoSeen){form.hidden=false;form.style.display='flex';}return;}
   document.getElementById('hmCh02ClearScene')?.remove();
   document.getElementById('hmCh02NewDialog')?.remove();
   const root=document.createElement('section');root.id='hmIndependentCh03';
