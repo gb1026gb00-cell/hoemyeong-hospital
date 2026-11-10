@@ -226,6 +226,27 @@
   out.style.borderColor=message.ok?'#6b9a83':'#9b697f';
   if(message.complete){document.querySelectorAll('#hmReceptionCoop input').forEach(input=>input.disabled=true);}
  }
+ function installSplitTrigger(){
+  const panel=$('ch01PuzzlePanel');if(!panel||$('hmCh01SplitTrigger'))return;
+  const button=document.createElement('button');button.id='hmCh01SplitTrigger';button.type='button';
+  button.textContent='접수실 조사 시작';
+  button.style.cssText='display:block;width:100%;min-height:56px;margin:12px 0;padding:14px;border:1px solid #a87a91;border-radius:10px;background:#482638;color:#fff;font:700 17px system-ui';
+  const hint=document.createElement('p');hint.id='hmCh01SplitHint';hint.textContent='조사 시작을 누르면 모든 조사원에게 강제 분리 영상이 재생됩니다.';
+  hint.style.cssText='font:13px/1.5 system-ui;color:#d2b9c8';
+  button.onclick=()=>{
+   if(!active||socket?.readyState!==NativeWS.OPEN){hint.textContent='팀원과 협동 서버 연결을 확인하세요.';return;}
+   if(phase!=='reception'){hint.textContent='이미 분리된 조사실입니다. 현장 조사를 계속하세요.';return;}
+   socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'desk'}));
+   button.disabled=true;hint.textContent='다른 조사원들과 분리되는 중…';
+   setTimeout(()=>{if(phase==='reception'){button.disabled=false;hint.textContent='응답이 없습니다. 서버 연결을 확인하고 다시 누르세요.';}},4500);
+  };
+  panel.prepend(hint);panel.prepend(button);
+  const oldNotice=[...panel.querySelectorAll('p,div,span')].filter(el=>el.children.length===0&&/호출벨과 협동 절차를 먼저/.test(el.textContent||''));
+  oldNotice.forEach(el=>{el.hidden=true;el.style.display='none';});
+  const refresh=()=>{const done=phase!=='reception';button.hidden=done;hint.hidden=done;};
+  document.addEventListener('hm-v175-state',refresh);refresh();
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installSplitTrigger,{once:true});else installSplitTrigger();
  function installReceptionCoop(){
   const panel=$('ch01PuzzlePanel');if(!panel||$('hmReceptionCoop'))return;
   const section=document.createElement('section');section.id='hmReceptionCoop';
