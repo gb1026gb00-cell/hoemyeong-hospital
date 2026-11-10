@@ -603,7 +603,7 @@ wss.on('connection',ws=>{
     if(!r.artifactFragments)r.artifactFragments=new Set();
     r.artifactFragments.add(1);
     broadcast(r,{type:'ch02_new_result',site:'answer',ok:true,scene:'death_record_invalidated',artifactFragment:1,message:'PATIENT STATUS : ALIVE · 제0유물 파편이 공동 수집함에 등록되었습니다.'});
-    ch.phase='ch02_video_wait';startVideoGate(r,'ch02_clear','G02');return;
+    ch.phase='ch02_video_wait';startVideoGate(r,'ch02_clear','G13');return;
    }
    if(ch.phase==='ch02'&&String(m.action||'').startsWith('ch02_'))return;
    if(m.action==='ch03_enter'&&ch.phase==='ch02_cleared'){
@@ -836,7 +836,7 @@ wss.on('connection',ws=>{
       broadcast(r,{type:'fragment_result',ok:true,index:0,message:FRAGMENT_DESCRIPTIONS[0]+' (팀 공동 소지품에 등록)'});
      }
      broadcast(r,{type:'reception_result',ok:true,complete:true,message:'접수대 봉인 해제. 제0유물 파편을 공동 소지품에 등록했습니다. 208호로 이동합니다.'});
-     ch.phase='ch01_video_wait';startVideoGate(r,'ch01_clear','G01');
+     ch.phase='ch01_video_wait';startVideoGate(r,'ch01_clear','H03');
     }
     broadcast(r,state(r));persist();return;
    }
