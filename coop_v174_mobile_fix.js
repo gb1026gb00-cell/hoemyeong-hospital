@@ -24,11 +24,21 @@
      const status=document.getElementById('hmCh02NewStatus');if(status)status.textContent=m.message||'';
      if(m.ok)ch02Dialog('봉인 해제',m.message||'PATIENT STATUS : ALIVE');
     }
+    if(m.type==='ch02_new_result'&&m.site==='underbed'&&phase==='ch02'&&!m.videoPending){
+     ch02HandPending=false;
+     showCh02Answer();
+    }
     if(m.type==='horror_video'&&m.id==='H01'&&phase==='ch02'&&ch02HandPending){
      ch02HandPending=false;
-     const vid=document.getElementById('hmHorrorVideo');
-     if(vid){const finish=()=>ch02Dialog('302호 · 봉인 번호','침대 아래에 새겨진 네 글자를 입력하라.',true);vid.addEventListener('ended',finish,{once:true});}
-     else ch02Dialog('302호 · 봉인 번호','침대 아래에 새겨진 네 글자를 입력하라.',true);
+     const video=document.getElementById('hmHorrorVideo');
+     if(video){
+      let shown=false;
+      const finish=()=>{if(shown||phase!=='ch02')return;shown=true;showCh02Answer();};
+      video.addEventListener('ended',finish,{once:true});
+      video.addEventListener('error',finish,{once:true});
+      // A blocked or missing media source should not strand the puzzle.
+      video.addEventListener('abort',finish,{once:true});
+     }else showCh02Answer();
     }
     if((m.type==='chapter_event'&&m.event==='escape')||((m.type==='state'||m.type==='joined')&&m.chapter&&['escaped','ch02','ch03','ch04','ch05','ch06','finished'].includes(m.chapter.phase))){$('hmReceptionCodeModal')?.remove();$('hmCh01InspectionScreen')?.remove();}
     handleHospitalSoundEvent(m);
@@ -711,6 +721,10 @@
   const footer=document.createElement('p');footer.textContent='※ 서로 다른 조사원이 확인한 문서를 대조하십시오.';footer.style.cssText='font-size:12px;margin-top:18px';paper.append(footer);
   wrap.append(paper);document.body.append(wrap);
  }
+ function showCh02Answer(){
+  ch02Dialog('02. 사망 판정의 오류',
+   '죽은 자의 기록은 남아 있으나, 죽음의 증거는 남아 있지 않다.\n\n네 장의 사망진단서와 마지막 심장 신호를 대조하라.\n\n사망 판정 이후에도 심장이 뛰었던 시간.\n가장 오래 살아 있었던 자부터, 인식표에 남겨진 네 글자를 입력하라.',true);
+ }
  function ch02Dialog(title,body,code=false){
   document.getElementById('hmCh02NewDialog')?.remove();
   const wrap=document.createElement('div');wrap.id='hmCh02NewDialog';
@@ -721,8 +735,8 @@
   const close=document.createElement('button');close.textContent='닫기 ×';close.style.cssText='float:right;padding:8px 12px;background:#30232b;color:white;border:0';
   close.onclick=()=>wrap.remove();card.append(close,h,p);
   if(code){
-   const input=document.createElement('input');input.maxLength=4;input.placeholder='영문 4글자';input.autocapitalize='characters';input.style.cssText='width:100%;padding:12px;font-size:22px;letter-spacing:7px;text-transform:uppercase';
-   const submit=document.createElement('button');submit.textContent='봉인 해제';submit.style.cssText='display:block;margin-top:12px;padding:12px 18px;background:#30232b;color:#fff;border:0';
+   const input=document.createElement('input');input.maxLength=4;input.placeholder='영문 4글자';input.setAttribute('aria-label','사망 판정 정정 코드 네 글자');input.autocapitalize='characters';input.style.cssText='width:100%;padding:12px;font-size:22px;letter-spacing:7px;text-transform:uppercase';
+   const submit=document.createElement('button');submit.textContent=code?'기록 정정':'봉인 해제';submit.style.cssText='display:block;margin-top:12px;padding:12px 18px;background:#30232b;color:#fff;border:0';
    const status=document.createElement('p');status.id='hmCh02NewStatus';
    submit.onclick=()=>ch02Send('ch02_new_solve',{answer:input.value.toUpperCase()});
    card.append(input,submit,status);
