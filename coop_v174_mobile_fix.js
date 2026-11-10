@@ -185,7 +185,14 @@
   const old=panel.querySelector('#senseIndex')?.closest('div');
   if(old){old.hidden=true;old.style.display='none';}
   const oldControls=panel.querySelector('[data-ch01="inspect"]')?.parentElement;
-  if(oldControls){oldControls.hidden=true;oldControls.style.display='none';}
+  if(oldControls){
+   // Keep the approved artifact collection and chapter transition functional.
+   for(const action of ['fragment_search','ch02_enter']){
+    const original=oldControls.querySelector('[data-ch01="'+action+'"]');
+    if(original){original.style.cssText+=';width:100%;min-height:46px;margin-top:9px;border-radius:9px;';section.append(original);}
+   }
+   oldControls.hidden=true;oldControls.style.display='none';
+  }
   if(guide){guide.hidden=true;guide.style.display='none';}
   const desk=document.querySelector('#mainScene [data-action="desk"]');
   if(desk){desk.addEventListener('click',()=>{if(active&&phase==='separated'&&socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'desk'}));});}
