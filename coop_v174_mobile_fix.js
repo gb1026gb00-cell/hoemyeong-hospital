@@ -16,7 +16,7 @@
   constructor(...args){super(...args);socket=this;
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
-    if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity))){receptionAnswerLength=Number(m.capacity)/2+3;ch02RoomCapacity=Number(m.capacity);}if(Array.isArray(m.roles))ch02RoomRoles=m.roles.filter(Number.isInteger).slice().sort((a,b)=>a-b);active=!!m.started;phase=m.chapter?.phase||phase;if(Array.isArray(m.artifactFragments))ch03FragmentCollected=m.artifactFragments.includes(2);updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
+    if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity))){receptionAnswerLength=Number(m.capacity)/2+3;ch02RoomCapacity=Number(m.capacity);}if(Array.isArray(m.roles))ch02RoomRoles=m.roles.filter(Number.isInteger).slice().sort((a,b)=>a-b);active=!!m.started;phase=m.chapter?.phase||phase;if(Array.isArray(m.artifactFragments))ch03FragmentCollected=m.artifactFragments.includes(2);const inv=document.getElementById('hmCh03Inventory');if(inv)inv.textContent='🎒 제0유물 파편 · '+(m.artifactFragments?.length||0)+'/5'+(ch03FragmentCollected?' · 거울 파편 획득':' · 거울 파편 미획득');updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='joined'&&typeof m.isHost==='boolean')ch02IsHost=m.isHost;
     if((m.type==='joined'||m.type==='state')&&m.yourRole!==undefined&&m.yourRole!==null&&Number.isInteger(Number(m.yourRole)))ch02AssignedRole=Number(m.yourRole);
     if(m.type==='ch02_certificate'&&Number.isInteger(Number(m.role)))ch02AssignedRole=Number(m.role);
@@ -113,7 +113,7 @@
     if(m.type==='horror_video'&&m.id==='G06'&&phase==='ch03')playCh03ElevatorVideo();
     if(m.type==='ch03_event'&&m.event==='transition_video')playCh03ToCh04Video();
     if(m.type==='ch03_event'&&m.event==='cleared'){phase='ch03_cleared';showCh03Cleared();}
-    if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2){ch03FragmentCollected=true;const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent='제0유물 파편이 공동 소지품에 등록되었습니다.';}
+    if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2){ch03FragmentCollected=true;const inv=document.getElementById('hmCh03Inventory');if(inv)inv.textContent='🎒 제0유물 파편 수집함 · 거울 파편 획득';const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent='제0유물 파편이 공동 소지품에 등록되었습니다.';}
     if(m.type==='ch03_result'&&m.ok===false&&phase==='ch03'){const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent=m.message||'조사 요청을 완료하지 못했습니다.';}
     if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2&&phase==='ch03'){const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent='제0유물 파편이 공동 소지품에 등록되었습니다. 이제 운행 코드를 입력할 수 있습니다.';}
     if(m.type==='ch04_result'&&m.ok===false&&phase==='ch03_cleared'){const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent=m.message||'다음 구역으로 이동할 수 없습니다.';}
@@ -410,14 +410,19 @@
   root.style.cssText='position:fixed!important;inset:0!important;z-index:2147483000!important;background:#080709;color:#e9e3dd;display:flex!important;flex-direction:column;font:14px/1.5 system-ui;overflow-y:auto;overscroll-behavior:contain;pointer-events:auto!important';
   const header=document.createElement('header');header.textContent='03. 엘리베이터 · 回明病院';
   header.style.cssText='flex:none;padding:13px 18px;background:#0d0d10;border-bottom:1px solid #494149;letter-spacing:1px;text-align:center';root.append(header);
-  const scene=document.createElement('div');scene.style.cssText='position:relative;flex:none;width:100%;aspect-ratio:16/9;overflow:hidden;background:#09080a';
-  const photo=document.createElement('img');photo.src='/elevator_hall.webp';photo.alt='낡은 회명병원 엘리베이터';photo.style.cssText='width:100%;height:100%;object-fit:cover;display:block;pointer-events:none';scene.append(photo);
+  const scene=document.createElement('div');scene.style.cssText='position:relative;flex:1 1 auto;min-height:45dvh;width:100%;overflow:hidden;background:#09080a';
+  const imageLayer=document.createElement('div');imageLayer.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);aspect-ratio:16/9;overflow:hidden';
+  const photo=document.createElement('img');photo.src='/elevator_hall.webp';photo.alt='낡은 회명병원 엘리베이터';photo.style.cssText='width:100%;height:100%;object-fit:fill;display:block;pointer-events:none';imageLayer.append(photo);
+  function sizeElevatorImage(){const w=scene.clientWidth,h=scene.clientHeight;if(!w||!h)return;const width=Math.max(w,h*16/9);imageLayer.style.width=width+'px';imageLayer.style.height=width*9/16+'px';}
+  const elevatorResizeObserver=new ResizeObserver(sizeElevatorImage);elevatorResizeObserver.observe(scene);
+  photo.addEventListener('load',sizeElevatorImage);requestAnimationFrame(sizeElevatorImage);
+  scene.append(imageLayer);
   // Irregular damp grime on the floor directory; no fabricated readable text.
   const grime=document.createElement('div');grime.setAttribute('aria-hidden','true');
-  grime.style.cssText='position:absolute;left:76%;top:10%;width:17%;height:76%;pointer-events:none;opacity:.9;mix-blend-mode:multiply;background:radial-gradient(ellipse at 23% 15%,#070a09 0%,#161e1a 18%,transparent 46%),radial-gradient(ellipse at 78% 43%,#080b09 0%,#161d18 23%,transparent 53%),radial-gradient(ellipse at 42% 73%,#060807 0%,#18211c 27%,transparent 60%),linear-gradient(102deg,transparent 5%,#101411a8 39%,transparent 72%);filter:blur(2px)';scene.append(grime);
+  grime.style.cssText='position:absolute;left:76%;top:10%;width:17%;height:76%;pointer-events:none;opacity:.9;mix-blend-mode:multiply;background:radial-gradient(ellipse at 23% 15%,#070a09 0%,#161e1a 18%,transparent 46%),radial-gradient(ellipse at 78% 43%,#080b09 0%,#161d18 23%,transparent 53%),radial-gradient(ellipse at 42% 73%,#060807 0%,#18211c 27%,transparent 60%),linear-gradient(102deg,transparent 5%,#101411a8 39%,transparent 72%);filter:blur(2px)';imageLayer.append(grime);
   root.append(scene);
-  const bottom=document.createElement('div');bottom.style.cssText='flex:none;padding:13px 16px 24px;background:#100d12;border-top:1px solid #494149;display:grid;grid-template-columns:1fr 1fr;gap:10px';
-  const note=document.createElement('div');note.id='hmIndependentCh03Note';note.textContent='왼쪽 거울을 문질러 숫자를 찾으세요. 제0유물은 거울 오른쪽 테두리의 틈에 있습니다. 오른쪽 벽의 작은 버튼으로 엘리베이터를 작동하고, 안내문·계산판은 각각 직접 눌러 조사하세요.';note.style.cssText='grid-column:1/-1;min-height:52px;white-space:pre-wrap;color:#d9c9d5;padding:10px;background:#1e1721;border:1px solid #4b394d;border-radius:6px';bottom.append(note);
+  const bottom=document.createElement('div');bottom.style.cssText='flex:none;padding:10px 12px 16px;background:#100d12;border-top:1px solid #494149;display:grid;grid-template-columns:1fr 1fr;gap:8px';
+  const note=document.createElement('div');note.id='hmIndependentCh03Note';note.textContent='왼쪽 거울을 문질러 숫자를 찾으세요. 제0유물은 거울 오른쪽 테두리의 틈에 있습니다. 오른쪽 벽의 작은 버튼으로 엘리베이터를 작동하고, 안내문·계산판은 각각 직접 눌러 조사하세요.';note.style.cssText='grid-column:1/-1;min-height:0;white-space:pre-wrap;color:#d9c9d5;padding:10px;background:#1e1721;border:1px solid #4b394d;border-radius:6px';bottom.append(note);
   function sendInvestigation(action,extra,label){
    note.textContent=label+' 조사 요청 중…';
    if(socket?.readyState===NativeWS.OPEN){socket.send(JSON.stringify({type:'chapter',action,...extra}));}
@@ -437,13 +442,17 @@
    button.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();action();});
    button.addEventListener('focus',()=>button.style.outline='2px solid #d6b3bb');
    button.addEventListener('blur',()=>button.style.outline='none');
-   scene.append(button);return button;
+   imageLayer.append(button);return button;
   }
   hotspot('거울 문지르기',6,12,30,58,openCh03Mirror);
   const fragmentHotspot=hotspot('거울 가장자리 틈 · 제0유물 조사',23,19,10,43,()=>sendInvestigation('ch03_fragment',{},'거울 가장자리'));fragmentHotspot.style.zIndex='3';
   hotspot('거울 아래 층별 안내문',7,71,33,24,openCh03FloorDirectory);
   hotspot('우측 아래 기호 계산판',71,67,25,29,openCh03SymbolCalculator);
   hotspot('엘리베이터 운행 버튼',68,46,8,15,()=>sendInvestigation('ch03_video',{},'엘리베이터'));
+  const inventory=document.createElement('button');inventory.type='button';inventory.id='hmCh03Inventory';inventory.style.cssText='grid-column:1/-1;padding:10px 12px;border:1px solid #766477;border-radius:7px;background:#211b28;color:#f4e8f1;font:600 14px system-ui;text-align:left';
+  const updateInventory=()=>{const progress=document.getElementById('artifactProgress')?.textContent||'제0유물 파편 수집함';inventory.textContent='🎒 '+progress+(ch03FragmentCollected?' · 거울 파편 획득':' · 거울 파편 미획득');};
+  inventory.addEventListener('click',()=>{updateInventory();note.textContent=ch03FragmentCollected?'거울 가장자리의 제0유물 파편이 공동 수집함에 등록되었습니다.':'제0유물 파편은 왼쪽 거울 오른쪽 테두리의 틈에서 수집할 수 있습니다.';});
+  bottom.append(inventory);updateInventory();
   const form=document.createElement('form');form.id='hmCh03CodeForm';form.hidden=!ch03VideoSeen;form.style.cssText='grid-column:1/-1;display:'+(ch03VideoSeen?'flex':'none')+';gap:8px';
   const input=document.createElement('input');input.placeholder='운행 코드 입력';input.inputMode='numeric';input.maxLength=2;input.autocomplete='off';input.style.cssText='min-width:0;flex:1;padding:12px;background:#161119;color:#fff;border:1px solid #766477;border-radius:6px;font-size:16px';
   const submit=document.createElement('button');submit.type='submit';submit.textContent='암호 입력';submit.style.cssText='padding:12px 15px;background:#4b354e;color:#fff;border:1px solid #a18ba5;border-radius:6px;font-size:14px';
