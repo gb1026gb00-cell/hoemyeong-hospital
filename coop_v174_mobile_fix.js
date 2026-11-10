@@ -14,12 +14,30 @@
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
     if(m.type==='state'||m.type==='joined'){active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
+    if(m.type==='horror_video'&&m.id==='G08')armSeparation();
     if(m.type==='chat'){const box=$('hmV174ChatLog');if(box){const line=document.createElement('div');line.textContent=(Number.isInteger(m.item?.character)&&m.item.character>=0&&m.item.character<8?['홍중','성화','윤호','여상','산','민기','우영','종호'][m.item.character]+': ':(m.item?.role!==undefined?'조사원 '+(m.item.role+1)+': ':''))+(m.item?.text||m.item?.message||'');box.append(line);box.scrollTop=box.scrollHeight;}}
    });
    this.addEventListener('close',()=>{if(socket===this){active=false;updateBell();updateConnectionStatus();}});
    this.addEventListener('open',()=>{if(socket===this)updateConnectionStatus();});
   }
  }
+ // The server already broadcasts G08 on the bell action. Add the approved
+ // corrupted CH01 voice to the actual G08 playback, not to an unrelated timer.
+ const separationVoice=new Audio('https://gb1026gb00-cell.github.io/hoemyeong-hospital/CH01_reverse_corrupted.mp3');
+ separationVoice.preload='auto';
+ let pendingSeparation=false;
+ function soundVolume(){const enabled=$('hmSoundEnabled'),volume=$('hmSoundVolume');return enabled&&!enabled.checked?0:Math.max(0,Math.min(1,Number(volume?.value??65)/100));}
+ function startSeparationVoice(){if(!pendingSeparation)return;pendingSeparation=false;separationVoice.pause();separationVoice.currentTime=0;separationVoice.volume=soundVolume();separationVoice.muted=soundVolume()===0;separationVoice.play().catch(()=>{pendingSeparation=true;});}
+ function armSeparation(){pendingSeparation=true;const v=$('hmHorrorVideo');if(v&&!v.paused&&!v.ended)startSeparationVoice();}
+ document.addEventListener('DOMContentLoaded',()=>{
+  const v=$('hmHorrorVideo');
+  if(v){v.addEventListener('playing',()=>{if(pendingSeparation)startSeparationVoice();});
+   v.addEventListener('ended',()=>{separationVoice.pause();pendingSeparation=false;});
+   v.addEventListener('error',()=>{separationVoice.pause();pendingSeparation=false;});}
+  const start=$('hmVideoStart');if(start)start.addEventListener('click',()=>{if(pendingSeparation)startSeparationVoice();});
+  const bell=document.querySelector('[data-action="bell"]');
+  if(bell)bell.addEventListener('click',()=>{separationVoice.load();},{passive:true});
+ },{once:true});
  window.WebSocket=CoopSocket;
  // Only the approved 2/4/6/8-person capacities are selectable.
  function normalizeCapacityControls(){
@@ -50,10 +68,20 @@
  else initializeCoopControls();
  const scene=document.querySelector('.scene');
  if(scene){
+  // The approved reception scene already owns the bell and its server-side action.
+  // Keep exactly one bell, preserving the original click handler.
+  const originalBell=scene.querySelector('[data-action="bell"]');
+  if(originalBell){
+   originalBell.textContent='🔔';
+   originalBell.setAttribute('aria-label','금이 간 호출벨 · 강제 분리');
+   originalBell.title='호출벨을 누르면 조사원들이 강제로 분리됩니다';
+   originalBell.style.cssText+=';min-width:62px;min-height:62px;border:2px solid #7e343e;border-radius:50%;background:radial-gradient(circle at 35% 25%,#66535d 0%,#24151d 42%,#08070b 76%);color:#e5c6cc;font-size:27px;text-shadow:0 0 10px #f22;box-shadow:0 0 0 3px #1b1018,0 0 20px #9e182f99,inset -5px -7px 12px #000;animation:hmBellPulse 3.4s ease-in-out infinite;z-index:20;';
+   const style=document.createElement('style');style.textContent='@keyframes hmBellPulse{0%,88%,100%{filter:brightness(.72);box-shadow:0 0 0 3px #1b1018,0 0 12px #9e182f77,inset -5px -7px 12px #000}90%,94%{filter:brightness(1.5);box-shadow:0 0 0 3px #1b1018,0 0 28px #e22a4e,inset -5px -7px 12px #000}}';document.head.append(style);
+  }
   const b=document.createElement('button');b.type='button';b.id='hmV174Bell';b.textContent='🔔 호출벨';b.setAttribute('aria-label','접수대 호출벨 누르기');b.hidden=true;
   b.style.cssText='position:absolute;left:43%;top:74%;z-index:16;border:1px solid #b79acb;border-radius:22px;padding:10px 13px;background:#201528e8;color:#f7ebff;font:700 14px system-ui;box-shadow:0 0 14px #6d458a88;touch-action:manipulation;';
   b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(!active||!socket||socket.readyState!==NativeWS.OPEN)return;socket.send(JSON.stringify({type:'chapter',action:'bell'}));});
-  scene.append(b);
+  if(originalBell){b.hidden=true;}else{scene.append(b);}
  }
  const chatButton=document.querySelector('[data-menu="chat"]');
  if(chatButton)chatButton.addEventListener('click',e=>{
