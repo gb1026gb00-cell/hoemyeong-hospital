@@ -371,6 +371,21 @@
  }
 
  
+
+ // CH01 / step 1-1 ONLY: the approved V172 mirror has an older click
+ // handler which opens a text-only demo. Window capture precedes that handler.
+ // Do not intercept any other object or cinematic in this patch.
+ window.addEventListener('click',event=>{
+  if(!active||phase!=='separated'||socket?.readyState!==NativeWS.OPEN)return;
+  const origin=event.target instanceof Element?event.target:null;
+  if(!origin||origin.closest('#hmCh01InspectionScreen,#hmReceptionCodeModal,#hmForcedSeparation,#hmReceptionScare,#hmReceptionHandScare,#hmCoopPanel,#hmV175Gate'))return;
+  const target=origin.closest('[data-obj="mirror"],[data-object="mirror"],[data-action="mirror"],[data-hotspot="mirror"]');
+  if(!target)return;
+  event.preventDefault();event.stopImmediatePropagation();
+  $('hmSceneClueOverlay')?.remove();
+  socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'mirror'}));
+ },true);
+
  // CH01 single object router: exact hotspot identity, never a parent's text.
  // In particular a ledger click may never be interpreted as a desk/drawer click.
  document.addEventListener('click',event=>{
