@@ -277,7 +277,7 @@ wss.on('connection',ws=>{
     const found=ch.inspected[player.role]||(ch.inspected[player.role]=[]);
     const secondDeskLook=m.object==='desk'; // G01 fires on first actual reception-desk investigation after separation
     if(secondDeskLook){
-     const witnessed=ch.g01Witnessed||(ch.g01Witnessed=[]);
+     const witnessed=ch.receptionCoop?.g01Witnessed||(ch.g01Witnessed||(ch.g01Witnessed=[]));
      if(!witnessed.includes(player.role)){
       witnessed.push(player.role);
       send(ws,{type:'horror_video',id:'G01',scope:'self'});
