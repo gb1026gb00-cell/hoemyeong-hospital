@@ -545,8 +545,9 @@ wss.on('connection',ws=>{
      const assigned=count===2?tags.slice(role*2,role*2+2):count===4?[tags[role]]:role<4?[]:[tags[role-4]];
      send(ws,{type:'ch02_bed_tags',role,capacity:count,records:assigned,locked:count===8&&role<4,rule:'사망 판정 이후에도 심장 신호가 남은 시간. 가장 오래 지속된 기록부터 읽어라.'});
     }
-    send(ws,{type:'ch02_new_result',site,ok:true,role:player.role,message:site==='certificate'?'사망진단서의 발급 기록이 발견되었다.':site==='ecg'?'심전도 기록에 생존 신호가 남아 있다.':site==='eight'?'침대 끝의 8번 표식 아래 문서 배열 단서가 있다.':'침대 아래의 검은 손자국이 움직인다.'});
-    if(site==='underbed'&&!ch.ch02.newScareRoles?.includes(player.role)){
+    const firstUnderbedScare=site==='underbed'&&!ch.ch02.newScareRoles?.includes(player.role);
+    send(ws,{type:'ch02_new_result',site,ok:true,videoPending:firstUnderbedScare,role:player.role,message:site==='certificate'?'사망진단서의 발급 기록이 발견되었다.':site==='ecg'?'심전도 기록에 생존 신호가 남아 있다.':site==='eight'?'침대 끝의 8번 표식 아래 문서 배열 단서가 있다.':'침대 아래의 검은 손자국이 움직인다.'});
+    if(firstUnderbedScare){
      ch.ch02.newScareRoles=ch.ch02.newScareRoles||[];ch.ch02.newScareRoles.push(player.role);
      send(ws,{type:'horror_video',id:'H01',scope:'self'});
     }
