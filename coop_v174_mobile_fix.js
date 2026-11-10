@@ -149,7 +149,7 @@
  // It is intentionally not aliased to any G/H clip until the binary is uploaded.
  let receptionHandPlaying=false;
  function playReceptionHand(){
-  if(receptionHandPlaying)return;
+  if(receptionHandPlaying||$('hmReceptionCodeModal'))return;
   receptionHandPlaying=true;
   const overlay=document.createElement('div');
   overlay.id='hmReceptionHandScare';
@@ -159,13 +159,13 @@
   configureCinematicVideo(video);
   video.style.cssText='width:100%;height:100%;object-fit:contain';
   video.volume=soundVolume();video.muted=soundVolume()===0;
-  const retry=document.createElement('button');retry.type='button';retry.textContent='접수대 영상 재생';
+  const retry=document.createElement('button');retry.type='button';retry.textContent='영상 재생하기';
   retry.style.cssText='position:absolute;bottom:12%;padding:14px 22px;border:1px solid #9e5263;border-radius:10px;background:#2c131d;color:white;font:700 15px system-ui';
   retry.hidden=true;
-  const finish=()=>{video.pause();overlay.remove();receptionHandPlaying=false;};
+  const finish=()=>{video.pause();overlay.remove();receptionHandPlaying=false;openReceptionCodePanel();};
   video.addEventListener('ended',finish,{once:true});
-  video.addEventListener('error',()=>{retry.textContent='영상 로딩 오류 · 봉인 입력으로 이동';retry.hidden=false;retry.onclick=finish;},{once:true});
-  retry.onclick=()=>{video.muted=false;video.play().catch(()=>{video.muted=true;video.play().catch(()=>{retry.hidden=false;retry.textContent='영상 재생하기';});});};
+  video.addEventListener('error',()=>{retry.textContent='영상 로딩 실패 · 다시 시도';retry.hidden=false;},{once:true});
+  retry.onclick=()=>{retry.hidden=true;video.muted=false;video.load();video.play().catch(()=>{retry.hidden=false;retry.textContent='영상 재생하기';});};
   overlay.append(video,retry);document.body.append(overlay);
   video.muted=true;video.play().catch(()=>{retry.hidden=false;});
  }
@@ -180,6 +180,9 @@
   const card=document.createElement('div');card.style.cssText='position:relative;width:min(520px,100%);max-height:90dvh;overflow:auto;padding:27px 20px;border:1px solid #887781;border-radius:9px;background:linear-gradient(145deg,#262026,#100d12 80%);box-shadow:0 18px 75px #000;color:#e9e1e5';
   const label=document.createElement('div');label.textContent='回明病院  /  RECEPTION';label.style.cssText='font:11px serif;letter-spacing:.25em;color:#a6a0a4';
   const title=document.createElement('h2');title.textContent='접수대 · 봉인 번호';title.style.cssText='font:700 22px serif;margin:12px 0 8px';
+  const regulation=document.createElement('div');
+  regulation.style.cssText='margin:18px 0 16px;padding:18px 10px;border-top:1px solid #78666d;border-bottom:1px solid #78666d;text-align:center;color:#f0e4e6;font:15px/2.1 serif;white-space:pre-line';
+  regulation.textContent='回明病院 · 접수 기록 보안 지침\\n\\n제01조 · 봉인 해제 절차\\n\\n비친 것을 먼저 헤아리고,\\n\\n잠긴 것의 빈자리를 채운 뒤,\\n\\n마지막으로 남겨진 기록을 대조하라.\\n\\n※ 순서를 어길 경우 봉인은 해제되지 않습니다.';
   const guide=document.createElement('p');guide.textContent='거울의 얼룩, 캐비닛의 빈자리, 접수명부의 인원을 팀원들과 대조해 여섯 칸을 채우세요.';guide.style.cssText='font:13px/1.8 system-ui;color:#c4b8be';
   const inputs=[],cells=document.createElement('div');cells.style.cssText='display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:20px 0 13px';
   for(let i=0;i<6;i++){
@@ -200,7 +203,7 @@
   };
   const back=document.createElement('button');back.type='button';back.textContent='← 접수실로 돌아가기';back.style.cssText='display:block;margin:0 0 16px;padding:9px 0;border:0;background:transparent;color:#d8c5ce;font:13px system-ui';
   back.onclick=()=>root.remove();
-  card.append(back,label,title,guide,cells,status,submit);root.append(card);document.body.append(root);
+  card.append(back,label,title,regulation,guide,cells,status,submit);root.append(card);document.body.append(root);
   inputs[0].focus();
  }
  function showReceptionAnswerResult(message){
@@ -301,19 +304,12 @@
  // The V172 original scene contains the desk drawer hotspot, but no plain
  // desk hotspot. Keep the real drawer/video and add a separate seal desk input.
  function ensureReceptionDesk(){
-  let original=$('deskButton');
+  const original=$('deskButton');
   if(!original)return;
-  if(!original.dataset.hmDrawerOriginal){
-   original.dataset.hmDrawerOriginal='1';
-   original.dataset.object='drawer';
-   original.setAttribute('aria-label','접수대 서랍');
-  }
-  if($('hmReceptionDeskSealButton'))return;
-  const seal=document.createElement('button');seal.id='hmReceptionDeskSealButton';
-  seal.type='button';seal.textContent='접수대 · 봉인 번호 입력';
-  seal.dataset.object='desk';seal.setAttribute('aria-label','접수대');
-  seal.style.cssText='position:absolute;right:7%;bottom:14%;z-index:35;min-height:46px;padding:10px 12px;background:#291923ec;border:1px solid #ac91a2;border-radius:8px;color:#f6e7ef;font:700 13px system-ui;box-shadow:0 0 16px #000;touch-action:manipulation';
-  original.parentElement?.append(seal);
+  original.dataset.object='desk';
+  original.setAttribute('aria-label','접수대');
+  // Old V174 separate seal control must not be a second way into the code.
+  $('hmReceptionDeskSealButton')?.remove();
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureReceptionDesk,{once:true});else ensureReceptionDesk();
  document.addEventListener('hm-v175-started',ensureReceptionDesk);
@@ -414,6 +410,19 @@
   socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'ledger'}));
  },true);
 
+ // CH01 / step 1-4 ONLY: the original reception desk is the sole entry.
+ // Capture before V172's old drawer handler; show code only after video ends.
+ window.addEventListener('click',event=>{
+  if(!active||phase!=='separated'||socket?.readyState!==NativeWS.OPEN)return;
+  const origin=event.target instanceof Element?event.target:null;
+  if(!origin||origin.closest('#hmCh01InspectionScreen,#hmReceptionCodeModal,#hmForcedSeparation,#hmReceptionScare,#hmReceptionHandScare,#hmCoopPanel,#hmV175Gate'))return;
+  const target=origin.closest('#deskButton,[data-obj="desk"],[data-object="desk"],[data-action="desk"],[data-hotspot="desk"],[data-obj="drawer"],[data-object="drawer"]');
+  if(!target||target.id==='hmReceptionDeskSealButton')return;
+  event.preventDefault();event.stopImmediatePropagation();
+  $('hmSceneClueOverlay')?.remove();
+  playReceptionHand();
+ },true);
+
  // CH01 single object router: exact hotspot identity, never a parent's text.
  // In particular a ledger click may never be interpreted as a desk/drawer click.
  document.addEventListener('click',event=>{
@@ -435,8 +444,7 @@
   if(!object)return;
   event.preventDefault();event.stopImmediatePropagation();
   if(phase!=='separated'){showConnectionStatus('접수실 조사 시작 버튼을 눌러 강제 분리를 완료한 뒤 조사해 주세요.');return;}
-  if(object==='desk'){openReceptionCodePanel();return;}
-  if(object==='drawer'){playReceptionHand();return;}
+  if(object==='desk'||object==='drawer'){playReceptionHand();return;}
   socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));
  },true);
 
