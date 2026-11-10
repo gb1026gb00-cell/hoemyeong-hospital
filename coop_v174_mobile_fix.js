@@ -97,7 +97,7 @@
  let pendingSeparation=false;
  function soundVolume(){const enabled=$('hmSoundEnabled'),volume=$('hmSoundVolume');return enabled&&!enabled.checked?0:Math.max(0,Math.min(1,Number(volume?.value??65)/100));}
  function startSeparationVoice(){if(!pendingSeparation)return;pendingSeparation=false;separationVoice.pause();separationVoice.currentTime=0;separationVoice.volume=soundVolume();separationVoice.muted=soundVolume()===0;separationVoice.play().catch(()=>{pendingSeparation=true;});}
- function armSeparation(){pendingSeparation=true;const v=$('hmHorrorVideo');if(v&&!v.paused&&!v.ended)startSeparationVoice();}
+ function armSeparation(){pendingSeparation=true;separationVoice.load();startSeparationVoice();}
  document.addEventListener('DOMContentLoaded',()=>{
   const v=$('hmHorrorVideo');
   if(v){v.addEventListener('playing',()=>{if(pendingSeparation)startSeparationVoice();});
@@ -128,7 +128,7 @@
   overlay.append(video,action);document.body.append(overlay);
   let done=false;
   const finish=()=>{if(done)return;done=true;video.pause();separationVoice.pause();video.hidden=true;action.hidden=true;const card=document.createElement('div');card.style.cssText='position:absolute;inset:0;background:#070507;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;padding:24px';card.innerHTML='<div style="color:#a93645;font:700 clamp(34px,9vw,62px) serif;letter-spacing:.14em">回明病院</div><div style="color:#f3e8ee;font:600 21px system-ui">다른 조사원들과 떨어졌습니다.</div><div style="color:#ab96a2;font:13px system-ui">서로의 목소리만이 남아 있습니다.</div>';overlay.append(card);setTimeout(()=>{overlay.remove();separationPlaying=false;},2400);};
-  video.addEventListener('playing',()=>{action.hidden=true;pendingSeparation=true;startSeparationVoice();});
+  video.addEventListener('playing',()=>{action.hidden=true;armSeparation();});
   video.addEventListener('ended',finish);
   video.addEventListener('error',()=>{action.hidden=false;action.textContent='영상 로드 실패 · 조사 계속하기';action.onclick=finish;});
   action.addEventListener('click',()=>{if(video.error){finish();return;}video.play().catch(()=>{action.hidden=false;});});
@@ -178,9 +178,9 @@
   const finish=()=>{video.pause();overlay.remove();receptionHandPlaying=false;openReceptionCodePanel();};
   video.addEventListener('ended',finish,{once:true});
   video.addEventListener('error',()=>{retry.textContent='영상 로딩 오류 · 봉인 입력으로 이동';retry.hidden=false;retry.onclick=finish;},{once:true});
-  retry.onclick=()=>{video.muted=false;video.play().catch(()=>{retry.hidden=false;retry.textContent='영상 재생하기';});};
+  retry.onclick=()=>{video.muted=false;video.play().catch(()=>{video.muted=true;video.play().catch(()=>{retry.hidden=false;retry.textContent='영상 재생하기';});});};
   overlay.append(video,retry);document.body.append(overlay);
-  video.play().catch(()=>{video.muted=true;video.play().catch(()=>{retry.hidden=false;});});
+  video.muted=true;video.play().catch(()=>{retry.hidden=false;});
  }
  function openReceptionCodePanel(){
   if($('hmReceptionCodeModal'))return;
@@ -198,7 +198,7 @@
   const sealNotice=document.createElement('div');sealNotice.style.cssText='position:fixed;inset:0;z-index:2;background:#070507;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:25px;text-align:center;color:#eee3e9';
   const hospital=document.createElement('div');hospital.textContent='回明病院';hospital.style.cssText='font:700 clamp(32px,9vw,58px) serif;letter-spacing:.12em;color:#a93645';
   const heading2=document.createElement('h2');heading2.textContent='제01조 · 봉인 해제 절차';heading2.style.cssText='font:600 23px serif';
-  const text2=document.createElement('p');text2.textContent='비친 것을 먼저 헤아리고,\\n잠긴 것의 빈자리를 채운 뒤,\\n마지막으로 남겨진 기록을 대조하라.';text2.style.cssText='white-space:pre-line;font:17px/2 serif';
+  const text2=document.createElement('p');text2.textContent='비친 것을 먼저 헤아리고,\n잠긴 것의 빈자리를 채운 뒤,\n마지막으로 남겨진 기록을 대조하라.';text2.style.cssText='white-space:pre-line;font:17px/2 serif';
   const foot=document.createElement('p');foot.textContent='※ 순서를 어길 경우 봉인은 해제되지 않습니다.';foot.style.cssText='font:12px system-ui;color:#a99aa4';
   const proceed=document.createElement('button');proceed.textContent='봉인 번호 입력';proceed.style.cssText='padding:14px 28px;background:#493347;border:1px solid #9e7f94;color:white;border-radius:8px';proceed.onclick=()=>{sealNotice.remove();inputs[0].focus();};
   sealNotice.append(hospital,heading2,text2,foot,proceed);
@@ -361,7 +361,7 @@
   notice.style.cssText='margin:14px 0;padding:18px 14px;border:1px solid #766873;border-radius:5px;background:linear-gradient(140deg,#29232a,#16141a);color:#e5d8d9;box-shadow:inset 0 0 18px #08070a;font-family:serif;text-align:center;line-height:1.9';
   const noticeHeader=document.createElement('div');noticeHeader.textContent='回明病院 · 접수 기록 보안 지침';noticeHeader.style.cssText='font-size:12px;letter-spacing:.08em;color:#b5a6aa';
   const noticeTitle=document.createElement('div');noticeTitle.textContent='제01조 · 봉인 해제 절차';noticeTitle.style.cssText='font-size:16px;font-weight:bold;border-bottom:1px solid #514750;padding:8px 0;margin-bottom:9px';
-  const noticeBody=document.createElement('div');noticeBody.textContent='비친 것을 먼저 헤아리고,\\n잠긴 것의 빈자리를 채운 뒤,\\n마지막으로 남겨진 기록을 대조하라.';noticeBody.style.whiteSpace='pre-line';
+  const noticeBody=document.createElement('div');noticeBody.textContent='비친 것을 먼저 헤아리고,\n잠긴 것의 빈자리를 채운 뒤,\n마지막으로 남겨진 기록을 대조하라.';noticeBody.style.whiteSpace='pre-line';
   const noticeFooter=document.createElement('div');noticeFooter.textContent='※ 순서를 어길 경우 봉인은 해제되지 않습니다.';noticeFooter.style.cssText='font-size:11px;color:#a69ba0;border-top:1px solid #514750;margin-top:12px;padding-top:9px';
   notice.append(noticeHeader,noticeTitle,noticeBody,noticeFooter);
   const objects=document.createElement('div');objects.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0';
