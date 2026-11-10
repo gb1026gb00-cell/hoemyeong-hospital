@@ -341,7 +341,7 @@
 
  // Chapter entry cinematic stays on screen until local playback finishes.
  function playChapterEntryVideo(id,to){
-  if(!['H03(1)','G13(2)'].includes(id)||document.getElementById('hmChapterEntryVideo'))return;
+  if(!['H03','G13'].includes(id)||document.getElementById('hmChapterEntryVideo'))return;
   const overlay=document.createElement('div');overlay.id='hmChapterEntryVideo';
   overlay.style.cssText='position:fixed;inset:0;z-index:2147483652;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#eee;font:14px system-ui';
   const video=document.createElement('video');video.src='/'+encodeURIComponent(id)+'.mp4';video.playsInline=true;video.autoplay=true;video.preload='auto';video.controls=false;
