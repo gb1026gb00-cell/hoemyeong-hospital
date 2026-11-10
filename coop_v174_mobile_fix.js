@@ -709,6 +709,37 @@
   }
   layer.hidden=!(active&&phase==='ch02');
  }
+ // Legacy V172 death-certificate modal can still be opened by its original
+ // event handler. Detect that exact obsolete document and replace it with the
+ // server-issued investigator-specific record, without touching other puzzles.
+ let ch02LegacyIntercepting=false;
+ function interceptLegacyCh02Certificate(){
+  if(!active||phase!=='ch02'||ch02LegacyIntercepting)return;
+  const markers=['HM-302-□□□□','문서 번호 : HM-302-','다음 단계에서 단서가 복원됩니다'];
+  const nodes=document.querySelectorAll('body *');
+  for(const node of nodes){
+   if(node.children.length>4||node.id==='hmCh02NewDialog'||node.closest('#hmCh02NewDialog'))continue;
+   const t=node.textContent||'';
+   if(t.length>450||!markers.some(x=>t.includes(x)))continue;
+   let card=node;
+   for(let i=0;i<5&&card.parentElement;i++){
+    if(card.querySelector('button')&&card.textContent?.includes('사망진단서'))break;
+    card=card.parentElement;
+   }
+   // Only suppress a modal, never the approved hospital scene.
+   const modal=card.closest('[role="dialog"],.modal,.overlay')||card;
+   if(modal===document.body||modal.id==='mainScene'||modal.contains(document.getElementById('mainScene')))continue;
+   ch02LegacyIntercepting=true;
+   modal.style.setProperty('display','none','important');
+   ch02Send('ch02_new_inspect',{site:'certificate'});
+   ch02Dialog('기록 조회 중','조사원에게 배정된 사망진단서를 불러오고 있습니다.');
+   ch02LegacyIntercepting=false;
+   break;
+  }
+ }
+ const ch02LegacyObserver=new MutationObserver(()=>interceptLegacyCh02Certificate());
+ if(document.body)ch02LegacyObserver.observe(document.body,{childList:true,subtree:true});
+ else document.addEventListener('DOMContentLoaded',()=>ch02LegacyObserver.observe(document.body,{childList:true,subtree:true}),{once:true});
  document.addEventListener('hm-v175-state',mountCh02New);
  document.addEventListener('hm-v175-started',mountCh02New);
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountCh02New,{once:true});else mountCh02New();
