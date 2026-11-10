@@ -225,11 +225,13 @@
   document.getElementById('hmCh03FloorDirectory')?.remove();
   const capacity=[2,4,8].includes(ch02RoomCapacity)?ch02RoomCapacity:2;
   const index=ch03MirrorIndex();
+  const symbols=['★','●','▲','■','◆','✚','☾','♣'];
   const orderByCapacity={2:[2,1],4:[3,1,4,2],8:[3,1,6,2,8,4,7,5]};
   const order=orderByCapacity[capacity];
-  // Each capacity reveals exactly its highest N floors as ??? and assigns one fixed private mark per investigator.
+  // Each capacity masks exactly its highest N floors; each investigator sees one private symbol on their assigned floor.
   const floor=9-capacity+index;
   const rank=index>=0&&index<capacity?order[index]:null;
+  const ownSymbol=rank===null?null:symbols[rank-1];
   const overlay=document.createElement('div');overlay.id='hmCh03FloorDirectory';
   overlay.style.cssText='position:fixed;inset:0;z-index:2147483600;background:#030405f5;color:#f2eae3;display:flex;align-items:center;justify-content:center;padding:15px;box-sizing:border-box;font:14px system-ui';
   const card=document.createElement('section');card.style.cssText='width:min(440px,100%);max-height:94dvh;overflow:auto;background:#171513;border:1px solid #5b534b;border-radius:10px;padding:15px;box-sizing:border-box';
@@ -242,15 +244,15 @@
   const labels=['접수실','진료실','검사실','기록보관실','수술실','입원병동','폐쇄병동','기계실'];
   for(let i=0;i<8;i++){
    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;min-height:39px;border-bottom:1px dashed #7e7067;padding:3px 8px;gap:10px;'+(i===floor-1?'background:#7c514b28;':'');
-   const name=document.createElement('span');name.textContent=String(i+1).padStart(2,'0')+'F  '+(i>=8-capacity?'???':labels[i]);name.style.cssText='font:600 16px Georgia,serif;letter-spacing:.4px';
+   const name=document.createElement('span');name.textContent=String(i+1).padStart(2,'0')+'F  '+(i>=8-capacity?(i===floor-1&&ownSymbol!==null?ownSymbol:'???'):labels[i]);name.style.cssText='font:600 16px Georgia,serif;letter-spacing:.4px';
    const stamp=document.createElement('span');stamp.style.cssText='font:bold 23px Georgia,serif;color:#702d2a;min-width:40px;text-align:center;transform:rotate(-8deg)';
-   stamp.textContent=i===floor-1&&rank!==null?String(rank):'';
+   stamp.textContent=i===floor-1&&ownSymbol!==null?ownSymbol:'';
    row.append(name,stamp);paper.append(row);
   }
   const footer=document.createElement('div');footer.textContent='※ 안내문 임의 수정 금지 / 일부 층의 기록이 훼손되었습니다.';footer.style.cssText='font:11px serif;text-align:center;margin-top:14px;color:#514238';paper.append(footer);
   card.append(paper);
   const help=document.createElement('p');help.style.cssText='color:#c9b8ae;font-size:13px;line-height:1.6;margin:13px 0 0';
-  help.textContent=rank===null?'조사원 배정 정보를 확인할 수 없습니다. 팀 연결 상태를 확인하세요.':'붉은 숫자는 층수가 아니라 배열 순서를 뜻하는 듯하다. 거울에서 발견한 숫자와 함께 팀원에게 전달하자.';
+  help.textContent=ownSymbol===null?'조사원 배정 정보를 확인할 수 없습니다. 팀 연결 상태를 확인하세요.':'붉은 기호를 기억하자. 거울에서 발견한 숫자와 이 기호를 함께 팀원에게 전달해야 한다.';
   card.append(help);overlay.append(card);document.body.append(overlay);
  }
  function mountIndependentCh03(){
