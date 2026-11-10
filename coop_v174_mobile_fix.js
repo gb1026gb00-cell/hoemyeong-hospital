@@ -109,7 +109,7 @@
   const dialogue=[['홍중','다들 도착했어? 아직 안 온 사람 있어?'],['성화','여기 정말 폐병원 맞아? 불은 켜져 있네.'],['윤호','홍중이 형, 우리 다 들어왔어. 일단 같이 움직이자.'],['민기','성화 형, 아까 복도에서 발소리 못 들었어?'],['여상','나도 들었어. 우리 말고 누가 더 있는 것 같은데.'],['종호','형들, 출입문이 안 열려.'],['우영','산아, 너 아까 문 잠갔어?'],['산','아니, 안 잠갔어. 홍중이 형, 접수대에 뭔가 있어.']];
   for(const [name,message] of dialogue){const row=document.createElement('div');row.style.cssText='display:flex;flex-direction:column;align-items:flex-start;gap:4px';const label=document.createElement('span');label.textContent=name;label.style.cssText='font-size:12px;color:#bcbcbc';const bubble=document.createElement('div');bubble.textContent=message;bubble.style.cssText='max-width:90%;background:#292929;border-radius:4px 13px 13px 13px;padding:10px 13px;color:#f5f5f5;white-space:pre-wrap';row.append(label,bubble);thread.append(row);}
   phone.append(thread);
-  overlay.style.pointerEvents='none';phone.style.pointerEvents='none';
+  overlay.style.pointerEvents='none';phone.style.pointerEvents='auto';thread.style.touchAction='pan-y';thread.style.overscrollBehavior='contain';
   phone.style.paddingBottom='0';
   overlay.append(phone);document.body.append(overlay);
  }
@@ -777,6 +777,12 @@
  // CH02 standalone investigation layer; approved scene photo remains untouched.
  const ch02Css=document.createElement('style');
  ch02Css.textContent='html.hm-ch02-clean #ch02PuzzlePanel,html.hm-ch02-clean .hm-object-guide,html.hm-ch02-clean .narrative,html.hm-ch02-clean #sceneNarrative,html.hm-ch02-clean #sceneDescription,html.hm-ch02-clean #sceneText,html.hm-ch02-clean .scene-caption{display:none!important}html.hm-ch02-clean #hmCh02NewLayer:not([hidden]){display:block!important}#hmCh02NewLayer{position:absolute;inset:0;z-index:5000;pointer-events:none}#hmCh02NewLayer button{position:absolute!important;pointer-events:auto!important;background:transparent!important;border:0!important;box-shadow:none!important;opacity:0!important;color:transparent!important;font-size:0!important;touch-action:manipulation!important}#hmCh02NewLayer button:focus-visible{outline:2px solid #e9c6d7}';
+ // Hide legacy purple ward interaction rectangles; keep the new invisible
+ // server-connected investigation buttons and the approved ward photograph.
+ const wardTapFix=document.createElement('style');
+ wardTapFix.textContent='html.hm-ch02-clean #hmWardScene button:not(#hmCh02NewLayer button){display:none!important}html.hm-ch02-clean #hmWardScene [role="button"]:not(#hmCh02NewLayer [role="button"]){display:none!important}html.hm-ch02-clean #hmCh02NewLayer{background:transparent!important;box-shadow:none!important;border:0!important}html.hm-ch02-clean #hmCh02NewLayer button{opacity:0!important;background:transparent!important;box-shadow:none!important;border:0!important;pointer-events:auto!important}';
+ document.head.append(wardTapFix);
+ let ch02TapDebug=false;
  document.head.append(ch02Css);
  let ch02HandPending=false;
  function ch02Send(action,extra={}){
