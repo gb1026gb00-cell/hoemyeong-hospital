@@ -594,9 +594,19 @@ wss.on('connection',ws=>{
    }
    if(ch.phase==='ch03'&&m.action==='ch03_video'){
     if(!ch.ch03)ch.ch03={inspected:[],clues:[],failed:0,solved:false};
+    if(ch.ch03.videoTriggered)return send(ws,{type:'ch03_result',ok:false,message:'엘리베이터 영상이 이미 재생 중입니다.'});
     ch.ch03.videoTriggered=true;
+    ch.ch03.videoCompletedRoles=[];
     broadcast(r,{type:'horror_video',id:'G06',scope:'all'});
     broadcast(r,{type:'ch03_event',event:'video',message:'엘리베이터 안에 환자복을 입은 사람이 서 있다.'});
+    broadcast(r,state(r));return;
+   }
+   if(ch.phase==='ch03'&&m.action==='ch03_video_done'){
+    const c=ch.ch03;
+    if(!c?.videoTriggered)return send(ws,{type:'ch03_result',ok:false,message:'먼저 엘리베이터 영상을 재생하십시오.'});
+    if(!Array.isArray(c.videoCompletedRoles))c.videoCompletedRoles=[];
+    if(!c.videoCompletedRoles.includes(player.role))c.videoCompletedRoles.push(player.role);
+    send(ws,{type:'ch03_video_ack',ok:true});
     broadcast(r,state(r));return;
    }
    if(ch.phase==='ch03'&&m.action==='ch03_fragment'){
@@ -612,6 +622,7 @@ wss.on('connection',ws=>{
     const answers={2:'15',4:'32',8:'35'};
     const expected=answers[r.capacity]||answers[2];
     if(!c.videoTriggered)return send(ws,{type:'ch03_result',ok:false,message:'엘리베이터 제어판을 먼저 작동하십시오.'});
+    if(!Array.isArray(c.videoCompletedRoles)||!c.videoCompletedRoles.includes(player.role))return send(ws,{type:'ch03_result',ok:false,message:'G06 영상을 끝까지 시청한 조사원만 운행 코드를 입력할 수 있습니다.'});
     if(String(m.answer||'').trim()!==expected){
      c.failed++;broadcast(r,{type:'ch03_event',event:'wrong',message:'잘못된 운행 코드. 엘리베이터가 아래로 급강하했다가 멈춘다.'});broadcast(r,state(r));return;
     }
