@@ -38,6 +38,12 @@ jobs:
         id: ch01_live
         continue-on-error: true
         run: node test_ch01_live_v177.js
+      - name: Check real Chrome PC and mobile game screens
+        id: browser_ch01
+        continue-on-error: true
+        run: |
+          npm install --no-save playwright --no-audit --no-fund
+          node test_ch01_browser_v178.js
       - name: Verify server syntax
         id: syntax_checks
         continue-on-error: true
@@ -49,6 +55,7 @@ jobs:
           echo "Approved V172 UI: ${{ steps.approved_ui.outcome }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Multiplayer checks: ${{ steps.network_checks.outcome }}" >> "$GITHUB_STEP_SUMMARY"
           echo "CH01 live puzzle and videos: ${{ steps.ch01_live.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "CH01 Chrome desktop + mobile: ${{ steps.browser_ch01.outcome }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Server syntax: ${{ steps.syntax_checks.outcome }}" >> "$GITHUB_STEP_SUMMARY"
           failed=0
           if [ "${{ steps.static_checks.outcome }}" != success ]; then
@@ -61,6 +68,10 @@ jobs:
           fi
           if [ "${{ steps.network_checks.outcome }}" != success ]; then
             echo "::error title=Multiplayer smoke test failed::Check the 2-player and 4-player reconnect test output."
+            failed=1
+          fi
+          if [ "${{ steps.browser_ch01.outcome }}" != success ]; then
+            echo "::error title=Browser smoke failed::CH01 screenshots or video runtime need correction."
             failed=1
           fi
           if [ "${{ steps.ch01_live.outcome }}" != success ]; then
