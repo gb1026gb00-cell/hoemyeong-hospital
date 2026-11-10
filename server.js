@@ -729,10 +729,10 @@ wss.on('connection',ws=>{
     }else if(object==='cabinet'){
       const hidden=p.cabinet[position];
       const sequence=p.cabinet.map((digit,i)=>i===position?'○':String(digit)).join('  ');
-      send(ws,{type:'reception_clue',object,label:'캐비닛 · 분리 기록',popup:true,lines:['분리된 조사원 '+(position+1)+'번의 캐비닛 기록: '+sequence,'가려진 ○의 값은 '+hidden+'이다.','다른 조사원들의 ○ 숫자를 모두 합한 뒤 일의 자리를 봉인 번호에 입력하라.']});
+      send(ws,{type:'reception_clue',object,label:'캐비닛 · 분리 기록',popup:true,sequence,missingIndex:position,lines:['분리된 조사원 '+(position+1)+'번의 캐비닛 기록: '+sequence,'가려진 ○의 값은 '+hidden+'이다.','다른 조사원들의 ○ 숫자를 모두 합한 뒤 일의 자리를 봉인 번호에 입력하라.']});
     }else if(object==='ledger'){
       const entry=p.dates[position];
-      send(ws,{type:'reception_clue',object,label:'접수 명부',lines:['11월 '+entry.date+'일 입실 '+entry.people+'명.','전원의 날짜별 입실 인원을 합하라. 합계의 마지막 '+p.ledgerCount+'자리가 봉인의 마지막 칸들이다.']});
+      send(ws,{type:'reception_clue',object,label:'접수 명부',date:entry.date,people:entry.people,lines:['11월 '+entry.date+'일 입실 '+entry.people+'명.','전원의 날짜별 입실 인원을 합하라. 합계의 마지막 '+p.ledgerCount+'자리가 봉인의 마지막 칸들이다.']});
     }
     if(object==='desk'){
      // Do not suppress the scare if the browser failed to load it previously.
