@@ -46,10 +46,13 @@
    const endpoint=$('hmEndpoint');if(!endpoint)return;
    endpoint.value=(location.protocol==='https:'?'wss://':'ws://')+location.host;
    endpoint.readOnly=true;endpoint.tabIndex=-1;endpoint.setAttribute('aria-hidden','true');
-   const row=endpoint.closest('label')||endpoint.parentElement;
-   if(row){row.classList.add('hmEndpointRow');row.hidden=true;row.style.display='none';}
-   const preceding=endpoint.previousElementSibling;
-   if(preceding&&/서버 주소/.test(preceding.textContent||'')){preceding.hidden=true;preceding.style.display='none';}
+   // Never hide endpoint.parentElement: in V172 it may be the entire co-op panel.
+   endpoint.hidden=true;endpoint.style.display='none';
+   const label=endpoint.closest('label');
+   if(label){label.hidden=true;label.style.display='none';}
+   for(const candidate of [endpoint.previousElementSibling,endpoint.parentElement?.previousElementSibling]){
+    if(candidate&&candidate!==endpoint&&/서버 주소/.test(candidate.textContent||'')&&candidate.children.length===0){candidate.hidden=true;candidate.style.display='none';}
+   }
   };
   lockEndpoint();
   document.head.append(style);
