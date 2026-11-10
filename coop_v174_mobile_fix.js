@@ -999,7 +999,7 @@
  window.addEventListener('pointerdown',e=>{
   if(!active||phase!=='ch02'||(e.pointerType==='mouse'&&e.button!==0))return;
   if(document.getElementById('hmCh02GroupIntro')||document.getElementById('hmCh02NewDialog')||document.getElementById('hmCh02ClearScene'))return;
-  if(e.target instanceof Element&&e.target.closest('#hmV174Chat,#hmV174ChatFloating,.hmLaterStoryIntro,#hmMediaOverlay,button:not([data-ch02-new]),input,textarea,nav'))return;
+  if(e.target instanceof Element&&e.target.closest('#hmV174Chat,#hmV174ChatFloating,.hmLaterStoryIntro,#hmMediaOverlay,input,textarea,nav'))return;
   const scene=document.getElementById('hmWardScene')||document.getElementById('mainScene');
   if(!scene)return;
   const rect=scene.getBoundingClientRect();
