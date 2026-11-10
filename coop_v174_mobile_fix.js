@@ -698,7 +698,7 @@
      e.preventDefault();e.stopImmediatePropagation();
      if(!active||phase!=='ch02')return;
      ch02Send('ch02_new_inspect',{site});
-     if(site==='certificate')ch02Dialog('의무기록 확인 중','조사원에게 배정된 사망진단서를 불러오고 있습니다.');
+     if(site==='certificate'){document.getElementById('hmCh02NewDialog')?.remove();ch02Dialog('기록 조회 중','사망진단서 원본을 확인하고 있습니다. 잠시만 기다려 주세요.');}
      if(site==='ecg')ch02Dialog('심전도 기록','전원 공급 장치가 끊겨 있다.\n기록의 마지막 생체 신호는 사망 이후에도 이어진다.\nPATIENT STATUS : ALIVE');
      if(site==='eight')ch02Dialog('침대 끝 · 8번 표지','지워진 표식 아래 작은 문구가 남아 있다.\n「사망을 기록한 네 글자를 읽어라.」');
      if(site==='underbed')ch02HandPending=true;
