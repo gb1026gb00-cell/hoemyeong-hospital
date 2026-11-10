@@ -109,7 +109,7 @@
     if(m.type==='chapter_event'&&m.event==='blackout'){document.getElementById('hmCh01GroupIntro')?.remove();appendCh01StoryChat();}
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
     if(m.type==='mandatory_video')showMandatoryVideo(m.id,m.video);
-    if(m.type==='mandatory_video_progress'&&m.id===mandatoryGateId){const status=document.getElementById('hmMandatoryVideoStatus');if(status)status.textContent='영상 시청 완료 '+m.done.length+' / '+m.online.length+'명 · 나머지 조사원 대기';}
+    if(m.type==='mandatory_video_progress'&&m.id===mandatoryGateId){const status=document.getElementById('hmMandatoryVideoStatus');if(status){status.textContent='영상 시청 완료 '+m.done.length+' / '+m.online.length+'명 · 나머지 조사원 대기';if(m.online.length>0&&m.online.every(role=>m.done.includes(role))&&socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'sync'}));}}
     if(m.type==='ch03_event'&&m.event==='video'){ch03VideoSeen=true;const form=document.getElementById('hmCh03CodeForm');if(form){form.hidden=false;form.style.display='flex';}}
     if((m.type==='state'||m.type==='joined')&&m.chapter?.videoGate){document.getElementById('hmCh02ClearScene')?.remove();const gate=m.chapter.videoGate;const done=gate.done||[];if(done.includes(ch02AssignedRole)){if(mandatoryGateId!==gate.id||!document.getElementById('hmMandatoryVideo'))showMandatoryVideo(gate.id,gate.video);const video=document.querySelector('#hmMandatoryVideo video');if(video){video.pause();video.hidden=true;video.removeAttribute('src');}const retry=document.querySelector('#hmMandatoryVideo button');if(retry)retry.hidden=true;const status=document.getElementById('hmMandatoryVideoStatus');if(status)status.textContent='이미 시청 완료 · 다른 조사원을 기다리는 중…';}else showMandatoryVideo(gate.id,gate.video);}
     if((m.type==='state'||m.type==='joined')&&!m.chapter?.videoGate&&mandatoryGateId)clearMandatoryVideo();
@@ -609,9 +609,9 @@
  }
  // The uploaded reception-drawer video has its own stable asset path.
  // It is intentionally not aliased to any G/H clip until the binary is uploaded.
- let receptionHandPlaying=false;
+ let receptionHandPlaying=false,receptionHandWatched=false;
  function playReceptionHand(){
-  if(receptionHandPlaying||$('hmReceptionCodeModal'))return;
+  if(receptionHandPlaying||receptionHandWatched)return;
   receptionHandPlaying=true;
   const overlay=document.createElement('div');
   overlay.id='hmReceptionHandScare';
@@ -624,7 +624,7 @@
   const retry=document.createElement('button');retry.type='button';retry.textContent='영상 재생하기';
   retry.style.cssText='position:absolute;bottom:12%;padding:14px 22px;border:1px solid #9e5263;border-radius:10px;background:#2c131d;color:white;font:700 15px system-ui';
   retry.hidden=true;
-  const finish=()=>{video.pause();overlay.remove();receptionHandPlaying=false;openReceptionCodePanel();};
+  const finish=()=>{video.pause();overlay.remove();receptionHandPlaying=false;receptionHandWatched=true;if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'cabinet'}));};
   video.addEventListener('ended',finish,{once:true});
   video.addEventListener('error',()=>{retry.textContent='영상 로딩 실패 · 다시 시도';retry.hidden=false;},{once:true});
   retry.onclick=()=>{retry.hidden=true;video.muted=false;video.load();video.play().catch(()=>{retry.hidden=false;retry.textContent='영상 재생하기';});};
@@ -869,7 +869,7 @@
   if(!target)return;
   event.preventDefault();event.stopImmediatePropagation();
   $('hmSceneClueOverlay')?.remove();
-  socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'cabinet'}));
+  if(!receptionHandWatched)playReceptionHand();else socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'cabinet'}));
  },true);
 
 
@@ -896,7 +896,7 @@
   if(!target||target.id==='hmReceptionDeskSealButton')return;
   event.preventDefault();event.stopImmediatePropagation();
   $('hmSceneClueOverlay')?.remove();
-  playReceptionHand();
+  openReceptionCodePanel();
  },true);
 
  // CH01 single object router: exact hotspot identity, never a parent's text.
@@ -920,7 +920,8 @@
   if(!object)return;
   event.preventDefault();event.stopImmediatePropagation();
   if(phase!=='separated'){showConnectionStatus('접수실 조사 시작 버튼을 눌러 강제 분리를 완료한 뒤 조사해 주세요.');return;}
-  if(object==='desk'||object==='drawer'){playReceptionHand();return;}
+  if(object==='desk'||object==='drawer'){openReceptionCodePanel();return;}
+  if(object==='cabinet'&&!receptionHandWatched){playReceptionHand();return;}
   socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));
  },true);
 
