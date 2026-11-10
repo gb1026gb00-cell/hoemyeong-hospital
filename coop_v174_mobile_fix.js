@@ -1108,7 +1108,7 @@
  // Hide only the two redundant original mobile navigation items.
  // Preserve inventory, hints, chapter actions, and the separate floating team chat.
  const footerCleanupStyle=document.createElement('style');
- footerCleanupStyle.textContent='[data-menu="chat"],[data-menu="move"],[data-menu="area"],[data-menu="hint"]{display:none!important}';
+ footerCleanupStyle.textContent='[data-menu="chat"],[data-menu="move"],[data-menu="area"],[data-menu="hint"],#tabInspect,#tabHint,#tabMove{display:none!important}#app>nav{display:flex!important;justify-content:center!important}#tabInventory{display:block!important;flex:0 1 220px!important}';
  document.head.append(footerCleanupStyle);
  function cleanMobileFooter(){
   const menuCandidates=document.querySelectorAll('button,[role="button"],[data-menu]');
@@ -1124,6 +1124,14 @@
    }
   }
  }
+ // Inventory must open the working cooperative modal, not the legacy tab screen.
+ function bindSharedInventoryButton(){
+  const button=$('tabInventory');if(!button||button.dataset.hmSharedBound==='yes')return;
+  button.dataset.hmSharedBound='yes';
+  button.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();openSharedInventory();},true);
+ }
+ document.addEventListener('hm-v175-state',bindSharedInventoryButton);
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindSharedInventoryButton,{once:true});else bindSharedInventoryButton();
  document.addEventListener('hm-v175-state',cleanMobileFooter);
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',cleanMobileFooter,{once:true});else cleanMobileFooter();
  const footerObserver=new MutationObserver(()=>cleanMobileFooter());
