@@ -89,7 +89,7 @@
  };
  // The server already broadcasts G08 on the bell action. Add the approved
  // corrupted CH01 voice to the actual G08 playback, not to an unrelated timer.
- const separationVoice=new Audio('https://gb1026gb00-cell.github.io/hoemyeong-hospital/CH01_reverse_corrupted.mp3');
+ const separationVoice=new Audio(new URL('/CH01_reverse_corrupted.mp3',location.origin).href);
  separationVoice.preload='auto';
  let pendingSeparation=false;
  function soundVolume(){const enabled=$('hmSoundEnabled'),volume=$('hmSoundVolume');return enabled&&!enabled.checked?0:Math.max(0,Math.min(1,Number(volume?.value??65)/100));}
@@ -426,6 +426,16 @@
   const scroll=host.querySelector('[style*="overflow"]')||host;
   if(board.parentElement!==scroll){
    scroll.insertBefore(board,scroll.firstChild);
+  }
+  // Hide only obsolete investigation-record prose/forms in the currently
+  // active CH01 tab. Never remove other tabs, puzzle data, or scene hotspots.
+  if(scroll!==host&&scroll.contains(board)){
+   for(const child of [...scroll.children]){
+    if(child===board)continue;
+    if(child.dataset?.hmLegacyHidden==='1')continue;
+    child.dataset.hmLegacyHidden='1';
+    child.hidden=true;child.style.display='none';
+   }
   }
   // Keep the legacy investigation controls available in other tabs;
   // the new CH01 board is the first section of the investigation record.
