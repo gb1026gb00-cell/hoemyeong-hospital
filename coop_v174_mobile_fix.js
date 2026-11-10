@@ -456,8 +456,7 @@
   inventory.addEventListener('click',()=>{updateInventory();const original=document.getElementById('tabInventory');if(original){root.style.setProperty('display','none','important');original.click();const restore=()=>root.style.setProperty('display','flex','important');const close=document.createElement('button');close.type='button';close.textContent='← 엘리베이터 화면으로 돌아가기';close.style.cssText='position:fixed;top:12px;right:12px;z-index:2147483001;padding:12px;background:#211b28;color:white;border:1px solid #766477;border-radius:6px';close.onclick=()=>{close.remove();restore();};document.body.append(close);}else note.textContent='공동 소지품 화면을 찾을 수 없습니다.';});
   bottom.append(inventory);updateInventory();
   // Always provide usable controls when photographed objects are cropped or missing.
-  control('거울 조사','ch03_mirror',{}); 
-  const mirrorButton=bottom.lastElementChild;mirrorButton.onclick=(ev)=>{ev.preventDefault();ev.stopPropagation();openCh03Mirror();};
+  const mirrorButton=document.createElement('button');mirrorButton.type='button';mirrorButton.textContent='거울 조사';mirrorButton.style.cssText='min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c;color:#f5edf3;font:600 14px system-ui';mirrorButton.addEventListener('click',openCh03Mirror);bottom.append(mirrorButton);
   control('제0유물 파편 수집','ch03_fragment',{});
   const directoryButton=document.createElement('button');directoryButton.type='button';directoryButton.textContent='층별 안내문 조사';directoryButton.style.cssText=mirrorButton.style.cssText;directoryButton.onclick=()=>openCh03FloorDirectory();bottom.append(directoryButton);
   const calcButton=document.createElement('button');calcButton.type='button';calcButton.textContent='기호 계산판 조사';calcButton.style.cssText=mirrorButton.style.cssText;calcButton.onclick=()=>openCh03SymbolCalculator();bottom.append(calcButton);
