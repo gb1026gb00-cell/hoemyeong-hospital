@@ -25,6 +25,20 @@
    this.addEventListener('open',()=>{if(socket===this)updateConnectionStatus();});
   }
  }
+ // Keep cinematic overlays as non-interactive layers. The source video
+ // stays unchanged; native controls, fullscreen affordances and pinch zoom
+ // are suppressed on all injected scare players.
+ const cinematicStyle=document.createElement('style');
+ cinematicStyle.textContent='#hmForcedSeparation video,#hmReceptionScare video,#hmReceptionHandScare video{pointer-events:none!important;touch-action:none!important;user-select:none!important;-webkit-user-select:none!important;-webkit-touch-callout:none!important}#hmForcedSeparation video::-webkit-media-controls,#hmReceptionScare video::-webkit-media-controls,#hmReceptionHandScare video::-webkit-media-controls{display:none!important}#hmForcedSeparation video::-webkit-media-controls-enclosure,#hmReceptionScare video::-webkit-media-controls-enclosure,#hmReceptionHandScare video::-webkit-media-controls-enclosure{display:none!important}';
+ document.head.append(cinematicStyle);
+ const configureCinematicVideo=video=>{
+  video.controls=false;video.disablePictureInPicture=true;
+  video.disableRemotePlayback=true;video.playsInline=true;
+  video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');
+  video.setAttribute('controlslist','nodownload noplaybackrate nofullscreen noremoteplayback');
+  video.addEventListener('contextmenu',event=>event.preventDefault());
+  video.addEventListener('dblclick',event=>event.preventDefault());
+ };
  // The server already broadcasts G08 on the bell action. Add the approved
  // corrupted CH01 voice to the actual G08 playback, not to an unrelated timer.
  const separationVoice=new Audio('https://gb1026gb00-cell.github.io/hoemyeong-hospital/CH01_reverse_corrupted.mp3');
@@ -55,6 +69,7 @@
   video.playsInline=true;video.preload='auto';video.controls=false;
   video.style.cssText='width:100%;height:100%;object-fit:contain';
   video.src='https://gb1026gb00-cell.github.io/hoemyeong-hospital/G08.mp4';
+  configureCinematicVideo(video);
   const action=document.createElement('button');
   action.type='button';action.textContent='강제 분리 영상 재생';
   action.style.cssText='position:absolute;bottom:12%;padding:14px 22px;border:1px solid #9e5263;border-radius:10px;background:#2c131d;color:white;font:700 15px system-ui';
@@ -79,6 +94,7 @@
   overlay.style.cssText='position:fixed;inset:0;z-index:999998;background:#000;display:flex;align-items:center;justify-content:center';
   const video=document.createElement('video');video.playsInline=true;video.preload='auto';
   video.src='https://gb1026gb00-cell.github.io/hoemyeong-hospital/G01.mp4';
+  configureCinematicVideo(video);
   video.style.cssText='width:100%;height:100%;object-fit:contain';
   video.volume=soundVolume();video.muted=soundVolume()===0;
   const play=document.createElement('button');play.type='button';play.textContent='시작 영상 재생';
@@ -102,6 +118,7 @@
   overlay.style.cssText='position:fixed;inset:0;z-index:999998;background:#000;display:flex;align-items:center;justify-content:center';
   const video=document.createElement('video');video.playsInline=true;video.preload='auto';video.controls=false;
   video.src='/reception_hand.mp4';
+  configureCinematicVideo(video);
   video.style.cssText='width:100%;height:100%;object-fit:contain';
   video.volume=soundVolume();video.muted=soundVolume()===0;
   const retry=document.createElement('button');retry.type='button';retry.textContent='접수대 영상 재생';
