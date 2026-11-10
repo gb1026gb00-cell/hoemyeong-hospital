@@ -187,6 +187,7 @@
   const overlay=document.createElement('div');overlay.id='hmReceptionCodeModal';
   overlay.style.cssText='position:fixed;inset:0;z-index:999997;background:#070509f5;display:flex;align-items:center;justify-content:center;padding:16px';
   const content=document.createElement('section');content.style.cssText='width:min(540px,100%);max-height:88vh;overflow-y:auto;background:#1a121c;border:2px solid #98748b;border-radius:12px;padding:22px;color:#f1e3ed';
+  const back=document.createElement('button');back.type='button';back.textContent='← 접수실로 돌아가기';back.style.cssText='display:block;margin:0 0 16px;padding:10px 13px;background:#29202b;border:1px solid #8b7386;color:#fff;border-radius:8px;font:14px system-ui';back.onclick=()=>overlay.remove();
   const heading=document.createElement('h2');heading.textContent='回明病院 · 접수대 봉인';heading.style.cssText='font-size:20px;margin:0 0 14px';
   const notice=document.createElement('p');notice.textContent='비친 것을 먼저 헤아리고, 잠긴 것의 빈자리를 채운 뒤, 마지막으로 남겨진 기록을 대조하라.';notice.style.cssText='font:15px/1.8 serif;color:#d7c2ce';
   const cells=document.createElement('div');cells.style.cssText='display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:15px 0';
@@ -194,15 +195,16 @@
   for(let i=0;i<6;i++){const field=document.createElement('input');field.inputMode='numeric';field.maxLength=1;field.autocomplete='off';field.setAttribute('aria-label',(i+1)+'번째 숫자');field.style.cssText='min-width:0;width:100%;height:50px;text-align:center;font:700 22px system-ui;background:#0d0a12;color:white;border:1px solid #9e8298;border-radius:7px';field.oninput=()=>{field.value=field.value.replace(/[^0-9]/g,'').slice(0,1);if(field.value&&inputs[i+1])inputs[i+1].focus();};inputs.push(field);cells.append(field);}
   const status=document.createElement('p');status.style.cssText='font-size:13px;color:#e2b5c9';
   const submit=document.createElement('button');submit.textContent='봉인 해제 · CH.02 입장';submit.style.cssText='width:100%;padding:15px;background:#53354d;border:1px solid #ac8da4;border-radius:8px;color:white;font-weight:700';
-  submit.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN){status.textContent='서버 연결을 확인하세요.';return;}const answer=inputs.map(x=>x.value).join('');if(answer.length!==6){status.textContent='여섯 자리 숫자를 모두 입력하세요.';return;}socket.send(JSON.stringify({type:'chapter',action:'reception_submit',answer}));status.textContent='팀원 확인을 기다리는 중…';};
+  submit.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN){status.textContent='서버 연결을 확인하세요.';return;}const answer=inputs.map(x=>x.value).join('');if(answer.length!==6){status.textContent='여섯 자리 숫자를 모두 입력하세요.';return;}socket.send(JSON.stringify({type:'chapter',action:'reception_submit',answer}));status.textContent='봉인 번호 확인 중…';};
   const sealNotice=document.createElement('div');sealNotice.style.cssText='position:fixed;inset:0;z-index:2;background:#070507;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:25px;text-align:center;color:#eee3e9';
   const hospital=document.createElement('div');hospital.textContent='回明病院';hospital.style.cssText='font:700 clamp(32px,9vw,58px) serif;letter-spacing:.12em;color:#a93645';
   const heading2=document.createElement('h2');heading2.textContent='제01조 · 봉인 해제 절차';heading2.style.cssText='font:600 23px serif';
   const text2=document.createElement('p');text2.textContent='비친 것을 먼저 헤아리고,\n잠긴 것의 빈자리를 채운 뒤,\n마지막으로 남겨진 기록을 대조하라.';text2.style.cssText='white-space:pre-line;font:17px/2 serif';
   const foot=document.createElement('p');foot.textContent='※ 순서를 어길 경우 봉인은 해제되지 않습니다.';foot.style.cssText='font:12px system-ui;color:#a99aa4';
+  const noticeBack=document.createElement('button');noticeBack.type='button';noticeBack.textContent='← 접수실로 돌아가기';noticeBack.style.cssText='padding:12px 20px;background:transparent;border:1px solid #766572;color:#ddd;border-radius:8px';noticeBack.onclick=()=>overlay.remove();
   const proceed=document.createElement('button');proceed.textContent='봉인 번호 입력';proceed.style.cssText='padding:14px 28px;background:#493347;border:1px solid #9e7f94;color:white;border-radius:8px';proceed.onclick=()=>{sealNotice.remove();inputs[0].focus();};
-  sealNotice.append(hospital,heading2,text2,foot,proceed);
-  content.append(heading,notice,cells,status,submit);overlay.append(content,sealNotice);document.body.append(overlay);
+  sealNotice.append(hospital,heading2,text2,foot,proceed,noticeBack);
+  content.append(back,heading,notice,cells,status,submit);overlay.append(content,sealNotice);document.body.append(overlay);
  }
  // G08 is owned by the transition above; all other approved horror videos
  // continue through the original V172 media handler unchanged.
