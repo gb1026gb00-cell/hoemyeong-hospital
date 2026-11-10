@@ -497,6 +497,18 @@ wss.on('connection',ws=>{
     if(!ch.ch02.newVisited)ch.ch02.newVisited={};
     if(!ch.ch02.newVisited[player.role])ch.ch02.newVisited[player.role]=[];
     if(!ch.ch02.newVisited[player.role].includes(site))ch.ch02.newVisited[player.role].push(site);
+    if(site==='certificate'){
+     const count=[2,4,8].includes(r.capacity)?r.capacity:2;
+     const role=player.role%count;
+     const records=[
+      {id:'A-01',patient:'성명 불명 / 302-01',time:'02:41',cause:'심정지',stamp:'사망 확인',trace:'기록 시각이 심전도 종료보다 앞선다.'},
+      {id:'B-02',patient:'성명 불명 / 302-02',time:'02:38',cause:'호흡 정지',stamp:'퇴실 승인',trace:'의사 서명란의 날짜가 지워져 있다.'},
+      {id:'C-03',patient:'성명 불명 / 302-03',time:'03:06',cause:'원인 미상',stamp:'재확인 필요',trace:'퇴실 기록의 환자 번호가 다르다.'},
+      {id:'D-04',patient:'성명 불명 / 302-04',time:'02:52',cause:'심폐 기능 정지',stamp:'보류',trace:'사망 시각에 활력 징후가 기록됐다.'}
+     ];
+     const assigned=count===2?[records.slice(0,2),records.slice(2,4)][role]:count===4?[records[role]]:role<4?[records[role]]:[{...records[role-4],id:'검증-'+(role-3),stamp:'대조 기록',trace:['심전도 원본과 불일치','투약 일지와 불일치','퇴실 기록과 불일치','환자 인식표와 불일치'][role-4]}];
+     send(ws,{type:'ch02_certificate',role,capacity:count,records:assigned});
+    }
     send(ws,{type:'ch02_new_result',site,ok:true,role:player.role,message:site==='certificate'?'사망진단서의 발급 기록이 발견되었다.':site==='ecg'?'심전도 기록에 생존 신호가 남아 있다.':site==='eight'?'침대 끝의 8번 표식 아래 문서 배열 단서가 있다.':'침대 아래의 검은 손자국이 움직인다.'});
     if(site==='underbed'&&!ch.ch02.newScareRoles?.includes(player.role)){
      ch.ch02.newScareRoles=ch.ch02.newScareRoles||[];ch.ch02.newScareRoles.push(player.role);
