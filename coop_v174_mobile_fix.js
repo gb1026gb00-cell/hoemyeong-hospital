@@ -17,6 +17,16 @@
     if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity)))receptionAnswerLength=Number(m.capacity)/2+3;active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='reception_clue'&&m.object!=='desk')showSceneClue(m);
     if(m.type==='reception_result')showReceptionAnswerResult(m);
+    if(m.type==='ch02_new_result'&&m.site==='answer'){
+     const status=document.getElementById('hmCh02NewStatus');if(status)status.textContent=m.message||'';
+     if(m.ok)ch02Dialog('봉인 해제',m.message||'PATIENT STATUS : ALIVE');
+    }
+    if(m.type==='horror_video'&&m.id==='H01'&&phase==='ch02'&&ch02HandPending){
+     ch02HandPending=false;
+     const vid=document.getElementById('hmHorrorVideo');
+     if(vid){const finish=()=>ch02Dialog('302호 · 봉인 번호','침대 아래에 새겨진 네 글자를 입력하라.',true);vid.addEventListener('ended',finish,{once:true});}
+     else ch02Dialog('302호 · 봉인 번호','침대 아래에 새겨진 네 글자를 입력하라.',true);
+    }
     if((m.type==='chapter_event'&&m.event==='escape')||((m.type==='state'||m.type==='joined')&&m.chapter&&['escaped','ch02','ch03','ch04','ch05','ch06','finished'].includes(m.chapter.phase))){$('hmReceptionCodeModal')?.remove();$('hmCh01InspectionScreen')?.remove();}
     handleHospitalSoundEvent(m);
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
@@ -219,7 +229,7 @@
   const media=window.hmMedia;
   if(!media||typeof media.handle!=='function'||media.__hmG08Routed)return;
   const original=media.handle.bind(media);
-  media.handle=function(message){if(message?.type==='horror_video'&&(['G08','G01','RECEPTION_HAND'].includes(message.id)||(phase==='ch02'&&['G06','G12'].includes(message.id))))return;return original(message);};
+  media.handle=function(message){if(message?.type==='horror_video'&&(['G08','G01','RECEPTION_HAND'].includes(message.id)||(phase==='ch02'&&message.id!=='H01')))return;return original(message);};
   media.__hmG08Routed=true;
  }
  installG08MediaRouting();
@@ -612,37 +622,71 @@
  }
  guardCh02Horror();
  document.addEventListener('hm-v175-state',guardCh02Horror);
- // CH02 H01: the hand-under-bed scare must only be invoked from the foot/under-bed hotspot.
- // Legacy H01 hotspots are disabled while CH02 is active, preserving all other videos.
- function mountCh02UnderBed(){
-  const scene=document.getElementById('mainScene');
-  if(!scene)return;
-  let b=document.getElementById('hmCh02UnderBedHotspot');
-  if(!b){
-   b=document.createElement('button');b.type='button';b.id='hmCh02UnderBedHotspot';
-   b.textContent='⌕';b.setAttribute('aria-label','침대 아래 조사');
-   b.style.cssText='position:absolute;left:54%;top:79%;transform:translate(-50%,-50%);z-index:25;width:48px;height:48px;border:1px solid #d5c6d7;border-radius:50%;background:#1d1429c9;color:#fff;font:28px system-ui;display:grid;place-items:center;cursor:pointer';
-   b.addEventListener('click',event=>{
-    event.preventDefault();event.stopImmediatePropagation();
-    if(!active||phase!=='ch02'||socket?.readyState!==NativeWS.OPEN)return;
-    socket.send(JSON.stringify({type:'chapter',action:'horror_inspect',site:'bed_under'}));
-   },true);
-   scene.append(b);
-  }
-  b.hidden=!(active&&phase==='ch02');
-  b.style.display=b.hidden?'none':'grid';
+ // CH02 standalone investigation layer; approved scene photo remains untouched.
+ const ch02Css=document.createElement('style');
+ ch02Css.textContent='html.hm-ch02-clean #ch02PuzzlePanel,html.hm-ch02-clean .hm-object-guide,html.hm-ch02-clean .narrative,html.hm-ch02-clean #sceneNarrative,html.hm-ch02-clean #sceneDescription,html.hm-ch02-clean #sceneText,html.hm-ch02-clean .scene-caption{display:none!important}html.hm-ch02-clean #mainScene>:not(img):not(#hmCh02NewLayer){display:none!important}html.hm-ch02-clean #hmCh02NewLayer{display:block!important}#hmCh02NewLayer{position:absolute;inset:0;z-index:999;pointer-events:none}#hmCh02NewLayer button{position:absolute;pointer-events:auto;background:transparent;border:0;color:transparent;font-size:0;touch-action:manipulation}#hmCh02NewLayer button:focus-visible{outline:2px solid #e9c6d7}';
+ document.head.append(ch02Css);
+ let ch02HandPending=false;
+ function ch02Send(action,extra={}){
+  if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action,...extra}));
  }
- document.addEventListener('hm-v175-state',mountCh02UnderBed);
- document.addEventListener('hm-v175-started',mountCh02UnderBed);
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountCh02UnderBed,{once:true});else mountCh02UnderBed();
- document.addEventListener('click',event=>{
+ function ch02Dialog(title,body,code=false){
+  document.getElementById('hmCh02NewDialog')?.remove();
+  const wrap=document.createElement('div');wrap.id='hmCh02NewDialog';
+  wrap.style.cssText='position:fixed;inset:0;z-index:999999;background:#050507f2;display:grid;place-items:center;padding:18px;overflow:auto';
+  const card=document.createElement('section');card.style.cssText='position:relative;width:min(540px,100%);padding:32px 22px;background:linear-gradient(135deg,#cfc3a8,#a99c86);color:#211c19;box-shadow:0 15px 70px #000;font:16px/1.8 serif';
+  const h=document.createElement('h2');h.textContent=title;h.style.cssText='font-size:23px;margin:0 0 16px';
+  const p=document.createElement('p');p.textContent=body;p.style.whiteSpace='pre-line';
+  const close=document.createElement('button');close.textContent='닫기 ×';close.style.cssText='float:right;padding:8px 12px;background:#30232b;color:white;border:0';
+  close.onclick=()=>wrap.remove();card.append(close,h,p);
+  if(code){
+   const input=document.createElement('input');input.maxLength=4;input.placeholder='영문 4글자';input.autocapitalize='characters';input.style.cssText='width:100%;padding:12px;font-size:22px;letter-spacing:7px;text-transform:uppercase';
+   const submit=document.createElement('button');submit.textContent='봉인 해제';submit.style.cssText='display:block;margin-top:12px;padding:12px 18px;background:#30232b;color:#fff;border:0';
+   const status=document.createElement('p');status.id='hmCh02NewStatus';
+   submit.onclick=()=>ch02Send('ch02_new_solve',{answer:input.value.toUpperCase()});
+   card.append(input,submit,status);
+  }
+  wrap.append(card);document.body.append(wrap);
+ }
+ function mountCh02New(){
+  const scene=document.getElementById('mainScene');if(!scene)return;
+  let layer=document.getElementById('hmCh02NewLayer');
+  if(!layer){
+   layer=document.createElement('div');layer.id='hmCh02NewLayer';
+   const spots=[
+    ['certificate','침대 위 사망진단서','17%','30%','67%','31%'],
+    ['underbed','침대 아래 조사','22%','68%','59%','26%'],
+    ['ecg','벽 전기코드','3%','20%','16%','30%'],
+    ['eight','침대 끝 8번 표지','73%','49%','25%','24%']
+   ];
+   for(const [site,label,left,top,width,height] of spots){
+    const btn=document.createElement('button');btn.type='button';btn.dataset.ch02New=site;btn.setAttribute('aria-label',label);btn.title=label;
+    btn.style.left=left;btn.style.top=top;btn.style.width=width;btn.style.height=height;
+    btn.addEventListener('click',e=>{
+     e.preventDefault();e.stopImmediatePropagation();
+     if(!active||phase!=='ch02')return;
+     ch02Send('ch02_new_inspect',{site});
+     if(site==='certificate')ch02Dialog('回明病院 · 사망진단서','문서 번호 : HM-302-□□□□\\n환자명 : [훼손]\\n사망 일시 : [판독 불가]\\n사망 원인 : [판독 불가]\\n담당 의사 : [서명 훼손]');
+     if(site==='ecg')ch02Dialog('심전도 기록','전원 공급 장치가 끊겨 있다.\\n기록의 마지막 생체 신호는 사망 이후에도 이어진다.\\nPATIENT STATUS : ALIVE');
+     if(site==='eight')ch02Dialog('침대 끝 · 8번 표지','지워진 표식 아래 작은 문구가 남아 있다.\\n「사망을 기록한 네 글자를 읽어라.」');
+     if(site==='underbed')ch02HandPending=true;
+    },true);
+    layer.append(btn);
+   }
+   scene.append(layer);
+  }
+  layer.hidden=!(active&&phase==='ch02');
+ }
+ document.addEventListener('hm-v175-state',mountCh02New);
+ document.addEventListener('hm-v175-started',mountCh02New);
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountCh02New,{once:true});else mountCh02New();
+ document.addEventListener('click',e=>{
   if(!active||phase!=='ch02')return;
-  const el=event.target instanceof Element?event.target.closest('[data-site="bed_under"]'):null;
-  if(el&&el.id!=='hmCh02UnderBedHotspot'){event.preventDefault();event.stopImmediatePropagation();}
+  const el=e.target instanceof Element?e.target.closest('button,[role="button"],[data-action],[data-site]'):null;
+  if(!el||el.closest('#hmCh02NewLayer,#hmCh02NewDialog,#hmV174Chat'))return;
+  if(el.closest('#mainScene,#ch02PuzzlePanel')||el.dataset.ch02||el.dataset.site==='bed_under'){e.preventDefault();e.stopImmediatePropagation();}
  },true);
- const bedStyle=document.createElement('style');
- bedStyle.textContent='html.hm-ch02-clean [data-site="bed_under"]:not(#hmCh02UnderBedHotspot){display:none!important}';
- document.head.append(bedStyle);
+ document.addEventListener('hm-v175-state',()=>{if(phase!=='ch02'){ch02HandPending=false;document.getElementById('hmCh02NewDialog')?.remove();}});
  // CH02 clean-up: remove legacy narrative clutter only in the active CH02 scene.
  // Never remove the approved photorealistic background or mutate other chapters.
  function updateCh02SceneCleanup(){
