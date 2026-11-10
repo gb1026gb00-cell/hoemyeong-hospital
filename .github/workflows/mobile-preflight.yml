@@ -34,6 +34,10 @@ jobs:
         id: network_checks
         continue-on-error: true
         run: npm run test:network
+      - name: Exercise real two-player CH01 + video byte ranges
+        id: ch01_live
+        continue-on-error: true
+        run: node test_ch01_live_v177.js
       - name: Verify server syntax
         id: syntax_checks
         continue-on-error: true
@@ -44,6 +48,7 @@ jobs:
           echo "Static checks: ${{ steps.static_checks.outcome }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Approved V172 UI: ${{ steps.approved_ui.outcome }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Multiplayer checks: ${{ steps.network_checks.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "CH01 live puzzle and videos: ${{ steps.ch01_live.outcome }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Server syntax: ${{ steps.syntax_checks.outcome }}" >> "$GITHUB_STEP_SUMMARY"
           failed=0
           if [ "${{ steps.static_checks.outcome }}" != success ]; then
@@ -56,6 +61,10 @@ jobs:
           fi
           if [ "${{ steps.network_checks.outcome }}" != success ]; then
             echo "::error title=Multiplayer smoke test failed::Check the 2-player and 4-player reconnect test output."
+            failed=1
+          fi
+          if [ "${{ steps.ch01_live.outcome }}" != success ]; then
+            echo "::error title=CH01 integration failed::Check two-player visual clues, progression and locally served videos."
             failed=1
           fi
           if [ "${{ steps.syntax_checks.outcome }}" != success ]; then
