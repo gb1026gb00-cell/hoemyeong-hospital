@@ -553,6 +553,65 @@
   const object=String(target.dataset.object||target.dataset.site||target.dataset.station||'').toLowerCase();
   if(action==='ch02_explore'&&['bed','patient_record','chart','record'].includes(object))openCh02CertificatePreview();
  },true);
+ // CH02 rebuild v1: retain ONLY the approved ward photograph and create four
+ // invisible object hit areas. Old V172 ward hotspots and menus are not used.
+ const rebuildStyle=document.createElement('style');
+ rebuildStyle.textContent=[
+ 'html.hm-ch02-clean #hmWardScene .ward-hot',
+ 'html.hm-ch02-clean #hmWardScene .ward-bottom',
+ 'html.hm-ch02-clean #hmWardScene .hm-horror-site',
+ 'html.hm-ch02-clean #hmWardScene #hmWardMenu',
+ 'html.hm-ch02-clean #hmCh02UnderBedHotspot',
+ 'html.hm-ch02-clean #hmWard02',
+ 'html.hm-ch02-clean #hmWardScene [data-ward-action]',
+ 'html.hm-ch02-clean #hmWardScene .ward-top button'
+ ].join(',')+'{display:none!important}'+
+ '#hmWardScene .hm-ch02-new-target{position:absolute;z-index:55;display:block;border:0;background:transparent;color:transparent;padding:0;border-radius:0;box-shadow:none;cursor:pointer;touch-action:manipulation}'+
+ '#hmWardScene .hm-ch02-new-target:focus-visible{outline:2px solid #ddd}'+
+ 'html:not(.hm-ch02-clean) #hmWardScene .hm-ch02-new-target{display:none!important}';
+ document.head.append(rebuildStyle);
+ const rebuiltTargets=[
+  ['certificate','침대 위 사망진단서', 'left:24%;top:43%;width:53%;height:27%'],
+  ['hand','침대 아래 손 영상','left:28%;top:76%;width:52%;height:17%'],
+  ['ecg','벽 전기코드 심전도','left:43%;top:27%;width:39%;height:13%'],
+  ['eight','침대 끝 8번 표지','left:0%;top:70%;width:28%;height:17%']
+ ];
+ function mountRebuiltWard(){
+  const root=document.getElementById('hmWardScene');
+  if(!root||root.querySelector('.hm-ch02-new-target'))return;
+  for(const [kind,label,coords] of rebuiltTargets){
+   const b=document.createElement('button');b.type='button';b.className='hm-ch02-new-target';b.dataset.ch02New=kind;
+   b.setAttribute('aria-label',label);b.title=label;b.style.cssText=coords;
+   b.addEventListener('click',event=>{
+    event.preventDefault();event.stopImmediatePropagation();
+    if(!active||phase!=='ch02')return;
+    if(kind==='certificate')openCh02CertificatePreview();
+    else if(kind==='hand')openCh02RebuildNote('침대 아래 · 손 영상과 암호 입력은 다음 단계에서 연결됩니다.');
+    else if(kind==='ecg')openCh02RebuildNote('전기코드 · 심전도 기록은 다음 단계에서 연결됩니다.');
+    else openCh02RebuildNote('8번 표지 · 숨겨진 기록은 다음 단계에서 연결됩니다.');
+   },true);
+   root.append(b);
+  }
+ }
+ function openCh02RebuildNote(message){
+  document.getElementById('hmCh02RebuildNote')?.remove();
+  const layer=document.createElement('div');layer.id='hmCh02RebuildNote';layer.style.cssText='position:fixed;inset:0;z-index:999997;display:grid;place-items:center;padding:20px;background:#050407dc';
+  const card=document.createElement('div');card.style.cssText='width:min(450px,100%);padding:28px;background:#1d1821;color:#e7dce8;border:1px solid #6a576c;border-radius:10px;text-align:center;font:15px/1.8 system-ui';
+  const p=document.createElement('p');p.textContent=message;const close=document.createElement('button');close.type='button';close.textContent='닫기';close.style.cssText='padding:10px 22px;color:white;background:#423047;border:1px solid #927f94;border-radius:8px';close.onclick=()=>layer.remove();card.append(p,close);layer.append(card);document.body.append(layer);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountRebuiltWard,{once:true});else mountRebuiltWard();
+ document.addEventListener('hm-v175-state',mountRebuiltWard);
+ // All CH02 legacy horror triggers are blocked at the original video queue.
+ // H01 will be re-enabled only when the new under-bed sequence is implemented.
+ function guardCh02Horror(){
+  const media=window.HMCanvasHorror;
+  if(!media||typeof media.enqueue!=='function'||media.__ch02RebuiltGuard)return;
+  const original=media.enqueue.bind(media);
+  media.enqueue=function(id){if(active&&phase==='ch02')return;return original(id)};
+  media.__ch02RebuiltGuard=true;
+ }
+ guardCh02Horror();
+ document.addEventListener('hm-v175-state',guardCh02Horror);
  // CH02 H01: the hand-under-bed scare must only be invoked from the foot/under-bed hotspot.
  // Legacy H01 hotspots are disabled while CH02 is active, preserving all other videos.
  function mountCh02UnderBed(){
