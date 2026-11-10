@@ -18,7 +18,10 @@
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
     if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity))){receptionAnswerLength=Number(m.capacity)/2+3;ch02RoomCapacity=Number(m.capacity);}active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='joined'&&typeof m.isHost==='boolean')ch02IsHost=m.isHost;
-    if(m.type==='joined'&&Number.isInteger(Number(m.yourRole)))ch02AssignedRole=Number(m.yourRole);
+    if(m.type==='joined'&&m.yourRole!==undefined&&m.yourRole!==null&&Number.isInteger(Number(m.yourRole)))ch02AssignedRole=Number(m.yourRole);
+    if(m.type==='ch02_certificate'&&Number.isInteger(Number(m.role)))ch02AssignedRole=Number(m.role);
+    if(m.type==='ch02_ecg_archive'&&Number.isInteger(Number(m.role)))ch02AssignedRole=Number(m.role);
+    if(m.type==='ch02_bed_tags'&&Number.isInteger(Number(m.role)))ch02AssignedRole=Number(m.role);
     if(m.type==='error'&&phase==='ch02'){
      const popup=document.getElementById('hmCh02NewDialog');
      if(popup&&popup.dataset.awaitingCertificate==='yes'){
@@ -36,6 +39,11 @@
      if(status)status.textContent=m.message||'파편 수집 상태를 확인해 주세요.';
     }
     if((m.type==='state'||m.type==='joined')&&m.chapter?.phase==='ch02_cleared'&&!document.getElementById('hmCh02ClearScene'))showCh02Clear();
+    if(m.type==='ch03_event'&&m.event==='enter'){
+     phase='ch03';
+     const image=document.getElementById('sceneImage');
+     if(image){image.src='/elevator_hall.webp';image.alt='회명병원 엘리베이터';}
+    }
     if((m.type==='state'||m.type==='joined')&&m.chapter?.phase==='ch03'){
      const scene=document.getElementById('hmWardScene')||document.getElementById('mainScene');
      if(scene){scene.style.backgroundImage='url("/elevator_hall.webp")';scene.dataset.hmChapterScene='ch03';}
@@ -58,8 +66,10 @@
     if(m.type==='ch02_ecg_archive'&&active)showCh02ECG(m);
     if(m.type==='ch02_bed_tags'&&active)showCh02BedTags(m);
     if(m.type==='ch02_new_result'&&m.site==='answer'){
-     const status=document.getElementById('hmCh02NewStatus');if(status)status.textContent=m.message||'';
+     const status=document.getElementById('hmCh02NewStatus');
+     if(status)status.textContent=m.message||'';
      if(m.ok&&m.scene==='death_record_invalidated')showCh02Clear();
+     else if(!m.ok)ch02Dialog('기록 정정 실패',m.message||'조사 기록이 부족합니다. 네 조사 지점을 다시 확인해 주세요.');
     }
     if(m.type==='ch02_new_result'&&m.site==='underbed'&&phase==='ch02'&&!m.videoPending){
      ch02HandPending=false;
@@ -938,7 +948,7 @@
    const trace=document.createElement('p');trace.textContent='기록 대조 메모: '+record.trace;trace.style.cssText='margin:22px 0 0;padding:10px;border-top:1px dashed #85735e;font-size:13px';
    page.append(stamp,trace);paper.append(page);
   }
-  const footer=document.createElement('p');footer.textContent='※ 서로 다른 조사원이 확인한 문서를 대조하십시오.';footer.style.cssText='font-size:12px;margin-top:18px';paper.append(footer);
+  const footer=document.createElement('p');footer.textContent='조사원 '+(Number(message.role)+1)+' / '+message.capacity+'인 조사실 · 서로 다른 조사원이 확인한 문서를 대조하십시오.';footer.style.cssText='font-size:12px;margin-top:18px';paper.append(footer);
   wrap.append(paper);document.body.append(wrap);
  }
  let ch02ClearShown=false;
