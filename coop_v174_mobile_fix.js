@@ -162,7 +162,7 @@
   const retry=document.createElement('button');retry.type='button';retry.textContent='접수대 영상 재생';
   retry.style.cssText='position:absolute;bottom:12%;padding:14px 22px;border:1px solid #9e5263;border-radius:10px;background:#2c131d;color:white;font:700 15px system-ui';
   retry.hidden=true;
-  const finish=()=>{video.pause();overlay.remove();receptionHandPlaying=false;openReceptionCodePanel();};
+  const finish=()=>{video.pause();overlay.remove();receptionHandPlaying=false;};
   video.addEventListener('ended',finish,{once:true});
   video.addEventListener('error',()=>{retry.textContent='영상 로딩 오류 · 봉인 입력으로 이동';retry.hidden=false;retry.onclick=finish;},{once:true});
   retry.onclick=()=>{video.muted=false;video.play().catch(()=>{video.muted=true;video.play().catch(()=>{retry.hidden=false;retry.textContent='영상 재생하기';});});};
