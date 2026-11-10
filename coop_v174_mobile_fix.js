@@ -60,6 +60,11 @@
      document.getElementById('hmCh02NewDialog')?.remove();
      ch02ClearShown=false;
     }
+    if(m.type==='ch03_event'&&m.event==='enter')mountIndependentCh03();
+    if(m.type==='ch03_result'&&phase==='ch03'){
+     const note=document.getElementById('hmIndependentCh03Note');
+     if(note)note.textContent=m.message||'조사 기록을 확인했습니다.';
+    }
     if(m.type==='reception_clue'&&m.object!=='desk')showSceneClue(m);
     if(m.type==='reception_result')showReceptionAnswerResult(m);
     if(m.type==='ch02_certificate'&&active)showCh02Certificate(m);
@@ -163,6 +168,35 @@
  document.addEventListener('hm-v175-started',mountCh02GroupIntro);
 
  // Subsequent chapter story intros: narrative only, never modify cooperative puzzles.
+ // CH03 owns a standalone visual layer; the legacy reception must never be visible.
+ function mountIndependentCh03(){
+  const old=document.getElementById('hmIndependentCh03');
+  if(!active||phase!=='ch03'){old?.remove();return;}
+  if(old)return;
+  document.getElementById('hmCh02ClearScene')?.remove();
+  document.getElementById('hmCh02NewDialog')?.remove();
+  const root=document.createElement('section');root.id='hmIndependentCh03';
+  root.style.cssText='position:fixed;inset:0;z-index:999900;background:#050506;color:#e9e3dd;display:flex;flex-direction:column;font:14px/1.5 system-ui;overflow:auto';
+  const header=document.createElement('header');header.textContent='03. 엘리베이터 · 回明病院';
+  header.style.cssText='padding:13px 18px;background:#0d0d10;border-bottom:1px solid #494149;letter-spacing:1px;text-align:center';root.append(header);
+  const scene=document.createElement('div');scene.style.cssText='position:relative;flex:1;min-height:280px;max-height:78dvh;overflow:hidden;background:#0a090b';
+  const photo=document.createElement('img');photo.src='/elevator_hall.webp';photo.alt='낡은 회명병원 엘리베이터';photo.style.cssText='width:100%;height:100%;object-fit:contain;display:block';scene.append(photo);
+  const buttons=[['panel','층수 버튼','right:4%;top:37%'],['mirror','거울','left:5%;top:24%'],['speaker','스피커','left:34%;top:8%']];
+  for(const [site,label,pos] of buttons){
+   const b=document.createElement('button');b.type='button';b.textContent=label;b.style.cssText='position:absolute;'+pos+'background:#16131acc;color:#fff;border:1px solid #998b95;border-radius:6px;padding:9px 12px;font:13px system-ui';
+   b.onclick=()=>ch02Send('ch03_explore',{object:site});scene.append(b);
+  }
+  root.append(scene);
+  const bottom=document.createElement('div');bottom.style.cssText='padding:12px 16px 18px;background:#0b0b0e;border-top:1px solid #494149;display:flex;flex-wrap:wrap;gap:8px';
+  for(const [site,label] of [['log','운행 일지'],['reflection','반사면 분석']]){
+   const b=document.createElement('button');b.type='button';b.textContent=label;b.style.cssText='padding:10px 12px;border:1px solid #695963;border-radius:5px;background:#241d25;color:#fff';
+   b.onclick=()=>ch02Send('ch03_clue',{station:site});bottom.append(b);
+  }
+  const note=document.createElement('div');note.id='hmIndependentCh03Note';note.textContent='엘리베이터 내부를 조사하고 팀원과 단서를 공유하세요.';note.style.cssText='flex-basis:100%;white-space:pre-wrap;color:#cfc4cd';bottom.append(note);root.append(bottom);
+  document.body.append(root);
+ }
+ document.addEventListener('hm-v175-state',mountIndependentCh03);
+ document.addEventListener('hm-v175-started',mountIndependentCh03);
  const laterStory={
   ch03:[['홍중','다들 들었지? 방금 스피커에서 우리 이름 불렀어.'],['종호','홍중이 형, 난 아직 이름 말한 적 없는데.'],['민기','잠깐, 엘리베이터 문 닫혔잖아. 누가 열림 버튼 누르고 있어?'],['윤호','민기야, 버튼에서 손 떼. 지금 아무도 안 누르고 있어.'],['여상','성화 형, 거울 봐. 우리 여덟인데... 하나가 더 보여.'],['성화','여상아, 거울 보지 마. 다들 앞만 봐.'],['우영','산아, 아까부터 내 뒤에 누가 숨 쉬는 것 같아.'],['산','우영아, 뒤돌지 마. 내가 확인할게.'],['홍중','층수 버튼이랑 스피커부터 확인하자. 찾은 건 여기 공유해.']],
   ch04:[['홍중','여긴 기록실인가 봐. 다들 들어왔어?'],['성화','서류가 왜 이렇게 흩어져 있어?'],['윤호','홍중이 형, CCTV 화면에 우리 모습이 나와.'],['민기','근데 인원이 안 맞는데?'],['여상','나도 봤어. 한 명 더 있어.'],['종호','형들, 뒤돌아보지 마.'],['우영','야, 그런 말 하지 마. 더 무섭잖아.'],['산','우영아, 화면부터 확인하자.']],
