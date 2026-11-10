@@ -219,7 +219,7 @@
   const media=window.hmMedia;
   if(!media||typeof media.handle!=='function'||media.__hmG08Routed)return;
   const original=media.handle.bind(media);
-  media.handle=function(message){if(message?.type==='horror_video'&&['G08','G01','RECEPTION_HAND'].includes(message.id))return;return original(message);};
+  media.handle=function(message){if(message?.type==='horror_video'&&(['G08','G01','RECEPTION_HAND'].includes(message.id)||(phase==='ch02'&&['G06','G12'].includes(message.id))))return;return original(message);};
   media.__hmG08Routed=true;
  }
  installG08MediaRouting();
@@ -553,6 +553,18 @@
   const object=String(target.dataset.object||target.dataset.site||target.dataset.station||'').toLowerCase();
   if(action==='ch02_explore'&&['bed','patient_record','chart','record'].includes(object))openCh02CertificatePreview();
  },true);
+ // CH02 clean-up: remove legacy narrative clutter only in the active CH02 scene.
+ // Never remove the approved photorealistic background or mutate other chapters.
+ function updateCh02SceneCleanup(){
+  const on=active&&phase==='ch02';
+  document.documentElement.classList.toggle('hm-ch02-clean',on);
+  if(!on)document.getElementById('hmCh02CertificatePreview')?.remove();
+ }
+ const ch02Style=document.createElement('style');
+ ch02Style.textContent='html.hm-ch02-clean .narrative,html.hm-ch02-clean #sceneNarrative,html.hm-ch02-clean #sceneDescription,html.hm-ch02-clean #sceneText,html.hm-ch02-clean .scene-caption{display:none!important}';
+ document.head.append(ch02Style);
+ document.addEventListener('hm-v175-state',updateCh02SceneCleanup);
+ document.addEventListener('hm-v175-started',updateCh02SceneCleanup);
  // Rare atmospheric sounds only during active investigation, never while
   // a cinematic is on screen. Timer is cleared when page is closed.
   const ambient=setInterval(()=>{
