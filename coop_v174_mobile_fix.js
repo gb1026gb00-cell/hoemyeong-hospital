@@ -444,10 +444,12 @@
    button.addEventListener('blur',()=>button.style.outline='none');
    imageLayer.append(button);return button;
   }
-  hotspot('거울 문지르기',6,12,30,58,openCh03Mirror);
-  const fragmentHotspot=hotspot('거울 가장자리 틈 · 제0유물 조사',23,19,10,43,()=>sendInvestigation('ch03_fragment',{},'거울 가장자리'));fragmentHotspot.style.zIndex='3';
-  hotspot('거울 아래 층별 안내문',7,71,33,24,openCh03FloorDirectory);
-  hotspot('우측 아래 기호 계산판',71,67,25,29,openCh03SymbolCalculator);
+  // Hotspots are attached to the same 16:9 image layer, so cover cropping
+  // cannot shift a touch target relative to its photographed object.
+  hotspot('거울 문지르기',5,12,19,58,openCh03Mirror);
+  const fragmentHotspot=hotspot('거울 오른쪽 테두리 틈 · 제0유물 조사',24,19,9,43,()=>sendInvestigation('ch03_fragment',{},'거울 가장자리'));fragmentHotspot.style.zIndex='3';
+  hotspot('오른쪽 벽 층별 안내문',76,12,18,48,openCh03FloorDirectory);
+  hotspot('오른쪽 아래 기호 계산판',80,72,18,22,openCh03SymbolCalculator);
   hotspot('엘리베이터 운행 버튼',68,46,8,15,()=>sendInvestigation('ch03_video',{},'엘리베이터'));
   const inventory=document.createElement('button');inventory.type='button';inventory.id='hmCh03Inventory';inventory.style.cssText='grid-column:1/-1;padding:10px 12px;border:1px solid #766477;border-radius:7px;background:#211b28;color:#f4e8f1;font:600 14px system-ui;text-align:left';
   const updateInventory=()=>{const progress=document.getElementById('artifactProgress')?.textContent||'제0유물 파편 수집함';inventory.textContent='🎒 '+progress+(ch03FragmentCollected?' · 거울 파편 획득':' · 거울 파편 미획득');};
