@@ -18,6 +18,7 @@
     handleHospitalSoundEvent(m);
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
     if(m.type==='horror_video'&&m.id==='G01')playReceptionScare();
+    if(m.type==='horror_video'&&m.id==='RECEPTION_HAND')playReceptionHand();
     if(m.type==='chat'){const box=$('hmV174ChatLog');if(box){const line=document.createElement('div');line.textContent=(Number.isInteger(m.item?.character)&&m.item.character>=0&&m.item.character<8?['홍중','성화','윤호','여상','산','민기','우영','종호'][m.item.character]+': ':(m.item?.role!==undefined?'조사원 '+(m.item.role+1)+': ':''))+(m.item?.text||m.item?.message||'');box.append(line);box.scrollTop=box.scrollHeight;}}
    });
    this.addEventListener('close',()=>{if(socket===this){active=false;updateBell();updateConnectionStatus();}});
@@ -90,13 +91,36 @@
   overlay.append(video,play);document.body.append(overlay);
   video.play().catch(()=>{play.hidden=false;});
  }
+ // The uploaded reception-drawer video has its own stable asset path.
+ // It is intentionally not aliased to any G/H clip until the binary is uploaded.
+ let receptionHandPlaying=false;
+ function playReceptionHand(){
+  if(receptionHandPlaying)return;
+  receptionHandPlaying=true;
+  const overlay=document.createElement('div');
+  overlay.id='hmReceptionHandScare';
+  overlay.style.cssText='position:fixed;inset:0;z-index:999998;background:#000;display:flex;align-items:center;justify-content:center';
+  const video=document.createElement('video');video.playsInline=true;video.preload='auto';video.controls=false;
+  video.src='/reception_hand.mp4';
+  video.style.cssText='width:100%;height:100%;object-fit:contain';
+  video.volume=soundVolume();video.muted=soundVolume()===0;
+  const retry=document.createElement('button');retry.type='button';retry.textContent='접수대 영상 재생';
+  retry.style.cssText='position:absolute;bottom:12%;padding:14px 22px;border:1px solid #9e5263;border-radius:10px;background:#2c131d;color:white;font:700 15px system-ui';
+  retry.hidden=true;
+  const finish=()=>{video.pause();overlay.remove();receptionHandPlaying=false;};
+  video.addEventListener('ended',finish,{once:true});
+  video.addEventListener('error',finish,{once:true}); // Never trap the player if the asset is not deployed.
+  retry.onclick=()=>video.play().catch(()=>{retry.hidden=false;});
+  overlay.append(video,retry);document.body.append(overlay);
+  video.play().catch(()=>{retry.hidden=false;});
+ }
  // G08 is owned by the transition above; all other approved horror videos
  // continue through the original V172 media handler unchanged.
  function installG08MediaRouting(){
   const media=window.hmMedia;
   if(!media||typeof media.handle!=='function'||media.__hmG08Routed)return;
   const original=media.handle.bind(media);
-  media.handle=function(message){if(message?.type==='horror_video'&&['G08','G01'].includes(message.id))return;return original(message);};
+  media.handle=function(message){if(message?.type==='horror_video'&&['G08','G01','RECEPTION_HAND'].includes(message.id))return;return original(message);};
   media.__hmG08Routed=true;
  }
  installG08MediaRouting();
