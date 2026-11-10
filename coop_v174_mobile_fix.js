@@ -246,7 +246,14 @@
   const refresh=()=>{const done=phase!=='reception';button.hidden=done;hint.hidden=done;};
   document.addEventListener('hm-v175-state',refresh);refresh();
  }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installSplitTrigger,{once:true});else installSplitTrigger();
+ // V172 renders CH01 lazily after the room starts. DOMContentLoaded alone
+ // runs too early and silently leaves the old bell-gated panel untouched.
+ const ensureSplitUI=()=>{if(active&&phase==='reception')installSplitTrigger();};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureSplitUI,{once:true});else ensureSplitUI();
+ document.addEventListener('hm-v175-started',ensureSplitUI);
+ document.addEventListener('hm-v175-state',ensureSplitUI);
+ const splitObserver=new MutationObserver(()=>ensureSplitUI());
+ splitObserver.observe(document.documentElement,{childList:true,subtree:true});
  function installReceptionCoop(){
   const panel=$('ch01PuzzlePanel');if(!panel||$('hmReceptionCoop'))return;
   const section=document.createElement('section');section.id='hmReceptionCoop';
@@ -300,6 +307,7 @@
   if(desk){desk.addEventListener('click',()=>{if(active&&phase==='separated'&&socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'desk'}));});}
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installReceptionCoop,{once:true});else installReceptionCoop();
+ document.addEventListener('hm-v175-started',installReceptionCoop);
 
  // Route the FIRST actual CH01 investigation through the server before legacy
  // V172 scene handlers. The old scene can use data-action while the new panel
