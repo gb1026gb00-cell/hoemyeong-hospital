@@ -285,11 +285,14 @@
  // uses reception_clue; both must initiate the same once-per-room transition.
  document.addEventListener('click',event=>{
   if(!active||phase!=='reception'||socket?.readyState!==NativeWS.OPEN)return;
-  const target=event.target.closest?.('[data-action],[data-ch01],[data-object]');
+  const target=event.target.closest?.('[data-action],[data-ch01],[data-object],#ch01PuzzlePanel button,#hmReceptionCoop button');
   if(!target)return;
   const raw=(target.getAttribute('data-object')||target.getAttribute('data-action')||'').toLowerCase();
   const map={desk:'desk',reception:'desk',reception_desk:'desk',mirror:'mirror',cabinet:'cabinet',ledger:'ledger',intercom:'intercom'};
-  const object=map[raw];
+  let object=map[raw];
+  // Approved V172 has generic investigation buttons without data-action.
+  // Treat the first actual CH01 inspection as the required separation trigger.
+  if(!object&&target.closest('#ch01PuzzlePanel')&&/조사|확인|단서|접수|거울|캐비닛|명부/.test(target.textContent||''))object='desk';
   if(!object)return;
   event.preventDefault();event.stopImmediatePropagation();
   socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));
