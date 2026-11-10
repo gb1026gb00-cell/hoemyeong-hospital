@@ -160,7 +160,7 @@
   out.textContent=header+'\\n'+lines.join('\\n');
   const shadows=$('hmReceptionShadows');if(shadows){shadows.replaceChildren();shadows.hidden=message.object!=='mirror';if(message.object==='mirror'&&Number.isInteger(message.shadowCount)){for(let i=0;i<message.shadowCount;i++){const figure=document.createElement('span');figure.className='hmShadowNurse';figure.setAttribute('aria-label','얼굴이 검게 지워진 간호사 그림자');figure.innerHTML='<span class="hmNurseHead"></span><span class="hmNurseBody"></span>';shadows.append(figure);}}}
   out.style.borderColor=message.ok?'#6b9a83':'#9b697f';
-  if(message.complete){const input=$('hmReceptionAnswer');if(input)input.disabled=true;}
+  if(message.complete){document.querySelectorAll('#hmReceptionCoop input').forEach(input=>input.disabled=true);}
  }
  function installReceptionCoop(){
   const panel=$('ch01PuzzlePanel');if(!panel||$('hmReceptionCoop'))return;
@@ -183,7 +183,7 @@
   for(let i=0;i<6;i++){
    const field=document.createElement('input');field.type='text';field.inputMode='numeric';field.maxLength=1;field.autocomplete='off';field.setAttribute('aria-label',(i+1)+'번째 숫자');
    field.placeholder=String(i+1);field.style.cssText='width:100%;min-width:0;height:48px;text-align:center;font:700 21px system-ui;color:#fff;background:#140f17;border:1px solid #92758a;border-radius:8px';
-   field.addEventListener('input',()=>{field.value=field.value.replace(/\\D/g,'').slice(0,1);if(field.value&&i<5)digitInputs[i+1].focus();});
+   field.addEventListener('input',()=>{field.value=field.value.replace(/[^0-9]/g,'').slice(0,1);if(field.value&&i<5)digitInputs[i+1].focus();});
    field.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!field.value&&i>0)digitInputs[i-1].focus();});
    digitInputs.push(field);cells.append(field);
   }
