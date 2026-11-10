@@ -17,6 +17,7 @@
     if(m.type==='reception_clue'||m.type==='reception_result')showReceptionResult(m);
     handleHospitalSoundEvent(m);
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
+    if(m.type==='horror_video'&&m.id==='G01')playReceptionScare();
     if(m.type==='chat'){const box=$('hmV174ChatLog');if(box){const line=document.createElement('div');line.textContent=(Number.isInteger(m.item?.character)&&m.item.character>=0&&m.item.character<8?['홍중','성화','윤호','여상','산','민기','우영','종호'][m.item.character]+': ':(m.item?.role!==undefined?'조사원 '+(m.item.role+1)+': ':''))+(m.item?.text||m.item?.message||'');box.append(line);box.scrollTop=box.scrollHeight;}}
    });
    this.addEventListener('close',()=>{if(socket===this){active=false;updateBell();updateConnectionStatus();}});
@@ -67,13 +68,35 @@
   video.volume=soundVolume();video.muted=soundVolume()===0;
   video.play().catch(()=>{action.hidden=false;});
  }
+ // G01 uses its own mobile-safe player. Every newly created room gets a fresh
+ // server witness list; revisiting the desk in the same room does not replay.
+ let receptionScarePlaying=false;
+ function playReceptionScare(){
+  if(receptionScarePlaying)return;
+  receptionScarePlaying=true;
+  const overlay=document.createElement('div');overlay.id='hmReceptionScare';
+  overlay.style.cssText='position:fixed;inset:0;z-index:999998;background:#000;display:flex;align-items:center;justify-content:center';
+  const video=document.createElement('video');video.playsInline=true;video.preload='auto';
+  video.src='https://gb1026gb00-cell.github.io/hoemyeong-hospital/G01.mp4';
+  video.style.cssText='width:100%;height:100%;object-fit:contain';
+  video.volume=soundVolume();video.muted=soundVolume()===0;
+  const play=document.createElement('button');play.type='button';play.textContent='접수대 영상 재생';
+  play.style.cssText='position:absolute;bottom:12%;padding:14px 22px;background:#2c131d;color:white;border:1px solid #9e5263;border-radius:10px';
+  play.hidden=true;
+  const finish=()=>{video.pause();overlay.remove();receptionScarePlaying=false;};
+  video.addEventListener('ended',finish,{once:true});
+  video.addEventListener('error',()=>{play.textContent='영상 오류 · 닫기';play.hidden=false;},{once:true});
+  play.onclick=()=>{if(video.error){finish();return;}video.play().catch(()=>{play.hidden=false;});};
+  overlay.append(video,play);document.body.append(overlay);
+  video.play().catch(()=>{play.hidden=false;});
+ }
  // G08 is owned by the transition above; all other approved horror videos
  // continue through the original V172 media handler unchanged.
  function installG08MediaRouting(){
   const media=window.hmMedia;
   if(!media||typeof media.handle!=='function'||media.__hmG08Routed)return;
   const original=media.handle.bind(media);
-  media.handle=function(message){if(message?.type==='horror_video'&&message.id==='G08')return;return original(message);};
+  media.handle=function(message){if(message?.type==='horror_video'&&['G08','G01'].includes(message.id))return;return original(message);};
   media.__hmG08Routed=true;
  }
  installG08MediaRouting();
