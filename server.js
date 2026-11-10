@@ -617,6 +617,20 @@ wss.on('connection',ws=>{
     }else send(ws,{type:'fragment_result',ok:true,index:2,already:true,message:'제0유물 파편은 이미 공동 소지품에 등록되어 있습니다.'});
     broadcast(r,state(r));return;
    }
+   if(ch.phase==='ch03'&&m.action==='ch03_transition_video_done'){
+    const c=ch.ch03;
+    if(!c?.transitionPending)return send(ws,{type:'ch03_result',ok:false,message:'아직 챕터 전환 영상이 시작되지 않았습니다.'});
+    if(!Array.isArray(c.transitionWatchedRoles))c.transitionWatchedRoles=[];
+    if(!c.transitionWatchedRoles.includes(player.role))c.transitionWatchedRoles.push(player.role);
+    const present=[...r.clients].filter(p=>p.ws?.readyState===WebSocket.OPEN).map(p=>p.role);
+    if(!present.every(role=>c.transitionWatchedRoles.includes(role))){send(ws,{type:'ch03_result',ok:true,message:'G02 시청 완료. 다른 조사원의 시청을 기다립니다.'});broadcast(r,state(r));return;}
+    c.transitionPending=false;c.solved=true;
+    ch.phase='ch04';
+    ch.ch04={inspected:[],witnesses:[],votes:[],failed:0,solved:false};
+    broadcast(r,{type:'ch03_event',event:'cleared',message:'G02 영상 전원 시청 완료. 기록보관실로 이동한다.'});
+    broadcast(r,{type:'ch04_event',event:'enter',message:'서류 세 장에 같은 환자의 이름이 적혀 있다. 사망 시각은 모두 다르다. 복도 끝에서 종이가 넘어간다.'});
+    broadcast(r,state(r));chapterVoiceOnce(r,4);persist();return;
+   }
    if(ch.phase==='ch03'&&m.action==='ch03_submit'){
     const c=ch.ch03;
     const answers={2:'15',4:'32',8:'35'};
@@ -627,12 +641,10 @@ wss.on('connection',ws=>{
      c.failed++;broadcast(r,{type:'ch03_event',event:'wrong',message:'잘못된 운행 코드. 엘리베이터가 아래로 급강하했다가 멈춘다.'});broadcast(r,state(r));return;
     }
     if(!(r.artifactFragments||new Set()).has(2))return send(ws,{type:'ch03_result',ok:false,message:'정답은 맞지만 거울 가장자리의 제0유물 파편을 먼저 회수해야 합니다.'});
-    c.solved=true;
-    ch.phase='ch04';
-    ch.ch04={inspected:[],witnesses:[],votes:[],failed:0,solved:false};
-    broadcast(r,{type:'ch03_event',event:'cleared',message:'운행 코드 승인. 제0유물 파편을 확보하고 기록보관실로 이동한다.'});
-    broadcast(r,{type:'ch04_event',event:'enter',message:'서류 세 장에 같은 환자의 이름이 적혀 있다. 사망 시각은 모두 다르다. 복도 끝에서 종이가 넘어간다.'});
-    broadcast(r,state(r));chapterVoiceOnce(r,4);persist();return;
+    if(c.transitionPending)return send(ws,{type:'ch03_result',ok:true,message:'G02 전환 영상 시청이 진행 중입니다.'});
+    c.transitionPending=true;c.transitionWatchedRoles=[];
+    broadcast(r,{type:'ch03_event',event:'transition_video',video:'G02',message:'운행 코드 승인. 전 조사원이 전환 영상을 시청합니다.'});
+    broadcast(r,state(r));persist();return;
    }
    if(m.action==='ch04_enter'&&ch.phase==='ch03_cleared'){
     if(!(r.artifactFragments||new Set()).has(2))return send(ws,{type:'fragment_result',ok:false,message:'이 구역의 균열의 파편을 직접 찾아 공동 소지품에 등록해야 다음 구역으로 이동할 수 있습니다.'});
