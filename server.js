@@ -17,7 +17,24 @@ if(!ROOM_SAVE_PATH)console.warn('[PERSISTENCE WARNING] ROOM_SAVE_PATH is unset: 
 let rooms=new Map();
 try{rooms=roomStorage.restore(ROOM_SAVE_PATH)}catch(e){console.error('Room restore failed:',e.message);process.exitCode=1;throw e}
 function persist(){if(!ROOM_SAVE_PATH)return;try{roomStorage.save(ROOM_SAVE_PATH,rooms);persistenceWritable=true;persistenceLastError=null}catch(e){persistenceWritable=false;persistenceLastError=e.message;console.error('Room save failed:',e.message)}}
-const server=http.createServer((req,res)=>{res.writeHead(200,{'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':'*'});res.end(JSON.stringify({service:'Hoemyeong Hospital multiplayer v6.0-test',status:'ok',rooms:rooms.size,persistenceConfigured:!!ROOM_SAVE_PATH,persistenceWritable,persistenceError:persistenceLastError}));});
+const server=http.createServer((req,res)=>{
+ const pathname=new URL(req.url||'/', 'http://localhost').pathname;
+ if((req.method==='GET'||req.method==='HEAD')&&pathname==='/play'){
+  const fs=require('fs'),path=require('path');
+  const approved=path.join(__dirname,'approved-v172.html');
+  fs.stat(approved,(err,stat)=>{
+   if(err||!stat.isFile()){res.writeHead(503,{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'});return res.end('Approved V172 game file is unavailable');}
+   res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Content-Length':stat.size,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+   if(req.method==='HEAD')return res.end();
+   const stream=fs.createReadStream(approved);
+   stream.on('error',()=>res.destroy());
+   stream.pipe(res);
+  });
+  return;
+ }
+ res.writeHead(200,{'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':'*'});
+ res.end(JSON.stringify({service:'Hoemyeong Hospital multiplayer v6.0-test',status:'ok',rooms:rooms.size,persistenceConfigured:!!ROOM_SAVE_PATH,persistenceWritable,persistenceError:persistenceLastError}));
+});
 const wss=new WebSocketServer({server,maxPayload:4096});
 const HEARTBEAT_MS=30000;
 const heartbeat=setInterval(()=>{
