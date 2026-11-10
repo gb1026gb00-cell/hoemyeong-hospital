@@ -592,13 +592,24 @@ wss.on('connection',ws=>{
     if(!ch.ch03.clues.includes(station))ch.ch03.clues.push(station);
     send(ws,{type:'ch03_result',ok:true,message:clue.text,station});broadcast(r,state(r));return;
    }
+   if(ch.phase==='ch03'&&m.action==='ch03_video'){
+    if(!ch.ch03)ch.ch03={inspected:[],clues:[],failed:0,solved:false};
+    ch.ch03.videoTriggered=true;
+    broadcast(r,{type:'horror_video',id:'G06',scope:'all'});
+    broadcast(r,{type:'ch03_event',event:'video',message:'엘리베이터 안에 환자복을 입은 사람이 서 있다.'});
+    broadcast(r,state(r));return;
+   }
    if(ch.phase==='ch03'&&m.action==='ch03_submit'){
     const c=ch.ch03;
-    if(c.inspected.length!==3||c.clues.length!==2)return send(ws,{type:'ch03_result',ok:false,message:'현장 3곳과 서로 다른 조사원의 감각 기록 2개가 필요합니다.'});
-    if(String(m.answer||'').trim()!=='417'){
-     c.failed++;broadcast(r,{type:'ch03_event',event:'wrong',message:'엘리베이터가 아래로 급강하했다가 멈춘다. 거울 속 인물은 이제 조사원들을 정면으로 바라본다.'});broadcast(r,state(r));return;
+    const answers={2:'15',4:'32',8:'35'};
+    const expected=answers[r.capacity]||answers[2];
+    if(!c.videoTriggered)return send(ws,{type:'ch03_result',ok:false,message:'엘리베이터 제어판을 먼저 작동하십시오.'});
+    if(String(m.answer||'').trim()!==expected){
+     c.failed++;broadcast(r,{type:'ch03_event',event:'wrong',message:'잘못된 운행 코드. 엘리베이터가 아래로 급강하했다가 멈춘다.'});broadcast(r,state(r));return;
     }
-    c.solved=true;ch.phase='ch03_cleared';broadcast(r,{type:'horror_video',id:'G06',scope:'all'});broadcast(r,{type:'ch03_event',event:'cleared',message:'417. 비상 패널이 열리고 지하 기록보관실로 향하는 문이 드러난다. 그러나 엘리베이터에는 아직 누군가 남아 있다.'});broadcast(r,state(r));return;
+    c.solved=true;ch.phase='ch03_cleared';
+    broadcast(r,{type:'ch03_event',event:'cleared',message:'운행 코드가 확인되었다. 그러나 엘리베이터에는 아직 누군가 남아 있다.'});
+    broadcast(r,state(r));persist();return;
    }
    if(m.action==='ch04_enter'&&ch.phase==='ch03_cleared'){
     if(!(r.artifactFragments||new Set()).has(2))return send(ws,{type:'fragment_result',ok:false,message:'이 구역의 균열의 파편을 직접 찾아 공동 소지품에 등록해야 다음 구역으로 이동할 수 있습니다.'});
