@@ -35,7 +35,19 @@
    if(Number(input.min)===2&&Number(input.max)===8){input.step='2';input.addEventListener('change',()=>{if([3,5,7].includes(Number(input.value)))input.value=String(Math.max(2,Math.min(8,Number(input.value)-1)));});}
   });
  }
- document.addEventListener('DOMContentLoaded',normalizeCapacityControls,{once:true});
+ function useSameOriginCoopEndpoint(){
+  const input=$('hmEndpoint');
+  if(!input)return;
+  const protocol=location.protocol==='https:'?'wss:':'ws:';
+  const endpoint=protocol+'//'+location.host;
+  // A test build must never accidentally connect players to the production room server.
+  input.value=endpoint;
+  input.dispatchEvent(new Event('input',{bubbles:true}));
+  input.dispatchEvent(new Event('change',{bubbles:true}));
+ }
+ function initializeCoopControls(){useSameOriginCoopEndpoint();normalizeCapacityControls();}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initializeCoopControls,{once:true});
+ else initializeCoopControls();
  const scene=document.querySelector('.scene');
  if(scene){
   const b=document.createElement('button');b.type='button';b.id='hmV174Bell';b.textContent='🔔 호출벨';b.setAttribute('aria-label','접수대 호출벨 누르기');b.hidden=true;
