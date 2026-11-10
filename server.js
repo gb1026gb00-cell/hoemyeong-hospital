@@ -632,7 +632,7 @@ wss.on('connection',ws=>{
    if(m.action==='reception_submit'&&ch.phase==='separated'){
     const p=ch.receptionCoop;if(!p)return;
     const attempt=String(m.answer||'').trim();
-    if(!/^\\d{6}$/.test(attempt))return send(ws,{type:'reception_result',ok:false,message:'각 단서에서 구한 숫자를 한 칸씩, 총 여섯 칸에 입력하세요.'});
+    if(!/^[0-9]{6}$/.test(attempt))return send(ws,{type:'reception_result',ok:false,message:'각 단서에서 구한 숫자를 한 칸씩, 총 여섯 칸에 입력하세요.'});
     if(attempt!==p.answer)return send(ws,{type:'reception_result',ok:false,message:'틀린 칸이 있습니다. 거울·접수대·캐비닛·명부를 팀원과 다시 대조하세요.'});
     if(!p.confirmed.includes(player.role))p.confirmed.push(player.role);
     broadcast(r,{type:'reception_result',ok:true,message:'접수번호 대조 성공. '+p.confirmed.length+'명의 조사원이 확인했습니다.'});
