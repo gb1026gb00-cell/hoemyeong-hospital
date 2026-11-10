@@ -413,7 +413,7 @@
   const scene=document.createElement('div');scene.style.cssText='position:relative;flex:1 1 auto;min-height:45dvh;width:100%;overflow:hidden;background:#09080a';
   const imageLayer=document.createElement('div');imageLayer.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);aspect-ratio:16/9;overflow:hidden';
   const photo=document.createElement('img');photo.src='/elevator_hall.webp';photo.alt='낡은 회명병원 엘리베이터';photo.style.cssText='width:100%;height:100%;object-fit:fill;display:block;pointer-events:none';imageLayer.append(photo);
-  function sizeElevatorImage(){const w=scene.clientWidth,h=scene.clientHeight;if(!w||!h)return;const width=Math.max(w,h*16/9);imageLayer.style.width=width+'px';imageLayer.style.height=width*9/16+'px';}
+  function sizeElevatorImage(){const w=scene.clientWidth,h=scene.clientHeight;if(!w||!h)return;const width=Math.min(w,h*16/9);imageLayer.style.width=width+'px';imageLayer.style.height=width*9/16+'px';}
   const elevatorResizeObserver=new ResizeObserver(sizeElevatorImage);elevatorResizeObserver.observe(scene);
   photo.addEventListener('load',sizeElevatorImage);requestAnimationFrame(sizeElevatorImage);
   scene.append(imageLayer);
@@ -453,8 +453,15 @@
   hotspot('엘리베이터 운행 버튼',68,46,8,15,()=>sendInvestigation('ch03_video',{},'엘리베이터'));
   const inventory=document.createElement('button');inventory.type='button';inventory.id='hmCh03Inventory';inventory.style.cssText='grid-column:1/-1;padding:10px 12px;border:1px solid #766477;border-radius:7px;background:#211b28;color:#f4e8f1;font:600 14px system-ui;text-align:left';
   const updateInventory=()=>{const progress=document.getElementById('artifactProgress')?.textContent||'제0유물 파편 수집함';inventory.textContent='🎒 '+progress+(ch03FragmentCollected?' · 거울 파편 획득':' · 거울 파편 미획득');};
-  inventory.addEventListener('click',()=>{updateInventory();note.textContent=ch03FragmentCollected?'거울 가장자리의 제0유물 파편이 공동 수집함에 등록되었습니다.':'제0유물 파편은 왼쪽 거울 오른쪽 테두리의 틈에서 수집할 수 있습니다.';});
+  inventory.addEventListener('click',()=>{updateInventory();const original=document.getElementById('tabInventory');if(original){root.style.setProperty('display','none','important');original.click();const restore=()=>root.style.setProperty('display','flex','important');const close=document.createElement('button');close.type='button';close.textContent='← 엘리베이터 화면으로 돌아가기';close.style.cssText='position:fixed;top:12px;right:12px;z-index:2147483001;padding:12px;background:#211b28;color:white;border:1px solid #766477;border-radius:6px';close.onclick=()=>{close.remove();restore();};document.body.append(close);}else note.textContent='공동 소지품 화면을 찾을 수 없습니다.';});
   bottom.append(inventory);updateInventory();
+  // Always provide usable controls when photographed objects are cropped or missing.
+  control('거울 조사','ch03_mirror',{}); 
+  const mirrorButton=bottom.lastElementChild;mirrorButton.onclick=(ev)=>{ev.preventDefault();ev.stopPropagation();openCh03Mirror();};
+  control('제0유물 파편 수집','ch03_fragment',{});
+  const directoryButton=document.createElement('button');directoryButton.type='button';directoryButton.textContent='층별 안내문 조사';directoryButton.style.cssText=mirrorButton.style.cssText;directoryButton.onclick=()=>openCh03FloorDirectory();bottom.append(directoryButton);
+  const calcButton=document.createElement('button');calcButton.type='button';calcButton.textContent='기호 계산판 조사';calcButton.style.cssText=mirrorButton.style.cssText;calcButton.onclick=()=>openCh03SymbolCalculator();bottom.append(calcButton);
+  control('엘리베이터 버튼 작동','ch03_video',{});
   const form=document.createElement('form');form.id='hmCh03CodeForm';form.hidden=!ch03VideoSeen;form.style.cssText='grid-column:1/-1;display:'+(ch03VideoSeen?'flex':'none')+';gap:8px';
   const input=document.createElement('input');input.placeholder='운행 코드 입력';input.inputMode='numeric';input.maxLength=2;input.autocomplete='off';input.style.cssText='min-width:0;flex:1;padding:12px;background:#161119;color:#fff;border:1px solid #766477;border-radius:6px;font-size:16px';
   const submit=document.createElement('button');submit.type='submit';submit.textContent='암호 입력';submit.style.cssText='padding:12px 15px;background:#4b354e;color:#fff;border:1px solid #a18ba5;border-radius:6px;font-size:14px';
