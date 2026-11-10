@@ -718,11 +718,11 @@
   const markers=['HM-302-□□□□','문서 번호 : HM-302-','다음 단계에서 단서가 복원됩니다'];
   const nodes=document.querySelectorAll('body *');
   for(const node of nodes){
-   if(node.children.length>4||node.id==='hmCh02NewDialog'||node.closest('#hmCh02NewDialog'))continue;
+   if(node.children.length>4||node.dataset.hmLegacyHandled==='1'||node.id==='hmCh02NewDialog'||node.closest('#hmCh02NewDialog'))continue;
    const t=node.textContent||'';
    if(t.length>450||!markers.some(x=>t.includes(x)))continue;
    let card=node;
-   for(let i=0;i<5&&card.parentElement;i++){
+   for(let i=0;i<6&&card.parentElement;i++){
     if(card.querySelector('button')&&card.textContent?.includes('사망진단서'))break;
     card=card.parentElement;
    }
@@ -730,6 +730,8 @@
    const modal=card.closest('[role="dialog"],.modal,.overlay')||card;
    if(modal===document.body||modal.id==='mainScene'||modal.contains(document.getElementById('mainScene')))continue;
    ch02LegacyIntercepting=true;
+   node.dataset.hmLegacyHandled='1';
+   modal.dataset.hmLegacyHandled='1';
    modal.style.setProperty('display','none','important');
    ch02Send('ch02_new_inspect',{site:'certificate'});
    ch02Dialog('기록 조회 중','조사원에게 배정된 사망진단서를 불러오고 있습니다.');
