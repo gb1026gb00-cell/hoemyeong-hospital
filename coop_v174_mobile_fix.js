@@ -103,7 +103,7 @@
   if(overlay)return;
   overlay=document.createElement('div');overlay.id='hmCh01GroupIntro';
   overlay.style.cssText='position:fixed;inset:0;z-index:999985;background:#050505;color:#f5f5f5;display:flex;justify-content:center;align-items:center;padding:14px;box-sizing:border-box;font:14px/1.5 system-ui';
-  const phone=document.createElement('section');phone.style.cssText='width:min(500px,100%);height:min(650px,78dvh);display:flex;flex-direction:column;background:#101010;border:1px solid #343434;border-radius:15px;overflow:hidden;box-shadow:0 16px 50px #000';
+  const phone=document.createElement('section');phone.style.cssText='width:min(500px,100%);height:min(420px,52dvh);display:flex;flex-direction:column;background:#101010;border:1px solid #343434;border-radius:15px;overflow:hidden;box-shadow:0 16px 50px #000';
   const head=document.createElement('header');head.textContent='회명병원 · 단체 대화 (9)';head.style.cssText='padding:17px 19px;border-bottom:1px solid #303030;font-weight:700;text-align:center';phone.append(head);
   const thread=document.createElement('div');thread.style.cssText='flex:1;overflow:auto;padding:17px 15px;display:flex;flex-direction:column;gap:11px';
   const dialogue=[['홍중','다들 도착했어? 아직 안 온 사람 있어?'],['성화','여기 정말 폐병원 맞아? 불은 켜져 있네.'],['윤호','홍중이 형, 우리 다 들어왔어. 일단 같이 움직이자.'],['민기','성화 형, 아까 복도에서 발소리 못 들었어?'],['여상','나도 들었어. 우리 말고 누가 더 있는 것 같은데.'],['종호','형들, 출입문이 안 열려.'],['우영','산아, 너 아까 문 잠갔어?'],['산','아니, 안 잠갔어. 홍중이 형, 접수대에 뭔가 있어.']];
