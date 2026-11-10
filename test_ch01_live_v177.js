@@ -80,7 +80,7 @@ async function check(name,fn){await fn();checks.push(name);console.log('PASS',na
    await next(a,m=>m.type==='state'&&m.chapter?.phase==='separated');
   });
   await check('Ledger/mirror/cabinet are actual private visual clues, not videos',async()=>{
-   const observations={};
+   const observations=[];
    for(const [index,c] of [a,b].entries()){
     observations[index]={};
     for(const object of ['mirror','cabinet','ledger']){
@@ -90,7 +90,7 @@ async function check(name,fn){await fn();checks.push(name);console.log('PASS',na
      observations[index][object]=clue;
      await delay(30);
      assert.equal(c.messages.filter(m=>m.type==='horror_video').length,0,object+' unexpectedly played video');
-     assert.equal(c.messages.filter(m=>m.type==='reception_clue'&&m.object!=='object').length,0);
+     assert.equal(c.messages.filter(m=>m.type==='reception_clue'&&m.object!==object).length,0);
     }
    }
    assert.notEqual(observations[0].mirror.shadowCount,observations[1].mirror.shadowCount,'cooperative mirror clues are distributed');
