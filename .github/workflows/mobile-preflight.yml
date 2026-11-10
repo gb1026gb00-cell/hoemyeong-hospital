@@ -44,6 +44,9 @@ jobs:
         run: |
           npm install --no-save playwright --no-audit --no-fund
           node test_ch01_browser_v178.js
+      - name: Diagnose legacy connection and interaction wiring
+        id: legacy_diagnostic
+        run: node diagnose_v179_source.js
       - name: Verify server syntax
         id: syntax_checks
         continue-on-error: true
