@@ -19,16 +19,23 @@ try{rooms=roomStorage.restore(ROOM_SAVE_PATH)}catch(e){console.error('Room resto
 function persist(){if(!ROOM_SAVE_PATH)return;try{roomStorage.save(ROOM_SAVE_PATH,rooms);persistenceWritable=true;persistenceLastError=null}catch(e){persistenceWritable=false;persistenceLastError=e.message;console.error('Room save failed:',e.message)}}
 const server=http.createServer((req,res)=>{
  const pathname=new URL(req.url||'/', 'http://localhost').pathname;
+ if((req.method==='GET'||req.method==='HEAD')&&pathname==='/coop-v174-mobile-fix.js'){
+  res.writeHead(200,{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+  if(req.method==='HEAD')return res.end();
+  return require('fs').createReadStream(require('path').join(__dirname,'coop_v174_mobile_fix.js')).pipe(res);
+ }
  if((req.method==='GET'||req.method==='HEAD')&&pathname==='/play'){
   const fs=require('fs'),path=require('path');
   const approved=path.join(__dirname,'approved-v172.html');
   fs.stat(approved,(err,stat)=>{
    if(err||!stat.isFile()){res.writeHead(503,{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'});return res.end('Approved V172 game file is unavailable');}
-   res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Content-Length':stat.size,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
-   if(req.method==='HEAD')return res.end();
-   const stream=fs.createReadStream(approved);
-   stream.on('error',()=>res.destroy());
-   stream.pipe(res);
+   fs.readFile(approved,'utf8',(readError,html)=>{
+    if(readError){res.writeHead(503,{'Content-Type':'text/plain; charset=utf-8'});return res.end('Game file read failed');}
+    const script='<script src="/coop-v174-mobile-fix.js"></script>';
+    const output=html.replace(/<\/body>\s*<\/html>\s*$/i,script+'</body></html>');
+    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+    res.end(req.method==='HEAD'?'':output);
+   });
   });
   return;
  }
