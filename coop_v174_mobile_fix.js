@@ -15,7 +15,7 @@
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
     if(m.type==='state'||m.type==='joined'){active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='reception_clue'&&m.object!=='desk')showSceneClue(m);
-    if(m.type==='reception_result')showReceptionResult(m);
+    if(m.type==='reception_result')showReceptionAnswerResult(m);
     if(m.type==='reception_result'&&m.ok===false){const modal=$('hmReceptionCodeModal');if(modal){const p=modal.querySelector('p:nth-of-type(2)');if(p)p.textContent=m.message||'번호를 다시 확인하세요.';}}
     if(m.type==='reception_result'&&m.complete){$('hmReceptionCodeModal')?.remove();}
     handleHospitalSoundEvent(m);
@@ -107,7 +107,7 @@
   const video=document.createElement('video');
   video.playsInline=true;video.preload='auto';video.controls=false;
   video.style.cssText='width:100%;height:100%;object-fit:contain';
-  video.src='https://gb1026gb00-cell.github.io/hoemyeong-hospital/G08.mp4';
+  video.src=new URL('/G08.mp4',location.origin).href;
   configureCinematicVideo(video);
   const action=document.createElement('button');
   action.type='button';action.textContent='강제 분리 영상 재생';
@@ -132,7 +132,7 @@
   const overlay=document.createElement('div');overlay.id='hmReceptionScare';
   overlay.style.cssText='position:fixed;inset:0;z-index:999998;background:#000;display:flex;align-items:center;justify-content:center';
   const video=document.createElement('video');video.playsInline=true;video.preload='auto';
-  video.src='https://gb1026gb00-cell.github.io/hoemyeong-hospital/G01.mp4';
+  video.src=new URL('/G01.mp4',location.origin).href;
   configureCinematicVideo(video);
   video.style.cssText='width:100%;height:100%;object-fit:contain';
   video.volume=soundVolume();video.muted=soundVolume()===0;
@@ -170,31 +170,47 @@
   overlay.append(video,retry);document.body.append(overlay);
   video.muted=true;video.play().catch(()=>{retry.hidden=false;});
  }
+
+ // CH01 uses one desk input screen. No nested notice/second modal.
  function openReceptionCodePanel(){
   if($('hmReceptionCodeModal'))return;
-  const overlay=document.createElement('div');overlay.id='hmReceptionCodeModal';
-  overlay.style.cssText='position:fixed;inset:0;z-index:999997;background:#070509f5;display:flex;align-items:center;justify-content:center;padding:16px';
-  const content=document.createElement('section');content.style.cssText='width:min(540px,100%);max-height:88vh;overflow-y:auto;background:#1a121c;border:2px solid #98748b;border-radius:12px;padding:22px;color:#f1e3ed';
-  const back=document.createElement('button');back.type='button';back.textContent='← 접수실로 돌아가기';back.style.cssText='display:block;margin:0 0 16px;padding:10px 13px;background:#29202b;border:1px solid #8b7386;color:#fff;border-radius:8px;font:14px system-ui';back.onclick=()=>overlay.remove();
-  const heading=document.createElement('h2');heading.textContent='回明病院 · 접수대 봉인';heading.style.cssText='font-size:20px;margin:0 0 14px';
-  const notice=document.createElement('p');notice.textContent='비친 것을 먼저 헤아리고, 잠긴 것의 빈자리를 채운 뒤, 마지막으로 남겨진 기록을 대조하라.';notice.style.cssText='font:15px/1.8 serif;color:#d7c2ce';
-  const cells=document.createElement('div');cells.style.cssText='display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:15px 0';
-  const inputs=[];
-  for(let i=0;i<6;i++){const field=document.createElement('input');field.inputMode='numeric';field.maxLength=1;field.autocomplete='off';field.setAttribute('aria-label',(i+1)+'번째 숫자');field.style.cssText='min-width:0;width:100%;height:50px;text-align:center;font:700 22px system-ui;background:#0d0a12;color:white;border:1px solid #9e8298;border-radius:7px';field.oninput=()=>{field.value=field.value.replace(/[^0-9]/g,'').slice(0,1);if(field.value&&inputs[i+1])inputs[i+1].focus();};inputs.push(field);cells.append(field);}
-  const status=document.createElement('p');status.style.cssText='font-size:13px;color:#e2b5c9';
-  const submit=document.createElement('button');submit.textContent='봉인 해제 · CH.02 입장';submit.style.cssText='width:100%;padding:15px;background:#53354d;border:1px solid #ac8da4;border-radius:8px;color:white;font-weight:700';
-  submit.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN){status.textContent='서버 연결을 확인하세요.';return;}const answer=inputs.map(x=>x.value).join('');if(answer.length!==6){status.textContent='여섯 자리 숫자를 모두 입력하세요.';return;}socket.send(JSON.stringify({type:'chapter',action:'reception_submit',answer}));status.textContent='봉인 번호 확인 중…';};
-  const sealNotice=document.createElement('div');sealNotice.style.cssText='position:fixed;inset:0;z-index:2;background:#070507;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:25px;text-align:center;color:#eee3e9';
-  const hospital=document.createElement('div');hospital.textContent='回明病院';hospital.style.cssText='font:700 clamp(32px,9vw,58px) serif;letter-spacing:.12em;color:#a93645';
-  const heading2=document.createElement('h2');heading2.textContent='제01조 · 봉인 해제 절차';heading2.style.cssText='font:600 23px serif';
-  const text2=document.createElement('p');text2.textContent='비친 것을 먼저 헤아리고,\n잠긴 것의 빈자리를 채운 뒤,\n마지막으로 남겨진 기록을 대조하라.';text2.style.cssText='white-space:pre-line;font:17px/2 serif';
-  const foot=document.createElement('p');foot.textContent='※ 순서를 어길 경우 봉인은 해제되지 않습니다.';foot.style.cssText='font:12px system-ui;color:#a99aa4';
-  const noticeBack=document.createElement('button');noticeBack.type='button';noticeBack.textContent='← 접수실로 돌아가기';noticeBack.style.cssText='padding:12px 20px;background:transparent;border:1px solid #766572;color:#ddd;border-radius:8px';noticeBack.onclick=()=>overlay.remove();
-  const proceed=document.createElement('button');proceed.textContent='봉인 번호 입력';proceed.style.cssText='padding:14px 28px;background:#493347;border:1px solid #9e7f94;color:white;border-radius:8px';proceed.onclick=()=>{sealNotice.remove();inputs[0].focus();};
-  sealNotice.append(hospital,heading2,text2,foot,proceed,noticeBack);
-  content.append(back,heading,notice,cells,status,submit);overlay.append(content,sealNotice);document.body.append(overlay);
+  const root=document.createElement('section');root.id='hmReceptionCodeModal';
+  root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');
+  root.setAttribute('aria-label','접수대 봉인 해제');
+  root.style.cssText='position:fixed;inset:0;z-index:999997;background:#08080aec;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto';
+  const card=document.createElement('div');card.style.cssText='position:relative;width:min(520px,100%);max-height:90dvh;overflow:auto;padding:27px 20px;border:1px solid #887781;border-radius:9px;background:linear-gradient(145deg,#262026,#100d12 80%);box-shadow:0 18px 75px #000;color:#e9e1e5';
+  const label=document.createElement('div');label.textContent='回明病院  /  RECEPTION';label.style.cssText='font:11px serif;letter-spacing:.25em;color:#a6a0a4';
+  const title=document.createElement('h2');title.textContent='접수대 · 봉인 번호';title.style.cssText='font:700 22px serif;margin:12px 0 8px';
+  const guide=document.createElement('p');guide.textContent='거울의 얼룩, 캐비닛의 빈자리, 접수명부의 인원을 팀원들과 대조해 여섯 칸을 채우세요.';guide.style.cssText='font:13px/1.8 system-ui;color:#c4b8be';
+  const inputs=[],cells=document.createElement('div');cells.style.cssText='display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:20px 0 13px';
+  for(let i=0;i<6;i++){
+   const field=document.createElement('input');field.type='text';field.inputMode='numeric';field.autocomplete='off';field.maxLength=1;field.setAttribute('aria-label',(i+1)+'번째 봉인 숫자');
+   field.style.cssText='width:100%;min-width:0;height:54px;text-align:center;font:700 23px monospace;color:#f4e8e7;background:#0a0a0b;border:1px solid #80747c;border-radius:4px';
+   field.oninput=()=>{field.value=field.value.replace(/\D/g,'').slice(0,1);if(field.value&&inputs[i+1])inputs[i+1].focus();};
+   field.onkeydown=e=>{if(e.key==='Backspace'&&!field.value&&inputs[i-1])inputs[i-1].focus();};
+   inputs.push(field);cells.append(field);
+  }
+  const status=document.createElement('p');status.id='hmReceptionCheckStatus';status.setAttribute('role','status');status.style.cssText='min-height:28px;font:13px/1.5 system-ui;color:#d7afb9';
+  const submit=document.createElement('button');submit.type='button';submit.textContent='봉인 해제 · 다음 챕터';submit.style.cssText='width:100%;padding:15px;background:#583744;color:white;border:1px solid #997788;border-radius:7px;font:700 15px system-ui';
+  submit.onclick=()=>{
+   if(socket?.readyState!==NativeWS.OPEN){status.textContent='협동 서버 연결을 먼저 확인하세요.';return;}
+   if(phase!=='separated'){status.textContent='강제 분리 조사가 끝난 뒤 봉인을 입력하세요.';return;}
+   const answer=inputs.map(i=>i.value).join('');
+   if(answer.length!==6){status.textContent='여섯 칸의 숫자를 모두 입력하세요.';return;}
+   socket.send(JSON.stringify({type:'chapter',action:'reception_submit',answer}));status.textContent='봉인 번호를 대조하고 있습니다…';
+  };
+  const back=document.createElement('button');back.type='button';back.textContent='← 접수실로 돌아가기';back.style.cssText='display:block;margin:0 0 16px;padding:9px 0;border:0;background:transparent;color:#d8c5ce;font:13px system-ui';
+  back.onclick=()=>root.remove();
+  card.append(back,label,title,guide,cells,status,submit);root.append(card);document.body.append(root);
+  inputs[0].focus();
  }
- // G08 is owned by the transition above; all other approved horror videos
+ function showReceptionAnswerResult(message){
+  const status=$('hmReceptionCheckStatus');if(!status)return;
+  status.textContent=message.message||(message.ok?'봉인 번호가 일치합니다.':'숫자를 다시 확인하세요.');
+  status.style.color=message.ok?'#b8e3c6':'#f2b5c1';
+ }
+
+  // G08 is owned by the transition above; all other approved horror videos
  // continue through the original V172 media handler unchanged.
  function installG08MediaRouting(){
   const media=window.hmMedia;
@@ -205,44 +221,10 @@
  }
  installG08MediaRouting();
 
- // CH01 guidance is additive: all eight existing server-validated puzzles remain intact.
- const senses=['청각','촉각','시각','기록','시간','전파','관찰','기억'];
- const objects=['내선 기록','거울','거울','접수 기록','접수 기록','내선 기록','잠긴 보관함','거울'];
- const rules=[
-  '짧은 신호는 S, 긴 신호는 L로 적고, 들리는 순서대로 이어 붙이세요.',
-  '첫 번째 돌기 행을 왼쪽부터 읽어 숫자를 이어 붙이세요.',
-  '거울에 비친 숫자를 실제 방향으로 되돌린 뒤, 숫자 두 개를 붙여 쓰세요.',
-  '명부에 등장한 접수 번호를 위에서 아래 순서대로, 구분 기호 없이 이어 붙이세요.',
-  '당직 일지와 멈춘 시계의 시각을 각각 네 자리로 쓰고, 가운데에 -를 넣으세요.',
-  '호출 부호에서 숫자만 순서대로 적으세요. 하이픈은 빼세요.',
-  '감시 영상의 인원과 거울 속 인원을 차례로 쓰고 가운데 -를 넣으세요.',
-  '처음 확인한 네 자리 배열을 순서대로 이어 붙이세요.'
- ];
- function enhanceCh01(){
-  const panel=$('ch01PuzzlePanel');if(!panel||$('hmCh01Guide'))return;
-  const index=$('senseIndex');if(!index)return;
-  const guide=document.createElement('section');guide.id='hmCh01Guide';
-  guide.style.cssText='margin:12px 0;padding:13px;border:1px solid #80648e;border-radius:10px;background:#231a2b;color:#eee0f3;font:13px/1.65 system-ui;white-space:normal';
-  index.closest('label')?.before(guide);
-  const sequence=$('senseSequence'),cross=$('senseCrossKey'),digit=$('senseDigit');
-  const update=()=>{
-   const i=Number(index.value),valid=Number.isInteger(i)&&i>=0&&i<8;
-   if(!valid){guide.textContent='감각 번호는 0~7 중 하나를 선택하세요.';return;}
-   const next=(i+1)%8;
-   guide.innerHTML='<b>선택한 감각: '+senses[i]+' (번호 '+i+')</b><div>① 현장에서 <b>'+objects[i]+'</b>을 먼저 조사하세요.</div><div>② 장치 조작 순서: '+rules[i]+'</div><div>③ 장치 조작 버튼을 누른 뒤, 문제의 답을 해독 답 칸에 입력하세요.</div><div>④ <b>'+senses[next]+' 감각 담당자</b>에게 교차 열쇠를 받아 입력하세요. 내 화면의 공유 열쇠는 그 담당자에게 전달하는 값이지, 내 입력값이 아닙니다.</div><div>⑤ 해독 성공 메시지에 나온 숫자를 아래 숫자 조각 칸에 옮기고 등록하세요.</div>';
-   if(sequence)sequence.placeholder=rules[i];
-   if(cross)cross.placeholder=senses[next]+' 담당자에게 받은 교차 열쇠';
-   if(digit)digit.placeholder='해독 성공 메시지의 숫자';
-  };
-  index.addEventListener('input',update);index.addEventListener('change',update);update();
-  const caption=document.createElement('div');caption.style.cssText='font-size:12px;color:#cbbbd4;margin:5px 0 10px';caption.textContent='감각 번호: 청각 0 · 촉각 1 · 시각 2 · 기록 3 · 시간 4 · 전파 5 · 관찰 6 · 기억 7';index.closest('label')?.append(caption);
- }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhanceCh01,{once:true});else enhanceCh01();
-
- // Object-first investigation UI: keep original buttons, event handlers and server rules.
+ // CH01 legacy sensory guide removed. Visual scene clues are canonical.
+  // Object-first investigation UI: keep original buttons, event handlers and server rules.
  function enhanceChapterInteractions(){
   const chapters=[
-   ['ch01PuzzlePanel','접수실','명부와 사물을 조사하고 팀원과 단서를 비교하세요.','data-ch01'],
    ['ch02PuzzlePanel','208호 병실','침대·서랍·모니터에서 흔적을 찾고 두 사람이 안전장치를 조작하세요.','data-ch02'],
    ['ch03PuzzlePanel','엘리베이터','층수 패널·거울·스피커를 조사하고 비상 패널을 복원하세요.','data-ch03'],
    ['ch04PuzzlePanel','기록보관실','퇴실 대장과 CCTV, 내선 기록을 비교해 사건을 재구성하세요.','data-ch04'],
@@ -277,126 +259,13 @@
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhanceChapterInteractions,{once:true});else enhanceChapterInteractions();
 
- function showReceptionResult(message){
-  const out=$('hmReceptionOutput');if(!out)return;
-  const lines=Array.isArray(message.lines)?message.lines:[message.message||''];
-  const header=message.label|| (message.ok?'접수대 봉인':'명부 확인');
-  out.textContent=header+'\\n'+lines.join('\\n');
-  const previous=$('hmMirrorBlobs');if(previous)previous.remove();
-  if(message.object==='mirror'&&Number.isInteger(message.shadowCount)){
-    const blobs=document.createElement('div');blobs.id='hmMirrorBlobs';
-    blobs.setAttribute('aria-label','검은 그림자 '+message.shadowCount+'개');
-    blobs.style.cssText='display:flex;justify-content:space-evenly;align-items:center;gap:12px;min-height:115px;padding:15px;background:linear-gradient(135deg,#26272b,#101014 55%,#35343b);border:2px solid #77717a;border-radius:5px;margin:10px 0';
-    for(let i=0;i<message.shadowCount;i++){
-      const stain=document.createElement('span');
-      stain.style.cssText='display:block;flex:1;max-width:65px;height:'+(58+(i%2)*19)+'px;border-radius:46% 54% 62% 38% / 58% 40% 60% 42%;background:radial-gradient(ellipse,#030304 34%,#09090c 64%,#1d1c22 85%,transparent 100%);filter:blur(2px);transform:rotate('+((i*23)%31-15)+'deg)';
-      blobs.append(stain);
-    }
-    out.after(blobs);
-  }
-  if(false&&message.object==='cabinet'&&message.popup){
-    const existing=$('hmCabinetNotice');if(existing)existing.remove();
-    const overlay=document.createElement('div');overlay.id='hmCabinetNotice';
-    overlay.style.cssText='position:fixed;inset:0;z-index:999995;display:grid;place-items:center;background:#050307dd;padding:18px';
-    const panel=document.createElement('div');panel.style.cssText='max-width:500px;width:100%;padding:24px;background:#1b151e;border:2px solid #a08498;border-radius:10px;color:#fff;box-shadow:0 15px 55px #000';
-    const title=document.createElement('h3');title.textContent='분리 기록 · 캐비닛';
-    const detail=document.createElement('pre');detail.style.cssText='white-space:pre-wrap;font:15px/1.8 system-ui';detail.textContent=lines.join('\\n');
-    const close=document.createElement('button');close.textContent='확인';close.style.cssText='padding:12px 24px;background:#57354d;color:#fff;border:1px solid #a08498;border-radius:8px';
-    close.onclick=()=>overlay.remove();panel.append(title,detail,close);overlay.append(panel);document.body.append(overlay);
-  }
-  out.style.borderColor=message.ok?'#6b9a83':'#9b697f';
-  if(message.complete){document.querySelectorAll('#hmReceptionCoop input').forEach(input=>input.disabled=true);}
- }
- function installSplitTrigger(){
-  const legacy=$('ch01PuzzlePanel');
-  const notice=[...document.querySelectorAll('p,div,span')].find(el=>el.children.length===0&&/호출벨과 협동 절차를 먼저 진행해야 하는 구역/.test(el.textContent||''));
-  const panel=(notice?.closest('section,article,[role="dialog"],.hmPlaySheet,.hm-play-sheet')||notice?.parentElement||legacy);
-  if(!panel||$('hmCh01SplitTrigger'))return;
-  const button=document.createElement('button');button.id='hmCh01SplitTrigger';button.type='button';
-  button.textContent='접수실 조사 시작';
-  button.style.cssText='display:block;width:100%;min-height:56px;margin:12px 0;padding:14px;border:1px solid #a87a91;border-radius:10px;background:#482638;color:#fff;font:700 17px system-ui';
-  const hint=document.createElement('p');hint.id='hmCh01SplitHint';hint.textContent='조사 시작을 누르면 모든 조사원에게 강제 분리 영상이 재생됩니다.';
-  hint.style.cssText='font:13px/1.5 system-ui;color:#d2b9c8';
-  button.onclick=()=>{
-   if(!active||socket?.readyState!==NativeWS.OPEN){hint.textContent='팀원과 협동 서버 연결을 확인하세요.';return;}
-   if(phase!=='reception'){hint.textContent='이미 분리된 조사실입니다. 현장 조사를 계속하세요.';return;}
-   socket.send(JSON.stringify({type:'chapter',action:'start_investigation'}));
-   button.disabled=true;hint.textContent='다른 조사원들과 분리되는 중…';
-   setTimeout(()=>{if(phase==='reception'){button.disabled=false;hint.textContent='응답이 없습니다. 서버 연결을 확인하고 다시 누르세요.';}},4500);
-  };
-  panel.prepend(hint);panel.prepend(button);
-  const oldNotice=[...panel.querySelectorAll('p,div,span')].filter(el=>el.children.length===0&&/호출벨과 협동 절차를 먼저/.test(el.textContent||''));
-  oldNotice.forEach(el=>{el.hidden=true;el.style.display='none';});
-  const refresh=()=>{const done=phase!=='reception';button.hidden=done;hint.hidden=done;};
-  document.addEventListener('hm-v175-state',refresh);refresh();
- }
- // V172 renders CH01 lazily after the room starts. DOMContentLoaded alone
- // runs too early and silently leaves the old bell-gated panel untouched.
- const ensureSplitUI=()=>{if(active&&phase==='reception')installSplitTrigger();};
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureSplitUI,{once:true});else ensureSplitUI();
- document.addEventListener('hm-v175-started',ensureSplitUI);
- document.addEventListener('hm-v175-state',ensureSplitUI);
- const splitObserver=new MutationObserver(()=>ensureSplitUI());
- splitObserver.observe(document.documentElement,{childList:true,subtree:true});
- function installReceptionCoop(){
-  const panel=$('ch01PuzzlePanel');if(!panel||$('hmReceptionCoop'))return;
-  const section=document.createElement('section');section.id='hmReceptionCoop';
-  section.style.cssText='margin:12px 0;padding:14px;border:1px solid #91677c;border-radius:12px;background:linear-gradient(#271820,#100d15);color:#f4e8ee';
-  const title=document.createElement('strong');title.textContent='접수명부 · 여섯 자리 봉인';
-  const intro=document.createElement('p');intro.textContent='각자 보이는 물건이 다릅니다. 거울의 검은 얼룩을 세고, 캐비닛의 빈칸과 날짜별 명부를 팀원과 대조하세요. 팀원과 공유해 여섯 칸을 완성하세요.';intro.style.cssText='font-size:12px;line-height:1.6;color:#d5c2ce';
-  const notice=document.createElement('div');notice.id='hmReceptionSecurityNotice';
-  notice.style.cssText='margin:14px 0;padding:18px 14px;border:1px solid #766873;border-radius:5px;background:linear-gradient(140deg,#29232a,#16141a);color:#e5d8d9;box-shadow:inset 0 0 18px #08070a;font-family:serif;text-align:center;line-height:1.9';
-  const noticeHeader=document.createElement('div');noticeHeader.textContent='回明病院 · 접수 기록 보안 지침';noticeHeader.style.cssText='font-size:12px;letter-spacing:.08em;color:#b5a6aa';
-  const noticeTitle=document.createElement('div');noticeTitle.textContent='제01조 · 봉인 해제 절차';noticeTitle.style.cssText='font-size:16px;font-weight:bold;border-bottom:1px solid #514750;padding:8px 0;margin-bottom:9px';
-  const noticeBody=document.createElement('div');noticeBody.textContent='비친 것을 먼저 헤아리고,\n잠긴 것의 빈자리를 채운 뒤,\n마지막으로 남겨진 기록을 대조하라.';noticeBody.style.whiteSpace='pre-line';
-  const noticeFooter=document.createElement('div');noticeFooter.textContent='※ 순서를 어길 경우 봉인은 해제되지 않습니다.';noticeFooter.style.cssText='font-size:11px;color:#a69ba0;border-top:1px solid #514750;margin-top:12px;padding-top:9px';
-  notice.append(noticeHeader,noticeTitle,noticeBody,noticeFooter);
-  const objects=document.createElement('div');objects.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0';
-  for(const [object,label] of [['desk','📖 접수대'],['mirror','◈ 거울'],['cabinet','▤ 캐비닛'],['ledger','📋 접수명부']]){
-   const b=document.createElement('button');b.type='button';b.textContent=label;
-   b.style.cssText='min-height:55px;padding:10px;border:1px solid #805c72;border-radius:9px;background:#382531;color:#fff';
-   b.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN)return;socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));};
-   objects.append(b);
-  }
-  const output=document.createElement('pre');output.id='hmReceptionOutput';output.textContent='접수대, 거울, 캐비닛, 접수명부를 조사하세요.';output.style.cssText='white-space:pre-wrap;line-height:1.7;padding:12px;background:#110e15;border:1px solid #5d4759;border-radius:8px;min-height:80px;font:13px/1.7 system-ui';
-  const hint=document.createElement('p');hint.textContent='팀원과 숫자·기호를 공유하세요. 각 칸에 숫자 하나씩 입력하세요. 모든 조사원이 확인하면 봉인이 풀립니다.';hint.style.cssText='font-size:12px;color:#d8c1ce';
-  const cells=document.createElement('div');cells.id='hmReceptionCodeCells';cells.style.cssText='display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin-top:10px';
-  const digitInputs=[];
-  for(let i=0;i<6;i++){
-   const field=document.createElement('input');field.type='text';field.inputMode='numeric';field.maxLength=1;field.autocomplete='off';field.setAttribute('aria-label',(i+1)+'번째 숫자');
-   field.placeholder=String(i+1);field.style.cssText='width:100%;min-width:0;height:48px;text-align:center;font:700 21px system-ui;color:#fff;background:#140f17;border:1px solid #92758a;border-radius:8px';
-   field.addEventListener('input',()=>{field.value=field.value.replace(/[^0-9]/g,'').slice(0,1);if(field.value&&i<5)digitInputs[i+1].focus();});
-   field.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!field.value&&i>0)digitInputs[i-1].focus();});
-   digitInputs.push(field);cells.append(field);
-  }
-  const input={get value(){return digitInputs.map(el=>el.value).join('');},set disabled(value){digitInputs.forEach(el=>el.disabled=value);}};
-  const inputProxy=document.createElement('input');inputProxy.id='hmReceptionAnswer';inputProxy.type='hidden';
-  const submit=document.createElement('button');submit.id='hmReceptionCodeSubmit';submit.type='button';submit.textContent='접수대 봉인 해제';submit.style.cssText='width:100%;min-height:48px;margin-top:9px;border:1px solid #ac7a90;border-radius:9px;background:#5c3047;color:#fff;font-weight:bold';
-  submit.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN)return;socket.send(JSON.stringify({type:'chapter',action:'reception_submit',answer:input.value.trim()}));};
-  section.append(title,intro,objects,output,hint,notice,cells,inputProxy,submit);
-  const guide=$('hmCh01Guide');if(guide)guide.before(section);else panel.querySelector('strong')?.after(section);
-  // Hide only the obsolete CH01 numeric form, retaining its DOM and all server
-  // handlers for backward compatibility. Other chapters and artifacts untouched.
-  // Retire the old CH01 sense / cross-key form from the player UI.
-  const senseForm=$('senseIndex')?.closest('div');
-  if(senseForm){senseForm.hidden=true;senseForm.style.display='none';}
-  const old=panel.querySelector('#senseIndex')?.closest('div');
-  if(old){old.hidden=true;old.style.display='none';}
-  const oldControls=panel.querySelector('[data-ch01="inspect"]')?.parentElement;
-  if(oldControls){
-   // Keep the approved artifact collection and chapter transition functional.
-   for(const action of ['fragment_search','ch02_enter']){
-    const original=oldControls.querySelector('[data-ch01="'+action+'"]');
-    if(original){original.style.cssText+=';width:100%;min-height:46px;margin-top:9px;border-radius:9px;';section.append(original);}
-   }
-   oldControls.hidden=true;oldControls.style.display='none';
-  }
-  if(guide){guide.hidden=true;guide.style.display='none';}
+ // Old separate reception-result rendering removed; the desk uses showReceptionAnswerResult().
+ // Legacy split trigger removed; the sole explicit trigger is mountDirectInvestigation().
 
- }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installReceptionCoop,{once:true});else installReceptionCoop();
- document.addEventListener('hm-v175-started',installReceptionCoop);
- // The approved V172 CH01 investigation opens a separate investigation-record
+  // V176: remove the obsolete text board instead of mounting and hiding another copy.
+ // CH01 answers now exist only at the scene's 접수대.
+
+  // The approved V172 CH01 investigation opens a separate investigation-record
  // window, not #ch01PuzzlePanel. Move the new cooperative board into that
  // visible window whenever it opens, without destroying legacy puzzle handlers.
  // CH01 clues are inspected from the approved photorealistic scene, not the
@@ -428,68 +297,85 @@
  document.addEventListener('click',()=>requestAnimationFrame(hideLegacyCh01Record));
  const legacyWatcher=new MutationObserver(()=>{if(active&&['reception','separated'].includes(phase))requestAnimationFrame(hideLegacyCh01Record);});
  legacyWatcher.observe(document.body||document.documentElement,{childList:true,subtree:true});
+
+ // The one canonical CH01 inspection screen replaces the old text clue sheet.
+ // It renders only the evidence the player can observe, not the server answer.
  function showSceneClue(message){
   if(!message||!['mirror','cabinet','ledger'].includes(message.object))return;
+  $('hmCh01InspectionScreen')?.remove();
   $('hmSceneClueOverlay')?.remove();
-  const overlay=document.createElement('div');overlay.id='hmSceneClueOverlay';
-  overlay.style.cssText='position:fixed;inset:0;z-index:999996;background:#08070be9;display:flex;align-items:center;justify-content:center;padding:16px';
-  const card=document.createElement('section');card.style.cssText='width:min(550px,100%);max-height:85vh;overflow:auto;background:#171218;border:1px solid #826674;border-radius:10px;padding:22px;color:#e8dce4;text-align:center;box-shadow:0 20px 80px #000';
-  const heading=document.createElement('h2');heading.textContent=message.label||'조사 단서';heading.style.cssText='font:700 21px serif;margin:0 0 14px';
-  card.append(heading);
+  const root=document.createElement('section');root.id='hmCh01InspectionScreen';
+  root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');
+  root.setAttribute('aria-label',(message.label||'사물 조사')+' 화면');
+  root.style.cssText='position:fixed;inset:0;z-index:999996;overflow:auto;padding:clamp(10px,4vw,30px);display:grid;place-items:center;background:radial-gradient(circle at 52% 34%,#202125,#080709 68%,#030304);color:#d9d4d0';
+  const card=document.createElement('article');card.style.cssText='width:min(620px,100%);min-height:390px;padding:clamp(13px,4vw,26px);background:linear-gradient(155deg,#201e20,#0b0b0d 76%);border:1px solid #484347;box-shadow:0 24px 85px #000;display:flex;flex-direction:column;gap:13px';
+  const heading=document.createElement('h2');heading.textContent=message.label||'현장 조사';heading.style.cssText='margin:0;font:600 21px serif;letter-spacing:.07em;color:#ded6ce';
+  const clue=document.createElement('p');clue.style.cssText='font:13px/1.7 serif;letter-spacing:.03em;color:#bbb2af;margin:0';
   if(message.object==='mirror'){
-   const glass=document.createElement('div');glass.setAttribute('aria-label','거울에 비친 검은 그림자 '+message.shadowCount+'개');
-   glass.style.cssText='position:relative;height:220px;overflow:hidden;margin:12px 0;border:12px ridge #413b40;background:linear-gradient(110deg,#17191d,#4b4d50 46%,#24252a 67%,#3e4044);box-shadow:inset 0 0 60px #08090b';
-   const count=Math.max(1,Math.min(4,Number(message.shadowCount)||1));
+   clue.textContent='유리 표면에 묻은 검은 흔적이 희미하게 흔들린다. 이 거울에 보이는 것만 기억하라.';
+   const frame=document.createElement('div');frame.setAttribute('aria-label','검은 얼룩이 묻은 거울');
+   frame.style.cssText='position:relative;isolation:isolate;min-height:300px;height:min(56dvh,480px);overflow:hidden;border:14px ridge #343135;box-shadow:inset 0 0 60px 27px #07080aaa,0 0 0 2px #0b0a0b,0 24px 60px #000;background:radial-gradient(ellipse at 40% 48%,#5b62637c 0%,#33383b 36%,#121417 82%),linear-gradient(112deg,#161719,#383b40 40%,#101113 73%)';
+   const dust=document.createElement('div');dust.style.cssText='position:absolute;inset:0;pointer-events:none;opacity:.37;background:repeating-linear-gradient(109deg,transparent 0 22px,#adb2b208 23px 25px,transparent 26px 68px),radial-gradient(ellipse at 8% 83%,#070808ad,transparent 30%),radial-gradient(ellipse at 90% 12%,#0809099e,transparent 35%);mix-blend-mode:multiply';frame.append(dust);
+   const count=Math.max(1,Math.min(4,Math.floor(Number(message.shadowCount)||1)));
+   const coords=[[17,26],[64,17],[40,62],[77,66]];
    for(let i=0;i<count;i++){
-    const shadow=document.createElement('div');
-    shadow.style.cssText='position:absolute;bottom:18px;left:'+((i+.5)*100/count-32/count)+'%;width:'+Math.min(22,74/count)+'%;height:'+(95+i%3*21)+'px;background:#030305;opacity:.94;border-radius:49% 51% 44% 56% / 39% 54% 46% 61%;transform:rotate('+(i%2?9:-8)+'deg);filter:blur(4px);box-shadow:0 0 22px 12px #07070b';
-    glass.append(shadow);
+    const spot=document.createElement('span'),[left,top]=coords[i];
+    const height=[74,92,78,95][i],width=[76,67,81,73][i];
+    spot.setAttribute('aria-hidden','true');
+    spot.style.cssText='position:absolute;left:'+left+'%;top:'+top+'%;width:'+width+'px;height:'+height+'px;transform:rotate('+[-18,9,22,-12][i]+'deg);border-radius:42% 58% 67% 33% / 51% 33% 67% 49%;background:radial-gradient(ellipse at 49% 49%,#030305 0 29%,#07080ae8 43%,#101114c4 59%,transparent 80%);filter:blur(5px);box-shadow:0 0 29px 12px #0304056b';
+    const smear=document.createElement('span');smear.style.cssText='position:absolute;left:25%;top:68%;width:43%;height:47%;transform:rotate(11deg);border-radius:27% 73% 77% 23%;background:linear-gradient(#050607b8,transparent);filter:blur(3px)';
+    spot.append(smear);frame.append(spot);
    }
-   const fog=document.createElement('div');fog.style.cssText='position:absolute;inset:0;background:linear-gradient(125deg,#ffffff12,transparent 35%,#ffffff0b 66%,transparent);pointer-events:none';glass.append(fog);
-   card.append(glass);
-   const hint=document.createElement('p');hint.textContent='각 조사원의 거울에 비친 검은 덩어리 수를 모두 더하라.';card.append(hint);
+   const glint=document.createElement('div');glint.style.cssText='position:absolute;inset:0;pointer-events:none;background:linear-gradient(107deg,transparent 17%,#efffff14 24%,transparent 29% 66%,#d9e5eb0b 72%,transparent 78%);mix-blend-mode:screen';frame.append(glint);card.append(frame);
   }else if(message.object==='cabinet'){
-   const cabinet=document.createElement('div');cabinet.style.cssText='padding:24px 14px;margin:12px 0;background:linear-gradient(110deg,#393b3e,#1d1d20 50%,#333538);border:12px ridge #5c5d60;box-shadow:inset 0 0 38px #050506';
-   const metal=document.createElement('div');metal.textContent='回明病院 / 보관함 분리 기록';metal.style.cssText='font:12px serif;color:#a9a7a5;letter-spacing:.08em;margin-bottom:20px';cabinet.append(metal);
-   const slots=document.createElement('div');slots.style.cssText='display:flex;gap:8px;justify-content:center';
-   const sequence=String(message.sequence||'').trim().split(/\\s+/).filter(Boolean);
-   sequence.forEach((digit,i)=>{const slot=document.createElement('div');slot.textContent=digit;slot.style.cssText='min-width:0;flex:1;max-width:68px;padding:16px 4px;background:#111113;color:'+(digit==='○'?'#e5a7b2':'#d8d6d0')+';border:2px solid #777477;border-radius:4px;font:700 clamp(22px,6vw,32px) monospace;box-shadow:inset 0 0 10px #000';slots.append(slot);});
-   cabinet.append(slots);card.append(cabinet);
-   const hint=document.createElement('p');hint.textContent='빈자리 ○는 다른 조사원의 기록과 대조해야 한다.';card.append(hint);
-  }else{
-   const paper=document.createElement('div');paper.style.cssText='padding:28px 18px;margin:12px 0;background:repeating-linear-gradient(#c9c0aa,#c9c0aa 31px,#9e9486 32px);border:6px solid #4b3b30;box-shadow:inset 0 0 26px #5a4b3a;color:#28221e;transform:rotate(-1deg)';
-   const label=document.createElement('div');label.textContent='回明病院 · 접수 명부';label.style.cssText='font:700 22px serif;border-bottom:2px solid #54443b;padding-bottom:12px';paper.append(label);
-   const record=document.createElement('div');record.textContent='11월 '+message.date+'일  /  입실 '+message.people+'명';record.style.cssText='font:700 24px serif;padding:28px 0';paper.append(record);card.append(paper);
-   const hint=document.createElement('p');hint.textContent='조사원들이 확인한 날짜별 입실 인원을 대조하라.';card.append(hint);
+   clue.textContent='가려진 칸은 조사원마다 다르다. 다른 조사원의 보관함 기록과 비교하라.';
+   const steel=document.createElement('div');steel.style.cssText='padding:24px 12px;min-height:250px;display:flex;flex-direction:column;justify-content:center;background:repeating-linear-gradient(99deg,#333436 0 2px,#27282a 4px 13px,#38393a 15px);border:13px ridge #555558;box-shadow:inset 0 0 45px #000,0 13px 32px #000';
+   const stamp=document.createElement('div');stamp.textContent='回明病院   /   RECORD STORAGE';stamp.style.cssText='text-align:center;font:11px monospace;letter-spacing:.12em;color:#a2a2a5;margin-bottom:24px';steel.append(stamp);
+   const row=document.createElement('div');row.style.cssText='display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:nowrap';
+   const sequence=String(message.sequence||'').trim().split(/\s+/).filter(Boolean);
+   for(const digit of sequence){
+    const key=document.createElement('span');key.textContent=digit;key.style.cssText='flex:1;min-width:0;max-width:68px;text-align:center;padding:18px 2px;background:#111113;border:2px solid #77767b;box-shadow:inset 0 0 10px #000;color:'+(digit==='○'?'#cba1a8':'#e1deda')+';font:700 clamp(18px,6vw,30px) monospace';row.append(key);
+   }
+   steel.append(row);card.append(steel);
+  }else if(message.object==='ledger'){
+   clue.textContent='찢긴 접수명부의 한 장만 남아 있다. 다른 조사원이 가진 날짜와 비교하라.';
+   const paper=document.createElement('div');paper.style.cssText='min-height:320px;padding:28px 20px;background:repeating-linear-gradient(#c8bfa8 0 33px,#a99c89 34px,#c8bfa8 35px);border:9px solid #45382e;box-shadow:inset 0 0 55px #62534675,0 16px 42px #000;color:#30291f;transform:rotate(-.6deg)';
+   const stamp=document.createElement('div');stamp.textContent='回明病院 · 접수 명부';stamp.style.cssText='font:700 22px serif;letter-spacing:.06em;border-bottom:2px solid #5e5343;padding:0 0 15px';paper.append(stamp);
+   const detail=document.createElement('div');detail.textContent='11월 '+String(message.date||'')+'일   /   입실 '+String(message.people??'')+'명';detail.style.cssText='padding:55px 0 30px;font:700 clamp(21px,6vw,32px) serif;text-align:center';paper.append(detail);
+   const seal=document.createElement('div');seal.textContent='담당자 서명 __________';seal.style.cssText='font:13px serif;text-align:right;opacity:.54';paper.append(seal);card.append(paper);
   }
-  const close=document.createElement('button');close.textContent='현장으로 돌아가기';close.style.cssText='width:100%;margin-top:14px;padding:13px;background:#463345;border:1px solid #957b90;color:white;border-radius:8px';close.onclick=()=>overlay.remove();
-  card.append(close);overlay.append(card);document.body.append(overlay);
+  const close=document.createElement('button');close.type='button';close.textContent='← 접수실로 돌아가기';close.style.cssText='min-height:48px;margin-top:auto;border:1px solid #7e6973;border-radius:6px;background:#271e24;color:#ebe2e7;font:14px system-ui;cursor:pointer';
+  close.onclick=()=>root.remove();
+  card.prepend(heading,clue);card.append(close);root.append(card);document.body.append(root);close.focus();
  }
- // Route only the four original scene hotspots. No substring matching on
- // parent text, which previously confused the ledger with the drawer.
+
+ 
+ // CH01 single object router: exact hotspot identity, never a parent's text.
+ // In particular a ledger click may never be interpreted as a desk/drawer click.
  document.addEventListener('click',event=>{
   if(!active||socket?.readyState!==NativeWS.OPEN||!['reception','separated'].includes(phase))return;
-  const target=event.target.closest?.('#mainScene [data-action],#mainScene [data-object],#mainScene [data-ch01],#mainScene button,#mainScene [role="button"]');
-  if(!target||target.closest('#hmReceptionCodeModal,#hmSceneClueOverlay,#hmReceptionCoop'))return;
-  const code=(target.dataset.object||target.dataset.action||target.dataset.ch01||'').toLowerCase();
-  const names={desk:'desk',drawer:'desk',reception_desk:'desk',reception_drawer:'desk',mirror:'mirror',cabinet:'cabinet',ledger:'ledger'};
-  let object=names[code];
-  if(!object){
-   const label=(target.getAttribute('aria-label')||target.getAttribute('title')||target.textContent||'').trim();
-   if(/^(?:균열 난 )?거울$/.test(label))object='mirror';
-   else if(/^(?:잠긴 )?캐비닛$/.test(label))object='cabinet';
-   else if(/^접수\\s*명부$/.test(label))object='ledger';
-   else if(/^접수대\\s*서랍$/.test(label))object='desk';
-  }
+  const origin=event.target instanceof Element?event.target:null;if(!origin)return;
+  if(origin.closest('#hmCh01InspectionScreen,#hmReceptionCodeModal,#hmForcedSeparation,#hmReceptionScare,#hmReceptionHandScare,#hmCoopPanel,#hmV175Gate,#hmV174Chat'))return;
+  const target=origin.closest('button,[role="button"],[data-action],[data-object],[data-hotspot],[aria-label]');
+  if(!target||target.closest('#ch01PuzzlePanel,#hmReceptionCoop,[data-menu]'))return;
+  const label=(target.getAttribute('aria-label')||target.getAttribute('title')||target.textContent||'').replace(/\s+/g,' ').trim().replace(/^[◈▤📋📖]\s*/u,'');
+  const raw=String(target.dataset.object||target.dataset.action||target.dataset.hotspot||'').toLowerCase().trim();
+  let object=null;
+  if(/^(?:접수\s*명부|접수\s*명부 조사|접수\s*명부 열기)$/.test(label))object='ledger';
+  else if(/^(?:거울|균열 난 거울|거울 조사)$/.test(label))object='mirror';
+  else if(/^(?:캐비닛|잠긴 캐비닛|보관함|잠긴 보관함|서류함)$/.test(label))object='cabinet';
+  else if(/^(?:접수대 서랍|서랍)$/.test(label))object='drawer';
+  else if(/^(?:접수대|접수대 조사|봉인 번호 입력)$/.test(label))object='desk';
+  else object={ledger:'ledger',mirror:'mirror',cabinet:'cabinet',drawer:'drawer',reception_drawer:'drawer',desk:'desk',reception_desk:'desk'}[raw]||null;
   if(!object)return;
   event.preventDefault();event.stopImmediatePropagation();
-  if(phase==='reception'){
-   socket.send(JSON.stringify({type:'chapter',action:'start_investigation'}));return;
-  }
-  if(object==='desk')playReceptionHand();
-  else socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));
+  if(phase!=='separated'){showConnectionStatus('접수실 조사 시작 버튼을 눌러 강제 분리를 완료한 뒤 조사해 주세요.');return;}
+  if(object==='desk'){openReceptionCodePanel();return;}
+  if(object==='drawer'){playReceptionHand();return;}
+  socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));
  },true);
- // The new CH01 investigation controls remain usable after the split.
+
+  // The new CH01 investigation controls remain usable after the split.
  // Original uploaded audio files. This bridge never alters the approved videos,
  // chapter voices, artifact inventory or doll assembly.
  const hmSoundRoot='https://gb1026gb00-cell.github.io/hoemyeong-hospital/audio/';
