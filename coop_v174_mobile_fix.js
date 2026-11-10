@@ -369,6 +369,20 @@
 
  
 
+ // CH01 sound: the window-capture puzzle router stops later click listeners.
+ // Play the original object SFX on pointerdown before that routing occurs.
+ document.addEventListener('pointerdown',event=>{
+  if(!active||phase!=='separated'||event.button>0)return;
+  const origin=event.target instanceof Element?event.target:null;
+  if(!origin||origin.closest('#hmCh01InspectionScreen,#hmReceptionCodeModal,#hmForcedSeparation,#hmReceptionScare,#hmReceptionHandScare,#hmCoopPanel,#hmV175Gate'))return;
+  const target=origin.closest('[data-obj],[data-object],[data-hotspot],[data-action],#deskButton');
+  if(!target)return;
+  const raw=String(target.dataset.object||target.dataset.obj||target.dataset.hotspot||target.dataset.action||'').toLowerCase();
+  const object=target.id==='deskButton'?'desk':raw;
+  const file=hmSoundFiles[object];
+  if(file)playHospitalSound(file,0.35);
+ },true);
+
  // CH01 / step 1-1 ONLY: the approved V172 mirror has an older click
  // handler which opens a text-only demo. Window capture precedes that handler.
  // Do not intercept any other object or cinematic in this patch.
@@ -513,7 +527,7 @@
   // Rare atmospheric sounds only during active investigation, never while
   // a cinematic is on screen. Timer is cleared when page is closed.
   const ambient=setInterval(()=>{
-   if(!active||document.hidden||$('hmForcedSeparation')||!$('hmMediaOverlay')?.hidden)return;
+   if(!active||document.hidden||$('hmForcedSeparation')||$('hmReceptionScare')||$('hmReceptionHandScare')||($('hmMediaOverlay')&&!$('hmMediaOverlay').hidden))return;
    if(Math.random()<0.32)playHospitalSound(
     ['hallway_steps.wav','behind_you_breath.wav','laugh_woman.mp3','distant_thunder.wav','fluorescent_fault_new.mp3'][Math.floor(Math.random()*5)],0.2);
   },45000);
