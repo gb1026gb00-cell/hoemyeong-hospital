@@ -19,6 +19,10 @@
     if(m.type==='joined'&&typeof m.isHost==='boolean')ch02IsHost=m.isHost;
     if(m.type==='error'&&phase==='ch02'){
      const popup=document.getElementById('hmCh02NewDialog');
+     if(popup&&popup.dataset.awaitingCertificate==='yes'){
+      ch02Dialog('진단서 요청 거절',m.message||'서버에서 조사 요청을 처리하지 못했어.');
+      return;
+     }
      if(popup&&/협동 진행 대기|최소 2명|연결/.test(m.message||''))ch02Dialog('조사원 연결 대기',m.message);
     }
     if(m.type==='ch03_result'&&m.ok===false&&phase==='ch02_cleared'){
@@ -692,7 +696,7 @@
  // Hide only the two redundant original mobile navigation items.
  // Preserve inventory, hints, chapter actions, and the separate floating team chat.
  const footerCleanupStyle=document.createElement('style');
- footerCleanupStyle.textContent='[data-menu="chat"],[data-menu="move"],[data-menu="area"]{display:none!important}';
+ footerCleanupStyle.textContent='[data-menu="chat"],[data-menu="move"],[data-menu="area"],[data-menu="hint"]{display:none!important}';
  document.head.append(footerCleanupStyle);
  function cleanMobileFooter(){
   const menuCandidates=document.querySelectorAll('button,[role="button"],[data-menu]');
@@ -701,7 +705,7 @@
    const label=(b.textContent||'').replace(/\\s+/g,' ').trim();
    const menu=(b.dataset.menu||'').toLowerCase();
    const footer=b.closest('nav,[class*="bottom"],[class*="footer"],[id*="bottom"],[id*="footer"]');
-   if(menu==='chat'||menu==='move'||menu==='area'||(footer&&['대화','이동','구역 이동','구역이동'].includes(label))){
+   if(menu==='chat'||menu==='move'||menu==='area'||menu==='hint'||(footer&&['대화','이동','구역 이동','구역이동','힌트'].includes(label))){
     b.style.setProperty('display','none','important');
     b.setAttribute('aria-hidden','true');
     b.tabIndex=-1;
@@ -1014,10 +1018,11 @@
   if(site==='certificate'){
    ch02Dialog('사망진단서','원본 기록을 불러오는 중…');
    const dialog=document.getElementById('hmCh02NewDialog');
+   if(dialog)dialog.dataset.awaitingCertificate='yes';
    if(dialog){
     const waiting=dialog;
     setTimeout(()=>{if(document.getElementById('hmCh02NewDialog')===waiting){
-     ch02Dialog('진단서 연결 확인','사망진단서 응답이 도착하지 않았어. 팀 연결 상태를 확인하고 다시 조사해 줘.');
+     ch02Dialog('진단서 서버 응답 없음','터치는 인식됐지만 서버에서 진단서 데이터나 오류 메시지가 오지 않았어. 서버 배포 버전과 같은 방 접속 상태를 확인해야 해.');
     }},7000);
    }
   }
