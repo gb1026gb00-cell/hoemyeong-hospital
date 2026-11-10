@@ -51,7 +51,6 @@ const server=http.createServer((req,res)=>{
    try{
     const payload=JSON.parse(raw||'{}');
     const code=allocateRoom(Number(payload.capacity));
-    if(payload.drawerTest===true){const room=rooms.get(code);room.drawerTest=true;persist();}
     res.writeHead(201,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});
     res.end(JSON.stringify({code}));
    }catch(e){res.writeHead(503,{'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify({error:'방 번호를 발급하지 못했습니다.'}));}
@@ -91,7 +90,7 @@ const server=http.createServer((req,res)=>{
    fs.createReadStream(file).pipe(res);
   });return;
  }
- if((req.method==='GET'||req.method==='HEAD')&&(pathname==='/play'||pathname==='/play-drawer-test')){
+ if((req.method==='GET'||req.method==='HEAD')&&pathname==='/play'){
   const fs=require('fs'),path=require('path');
   const approved=path.join(__dirname,'approved-v172.html');
   fs.stat(approved,(err,stat)=>{
@@ -280,7 +279,7 @@ wss.on('connection',ws=>{
   }
   if(m.type==='set_capacity'){if(r.started||r.host!==player)return send(ws,{type:'error',message:'방장만 게임 시작 전에 인원을 변경할 수 있습니다.'});if(![2,4,6,8].includes(m.capacity))return send(ws,{type:'error',message:'2·4·6·8인 중 선택할 수 있습니다.'});if(r.clients.size>m.capacity)return send(ws,{type:'error',message:'현재 참가자보다 적은 인원으로 변경할 수 없습니다.'});r.capacity=m.capacity;broadcast(r,state(r));return}
   if(m.type==='ready'){if(r.started)return;player.ready=!!m.ready;broadcast(r,state(r));return}
-  if(m.type==='start'){if(r.host!==player)return send(ws,{type:'error',message:'방장만 시작할 수 있습니다.'});if(r.clients.size<2)return send(ws,{type:'error',message:'게임 시작에는 최소 2명의 조사원이 필요합니다.'});if([...r.clients].some(x=>!x.ws||x.ws.readyState!==WebSocket.OPEN))return send(ws,{type:'error',message:'모든 조사원이 연결된 상태여야 시작할 수 있습니다.'});if([...r.clients].some(x=>!x.ready))return send(ws,{type:'error',message:'모든 조사원이 준비해야 합니다.'});r.senseRoles=[...r.clients].map(x=>x.role).sort((a,b)=>a-b);r.started=true;r.lastActiveAt=Date.now();r.chapter={phase:r.drawerTest?'separated':'reception',solved:[],bellBy:null,inspected:{},sensoryDone:[],ecgSolved:false,evidenceFound:[],evidenceSolved:false,sensoryDigits:Array.from({length:8},()=>require('crypto').randomInt(1,10)),crossKeys:Array.from({length:8},()=>String(require('crypto').randomInt(10,100))),codes:Object.fromEntries([...r.clients].map(x=>[x.role,String(10+require('crypto').randomInt(90))]))};if(r.drawerTest)r.chapter.receptionCoop={answer:'273476',confirmed:[],g01Witnessed:[]};broadcast(r,{type:'started'});if(r.drawerTest){broadcast(r,{type:'chapter_event',event:'blackout',by:player.role});broadcast(r,{type:'horror_video',id:'G08',scope:'all'});}else broadcast(r,{type:'horror_video',id:'G01',scope:'all'});for(const member of r.clients)send(member.ws,{type:'sense_assignment',senses:assignedSenses(r,member.role).map(x=>x.sense)});broadcast(r,state(r));chapterVoiceOnce(r,1);return}
+  if(m.type==='start'){if(r.host!==player)return send(ws,{type:'error',message:'방장만 시작할 수 있습니다.'});if(r.clients.size<2)return send(ws,{type:'error',message:'게임 시작에는 최소 2명의 조사원이 필요합니다.'});if([...r.clients].some(x=>!x.ws||x.ws.readyState!==WebSocket.OPEN))return send(ws,{type:'error',message:'모든 조사원이 연결된 상태여야 시작할 수 있습니다.'});if([...r.clients].some(x=>!x.ready))return send(ws,{type:'error',message:'모든 조사원이 준비해야 합니다.'});r.senseRoles=[...r.clients].map(x=>x.role).sort((a,b)=>a-b);r.started=true;r.lastActiveAt=Date.now();r.chapter={phase:'reception',solved:[],bellBy:null,inspected:{},sensoryDone:[],ecgSolved:false,evidenceFound:[],evidenceSolved:false,sensoryDigits:Array.from({length:8},()=>require('crypto').randomInt(1,10)),crossKeys:Array.from({length:8},()=>String(require('crypto').randomInt(10,100))),codes:Object.fromEntries([...r.clients].map(x=>[x.role,String(10+require('crypto').randomInt(90))]))};broadcast(r,{type:'started'});broadcast(r,{type:'horror_video',id:'G01',scope:'all'});for(const member of r.clients)send(member.ws,{type:'sense_assignment',senses:assignedSenses(r,member.role).map(x=>x.sense)});broadcast(r,state(r));chapterVoiceOnce(r,1);return}
   
   if(m.type==='chapter'){
    if(!r.started)return;
