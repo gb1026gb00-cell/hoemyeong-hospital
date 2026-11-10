@@ -242,7 +242,7 @@ wss.on('connection',ws=>{
     const objects=['desk','cabinet','mirror','intercom'];
     if(!objects.includes(m.object))return;
     const found=ch.inspected[player.role]||(ch.inspected[player.role]=[]);
-    const secondDeskLook=m.object==='desk'&&found.includes('desk');
+    const secondDeskLook=m.object==='desk'; // G01 fires on first actual reception-desk investigation after separation
     if(secondDeskLook){
      const witnessed=ch.g01Witnessed||(ch.g01Witnessed=[]);
      if(!witnessed.includes(player.role)){
