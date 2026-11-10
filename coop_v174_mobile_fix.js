@@ -269,8 +269,28 @@
   const lines=Array.isArray(message.lines)?message.lines:[message.message||''];
   const header=message.label|| (message.ok?'접수대 봉인':'명부 확인');
   out.textContent=header+'\\n'+lines.join('\\n');
-  // No synthetic human silhouettes: the mirror clue is delivered as text.
-  const shadows=$('hmReceptionShadows');if(shadows)shadows.remove();
+  const previous=$('hmMirrorBlobs');if(previous)previous.remove();
+  if(message.object==='mirror'&&Number.isInteger(message.shadowCount)){
+    const blobs=document.createElement('div');blobs.id='hmMirrorBlobs';
+    blobs.setAttribute('aria-label','검은 그림자 '+message.shadowCount+'개');
+    blobs.style.cssText='display:flex;justify-content:space-evenly;align-items:center;gap:12px;min-height:115px;padding:15px;background:linear-gradient(135deg,#26272b,#101014 55%,#35343b);border:2px solid #77717a;border-radius:5px;margin:10px 0';
+    for(let i=0;i<message.shadowCount;i++){
+      const stain=document.createElement('span');
+      stain.style.cssText='display:block;flex:1;max-width:65px;height:'+(58+(i%2)*19)+'px;border-radius:46% 54% 62% 38% / 58% 40% 60% 42%;background:radial-gradient(ellipse,#030304 34%,#09090c 64%,#1d1c22 85%,transparent 100%);filter:blur(2px);transform:rotate('+((i*23)%31-15)+'deg)';
+      blobs.append(stain);
+    }
+    out.after(blobs);
+  }
+  if(message.object==='cabinet'&&message.popup){
+    const existing=$('hmCabinetNotice');if(existing)existing.remove();
+    const overlay=document.createElement('div');overlay.id='hmCabinetNotice';
+    overlay.style.cssText='position:fixed;inset:0;z-index:999995;display:grid;place-items:center;background:#050307dd;padding:18px';
+    const panel=document.createElement('div');panel.style.cssText='max-width:500px;width:100%;padding:24px;background:#1b151e;border:2px solid #a08498;border-radius:10px;color:#fff;box-shadow:0 15px 55px #000';
+    const title=document.createElement('h3');title.textContent='분리 기록 · 캐비닛';
+    const detail=document.createElement('pre');detail.style.cssText='white-space:pre-wrap;font:15px/1.8 system-ui';detail.textContent=lines.join('\\n');
+    const close=document.createElement('button');close.textContent='확인';close.style.cssText='padding:12px 24px;background:#57354d;color:#fff;border:1px solid #a08498;border-radius:8px';
+    close.onclick=()=>overlay.remove();panel.append(title,detail,close);overlay.append(panel);document.body.append(overlay);
+  }
   out.style.borderColor=message.ok?'#6b9a83':'#9b697f';
   if(message.complete){document.querySelectorAll('#hmReceptionCoop input').forEach(input=>input.disabled=true);}
  }
@@ -310,7 +330,7 @@
   const section=document.createElement('section');section.id='hmReceptionCoop';
   section.style.cssText='margin:12px 0;padding:14px;border:1px solid #91677c;border-radius:12px;background:linear-gradient(#271820,#100d15);color:#f4e8ee';
   const title=document.createElement('strong');title.textContent='접수명부 · 여섯 자리 봉인';
-  const intro=document.createElement('p');intro.textContent='각자 보이는 물건이 다릅니다. 거울의 그림자를 세고, 접수대 날짜와 명부를 대조하고, 캐비닛을 확인하세요. 팀원과 공유해 여섯 칸을 완성하세요.';intro.style.cssText='font-size:12px;line-height:1.6;color:#d5c2ce';
+  const intro=document.createElement('p');intro.textContent='각자 보이는 물건이 다릅니다. 거울의 검은 얼룩을 세고, 캐비닛의 빈칸과 날짜별 명부를 팀원과 대조하세요. 접수대 서랍은 공포 연출입니다. 팀원과 공유해 여섯 칸을 완성하세요.';intro.style.cssText='font-size:12px;line-height:1.6;color:#d5c2ce';
   const objects=document.createElement('div');objects.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0';
   for(const [object,label] of [['desk','📖 접수대'],['mirror','◈ 거울'],['cabinet','▤ 캐비닛'],['ledger','📋 접수명부']]){
    const b=document.createElement('button');b.type='button';b.textContent=label;
