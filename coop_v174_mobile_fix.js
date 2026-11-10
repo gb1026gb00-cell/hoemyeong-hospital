@@ -780,8 +780,30 @@
   overlay.append(panel);document.body.append(overlay);
  }
  function showCh02Answer(){
-  ch02Dialog('02. 사망 판정의 오류',
-   '죽은 자의 기록은 남아 있으나, 죽음의 증거는 남아 있지 않다.\n\n네 장의 사망진단서와 마지막 심장 신호를 대조하라.\n\n사망 판정 이후에도 심장이 뛰었던 시간.\n가장 오래 살아 있었던 자부터, 인식표에 남겨진 네 글자를 입력하라.',true);
+  document.getElementById('hmCh02NewDialog')?.remove();
+  const wrap=document.createElement('div');wrap.id='hmCh02NewDialog';wrap.setAttribute('role','dialog');wrap.setAttribute('aria-modal','true');
+  wrap.style.cssText='position:fixed;inset:0;z-index:999999;background:#050407f2;display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto';
+  const card=document.createElement('section');card.style.cssText='width:min(520px,100%);max-height:92dvh;overflow:auto;border:1px solid #68535b;background:linear-gradient(155deg,#211b23,#0e0c12);color:#e9dfe0;padding:25px clamp(17px,4vw,30px) 27px;box-shadow:0 18px 65px #000;font:15px/1.8 serif';
+  const back=document.createElement('button');back.type='button';back.textContent='← 병실로 돌아가기';back.style.cssText='border:0;background:transparent;color:#cbb7c1;font:13px system-ui;padding:4px 0 20px';back.onclick=()=>wrap.remove();card.append(back);
+  const label=document.createElement('div');label.textContent='回明病院 / 302호 / 기록 정정';label.style.cssText='font:11px system-ui;letter-spacing:2px;color:#b49aa5;margin-bottom:16px';card.append(label);
+  const title=document.createElement('h2');title.textContent='02. 사망 판정의 오류';title.style.cssText='font:600 clamp(22px,5vw,27px) serif;margin:0 0 17px';card.append(title);
+  const rule=document.createElement('p');rule.textContent='죽은 자의 기록은 남아 있으나, 죽음의 증거는 남아 있지 않다.';rule.style.cssText='font-style:italic;border-top:1px solid #68535b;border-bottom:1px solid #68535b;padding:17px 0;color:#d7c4cb';card.append(rule);
+  const guide=document.createElement('p');guide.textContent='네 장의 사망진단서와 마지막 심장 신호를 대조하라.\n\n사망 판정 이후에도 심장이 뛰었던 시간.\n\n가장 오래 살아 있었던 자부터, 인식표에 남겨진 네 글자를 입력하라.';guide.style.cssText='white-space:pre-line;line-height:1.9;margin:22px 0;color:#e4d9dc';card.append(guide);
+  const cells=document.createElement('div');cells.style.cssText='display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:22px 0';
+  const inputs=[];
+  for(let i=0;i<4;i++){
+   const input=document.createElement('input');input.type='text';input.maxLength=1;input.autocomplete='off';input.autocapitalize='characters';input.spellcheck=false;input.setAttribute('aria-label',(i+1)+'번째 영문 글자');
+   input.style.cssText='width:100%;min-width:0;height:58px;box-sizing:border-box;text-align:center;font:600 26px monospace;text-transform:uppercase;border:1px solid #88717e;border-radius:5px;background:#09090b;color:#f4e9ef';
+   input.addEventListener('input',()=>{input.value=input.value.replace(/[^a-z]/gi,'').toUpperCase().slice(-1);if(input.value&&i<3)inputs[i+1].focus();});
+   input.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!input.value&&i>0)inputs[i-1].focus();if(e.key==='Enter')submit.click();});
+   input.addEventListener('paste',e=>{const pasted=e.clipboardData?.getData('text')?.replace(/[^a-z]/gi,'').toUpperCase().slice(0,4)||'';if(pasted.length>1){e.preventDefault();for(let k=0;k<4;k++)inputs[k].value=pasted[k]||'';inputs[Math.min(pasted.length,4)-1].focus();}});
+   inputs.push(input);cells.append(input);
+  }
+  card.append(cells);
+  const status=document.createElement('p');status.id='hmCh02NewStatus';status.setAttribute('role','status');status.style.cssText='min-height:22px;color:#e4b3b3;font:13px system-ui';
+  const submit=document.createElement('button');submit.type='button';submit.textContent='기록 정정';submit.style.cssText='width:100%;padding:15px;background:#573b4b;color:#fff;border:1px solid #a18091;border-radius:6px;font:600 16px system-ui';
+  submit.onclick=()=>{const answer=inputs.map(x=>x.value).join('');if(answer.length!==4){status.textContent='인식표의 영문 네 글자를 모두 입력하세요.';return;}status.textContent='사망 판정 원본을 대조하고 있습니다…';ch02Send('ch02_new_solve',{answer});};
+  card.append(status,submit);wrap.append(card);document.body.append(wrap);
  }
  function ch02Dialog(title,body,code=false){
   document.getElementById('hmCh02NewDialog')?.remove();
