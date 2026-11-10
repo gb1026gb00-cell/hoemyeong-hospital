@@ -255,6 +255,57 @@
   help.textContent=ownSymbol===null?'조사원 배정 정보를 확인할 수 없습니다. 팀 연결 상태를 확인하세요.':'붉은 기호를 기억하자. 거울에서 발견한 숫자와 이 기호를 함께 팀원에게 전달해야 한다.';
   card.append(help);overlay.append(card);document.body.append(overlay);
  }
+
+ // CH03 calculator is an immediate local object; each symbol is filled from team-shared mirror clues.
+ const ch03Symbols=['★','●','▲','■','◆','✚','☾','♣'];
+ const ch03SymbolOrder={2:[2,1],4:[3,1,4,2],8:[3,1,6,2,8,4,7,5]};
+ const ch03Expressions={
+  2:{label:'(★ + ●) × (● − ★)',evaluate:v=>(v[0]+v[1])*(v[1]-v[0])},
+  4:{label:'(■ + ▲) × ● − ★',evaluate:v=>(v[3]+v[2])*v[1]-v[0]},
+  8:{label:'(♣ − ◆) × ✚ + (☾ ÷ ■) + (▲ × ●) − ★',evaluate:v=>(v[7]-v[4])*v[5]+v[6]/v[3]+v[2]*v[1]-v[0]}
+ };
+ function ch03ExpectedSymbolValues(capacity){
+  const ranks=ch03SymbolOrder[capacity],values=Array(capacity).fill(null);
+  ranks.forEach((rank,i)=>{values[rank-1]=ch03MirrorDigits[i];});
+  return values;
+ }
+ function openCh03SymbolCalculator(){
+  document.getElementById('hmCh03SymbolCalculator')?.remove();
+  const capacity=[2,4,8].includes(ch02RoomCapacity)?ch02RoomCapacity:2;
+  const expression=ch03Expressions[capacity];
+  const overlay=document.createElement('div');overlay.id='hmCh03SymbolCalculator';
+  overlay.style.cssText='position:fixed;inset:0;z-index:2147483600;background:#030405f5;color:#e9e2d9;display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box;font:14px system-ui';
+  const card=document.createElement('section');card.style.cssText='width:min(460px,100%);max-height:94dvh;overflow:auto;background:linear-gradient(145deg,#292826,#111415);border:2px solid #5e5c54;border-radius:10px;padding:16px;box-sizing:border-box;box-shadow:inset 0 0 25px #000';
+  const header=document.createElement('div');header.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px';
+  const title=document.createElement('strong');title.textContent='운행 제어장치 · 기호 연산판';
+  const close=document.createElement('button');close.type='button';close.textContent='닫기';close.style.cssText='padding:9px 14px;background:#302d30;color:#fff;border:1px solid #71656c;border-radius:6px';close.onclick=()=>overlay.remove();
+  header.append(title,close);card.append(header);
+  const instruction=document.createElement('p');instruction.textContent='거울에서 찾은 숫자와 층별 안내문의 기호를 대조하여 각 칸을 채우십시오.';instruction.style.cssText='color:#c6c2b9;line-height:1.6;margin:0 0 14px';card.append(instruction);
+  const grid=document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-bottom:14px';
+  const inputs=[];
+  for(let i=0;i<capacity;i++){
+   const field=document.createElement('label');field.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;background:#1c1e1e;border:1px solid #5d5c58;border-radius:6px;padding:9px 5px';
+   const symbol=document.createElement('span');symbol.textContent=ch03Symbols[i];symbol.style.cssText='font:700 27px Georgia,serif;color:#c9b6a0';
+   const input=document.createElement('input');input.type='text';input.inputMode='numeric';input.maxLength=1;input.placeholder='?';input.autocomplete='off';input.setAttribute('aria-label',ch03Symbols[i]+' 기호 숫자');
+   input.style.cssText='width:100%;max-width:55px;min-width:0;box-sizing:border-box;text-align:center;padding:8px 3px;border:1px solid #706c64;background:#090c0d;color:#fff;border-radius:4px;font:600 20px system-ui';
+   input.addEventListener('input',()=>{input.value=input.value.replace(/[^0-9]/g,'').slice(0,1);result.textContent='기호의 값을 모두 입력한 뒤 연산하십시오.';});
+   inputs.push(input);field.append(symbol,input);grid.append(field);
+  }
+  card.append(grid);
+  const formula=document.createElement('div');formula.textContent=expression.label;formula.style.cssText='padding:16px 8px;border:1px solid #675e54;background:#111312;text-align:center;border-radius:6px;font:600 18px/1.6 Georgia,serif;overflow-wrap:anywhere';card.append(formula);
+  const result=document.createElement('p');result.textContent='기호의 값을 모두 입력한 뒤 연산하십시오.';result.style.cssText='min-height:48px;text-align:center;color:#d9c5b8;white-space:pre-wrap;line-height:1.6';
+  const run=document.createElement('button');run.type='button';run.textContent='연산 실행';run.style.cssText='width:100%;padding:14px;background:#443542;color:#fff;border:1px solid #9e8299;border-radius:6px;font:600 15px system-ui';
+  run.onclick=()=>{
+   const values=inputs.map(input=>input.value===''?null:Number(input.value));
+   if(values.some(v=>v===null)){result.textContent='빈 기호가 있습니다. 팀원들의 단서를 확인하십시오.';return;}
+   const expected=ch03ExpectedSymbolValues(capacity);
+   if(values.some((v,i)=>v!==expected[i])){result.textContent='기호와 숫자의 대응이 일치하지 않습니다.\n거울과 층별 안내문을 다시 대조하십시오.';return;}
+   const answer=expression.evaluate(values);
+   if(!Number.isInteger(answer)||answer<0){result.textContent='연산 오류. 기록을 다시 확인하십시오.';return;}
+   result.textContent='운행 계산 완료 · 최종 산출값 '+String(answer)+'\n이 값을 엘리베이터 암호로 사용하십시오.';
+  };
+  card.append(result,run);overlay.append(card);document.body.append(overlay);
+ }
  function mountIndependentCh03(){
   const old=document.getElementById('hmIndependentCh03');
   if(!active||phase!=='ch03'){old?.remove();return;}
@@ -288,7 +339,7 @@
   const mirrorButton=document.createElement('button');mirrorButton.type='button';mirrorButton.textContent='거울 닦기';mirrorButton.style.cssText='min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c;color:#f5edf3;font:600 14px system-ui;cursor:pointer';mirrorButton.onclick=openCh03Mirror;bottom.append(mirrorButton);
   control('스피커','ch03_explore',{object:'speaker'});
   const directoryButton=document.createElement('button');directoryButton.type='button';directoryButton.textContent='거울 아래 층수 안내문';directoryButton.style.cssText='min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c;color:#f5edf3;font:600 14px system-ui;cursor:pointer';directoryButton.onclick=openCh03FloorDirectory;bottom.append(directoryButton);
-  control('반사면 분석','ch03_clue',{station:'reflection'});
+  const calculatorButton=document.createElement('button');calculatorButton.type='button';calculatorButton.textContent='우측 아래 기호 계산판';calculatorButton.style.cssText='min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c;color:#f5edf3;font:600 14px system-ui;cursor:pointer';calculatorButton.onclick=openCh03SymbolCalculator;bottom.append(calculatorButton);
   const form=document.createElement('form');form.style.cssText='grid-column:1/-1;display:flex;gap:8px';
   const input=document.createElement('input');input.placeholder='세 자리 암호';input.inputMode='numeric';input.maxLength=3;input.autocomplete='off';input.style.cssText='min-width:0;flex:1;padding:12px;background:#161119;color:#fff;border:1px solid #766477;border-radius:6px;font-size:16px';
   const submit=document.createElement('button');submit.type='submit';submit.textContent='암호 입력';submit.style.cssText='padding:12px 15px;background:#4b354e;color:#fff;border:1px solid #a18ba5;border-radius:6px;font-size:14px';
