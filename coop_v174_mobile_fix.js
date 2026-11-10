@@ -780,7 +780,7 @@
  // Hide legacy purple ward interaction rectangles; keep the new invisible
  // server-connected investigation buttons and the approved ward photograph.
  const wardTapFix=document.createElement('style');
- wardTapFix.textContent='html.hm-ch02-clean #hmWardScene > .ward-hot,html.hm-ch02-clean #hmWardScene > .hm-horror-site{display:none!important}html.hm-ch02-clean #hmCh02NewLayer,html.hm-ch02-clean #hmCh02NewLayer button{background:transparent!important;box-shadow:none!important;border:0!important}html.hm-ch02-clean #hmCh02NewLayer button{opacity:0!important;pointer-events:auto!important}';
+ wardTapFix.textContent='html.hm-ch02-clean #hmWardScene > .ward-hot,html.hm-ch02-clean #hmWardScene > .hm-horror-site{display:none!important}html.hm-ch02-clean #hmCh02NewLayer{display:none!important;pointer-events:none!important}';
  document.head.append(wardTapFix);
  let ch02TapDebug=false;
  document.head.append(ch02Css);
@@ -949,42 +949,10 @@
  }
  // One transparent CH02 interaction surface, anchored to the visible ward image.
  // Use direct pointer activation so a legacy click handler cannot swallow mobile taps.
+ // CH02 uses one capture-phase pointer router below; no duplicate hit overlays.
  function mountCh02New(){
-  const ward=document.getElementById('hmWardScene');
-  const scene=ward||document.getElementById('mainScene');
-  if(!scene)return;
-  let layer=document.getElementById('hmCh02NewLayer');
-  if(!layer){
-   layer=document.createElement('div');layer.id='hmCh02NewLayer';
-   const spots=[
-    ['certificate','사망진단서 조사','24%','43%','53%','27%'],
-    ['underbed','침대 아래 조사','28%','76%','52%','17%'],
-    ['ecg','심전도 조사','43%','27%','39%','13%'],
-    ['eight','8번 인식표 조사','0%','70%','28%','17%']
-   ];
-   for(const [site,label,left,top,width,height] of spots){
-    const btn=document.createElement('button');btn.type='button';btn.dataset.ch02New=site;btn.setAttribute('aria-label',label);btn.title=label;
-    btn.style.cssText='position:absolute!important;left:'+left+'!important;top:'+top+'!important;width:'+width+'!important;height:'+height+'!important;display:block!important;opacity:0!important;background:transparent!important;background-image:none!important;border:0!important;box-shadow:none!important;outline:0!important;color:transparent!important;pointer-events:auto!important;touch-action:manipulation!important;z-index:1!important';
-    let lastTap=0;
-    const inspect=e=>{
-     if(!active||phase!=='ch02')return;
-     e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
-     if(e.type==='click'&&Date.now()-lastTap<650)return;
-     if(e.type==='pointerup')lastTap=Date.now();
-     if(site==='underbed')ch02HandPending=true;
-     ch02Send('ch02_new_inspect',{site});
-    };
-    btn.addEventListener('pointerup',inspect,true);
-    btn.addEventListener('click',inspect,true);
-    layer.append(btn);
-   }
-  }
-  if(layer.parentElement!==scene)scene.append(layer);
-  // Keep the photograph as-is, and avoid a second full-screen hit surface.
-  if(ward&&getComputedStyle(ward).position==='static')ward.style.setProperty('position','relative');
-  const on=active&&phase==='ch02';
-  layer.hidden=!on;
-  layer.style.cssText='position:absolute!important;inset:0!important;z-index:5000!important;display:'+(on?'block':'none')+'!important;background:transparent!important;border:0!important;box-shadow:none!important;pointer-events:none!important';
+  document.getElementById('hmCh02NewLayer')?.remove();
+  document.querySelectorAll('#hmWardScene .hm-ch02-new-target').forEach(el=>el.remove());
  }
  // Legacy V172 death-certificate modal can still be opened by its original
  // event handler. Detect that exact obsolete document and replace it with the
@@ -1021,37 +989,36 @@
  const ch02LegacyObserver=new MutationObserver(()=>interceptLegacyCh02Certificate());
  if(document.body)ch02LegacyObserver.observe(document.body,{childList:true,subtree:true});
  else document.addEventListener('DOMContentLoaded',()=>ch02LegacyObserver.observe(document.body,{childList:true,subtree:true}),{once:true});
- // Mobile fallback: dispatch ward investigations from actual touch coordinates.
- // This runs in capture phase even if the legacy ward overlay intercepts clicks.
- let lastWardTouch=0;
- document.addEventListener('pointerdown',e=>{
-  if(!active||phase!=='ch02'||e.pointerType==='mouse'&&e.button!==0)return;
+ // Single CH02 investigation path: pointer -> server -> existing document renderer.
+ // Capture on window so legacy document handlers cannot swallow mobile touches.
+ let ch02LastPointer=0;
+ window.addEventListener('pointerdown',e=>{
+  if(!active||phase!=='ch02'||(e.pointerType==='mouse'&&e.button!==0))return;
   if(document.getElementById('hmCh02GroupIntro')||document.getElementById('hmCh02NewDialog')||document.getElementById('hmCh02ClearScene'))return;
-  if(e.target instanceof Element&&e.target.closest('#hmV174Chat,#hmV174ChatFloating,.hmLaterStoryIntro,header,nav'))return;
-  const ward=document.getElementById('hmWardScene');
-  const scene=ward||document.getElementById('mainScene');
+  if(e.target instanceof Element&&e.target.closest('#hmV174Chat,#hmV174ChatFloating,.hmLaterStoryIntro,#hmMediaOverlay,button:not([data-ch02-new]),input,textarea,nav'))return;
+  const scene=document.getElementById('hmWardScene')||document.getElementById('mainScene');
   if(!scene)return;
   const rect=scene.getBoundingClientRect();
-  if(!rect.width||!rect.height||e.clientX<rect.left||e.clientX>rect.right||e.clientY<rect.top||e.clientY>rect.bottom)return;
+  if(rect.width<1||rect.height<1)return;
   const x=(e.clientX-rect.left)/rect.width,y=(e.clientY-rect.top)/rect.height;
+  if(x<0||x>1||y<0||y>1)return;
   let site=null;
   if(x>=.24&&x<=.77&&y>=.43&&y<=.70)site='certificate';
   else if(x>=.28&&x<=.80&&y>=.76&&y<=.93)site='underbed';
   else if(x>=.43&&x<=.82&&y>=.27&&y<=.40)site='ecg';
   else if(x<=.28&&y>=.70&&y<=.87)site='eight';
-  if(!site||Date.now()-lastWardTouch<450)return;
-  lastWardTouch=Date.now();
+  if(!site||Date.now()-ch02LastPointer<500)return;
+  ch02LastPointer=Date.now();
   e.preventDefault();e.stopImmediatePropagation();
   if(site==='underbed')ch02HandPending=true;
   if(site==='certificate'){
-   let pending=document.getElementById('hmCh02NewDialog');
-   if(!pending){
-    pending=document.createElement('div');pending.id='hmCh02NewDialog';pending.setAttribute('role','dialog');
-    pending.style.cssText='position:fixed;inset:0;z-index:999999;background:#050507e8;display:grid;place-items:center;padding:20px;color:#f5f0e8;font:16px system-ui';
-    const panel=document.createElement('div');panel.style.cssText='width:min(460px,100%);padding:28px;background:#2c2524;border:1px solid #897a65;border-radius:10px;text-align:center';
-    const label=document.createElement('p');label.textContent='사망진단서 원본을 불러오는 중…';
-    const close=document.createElement('button');close.textContent='닫기 ×';close.style.cssText='margin-top:16px;padding:10px 18px;color:white;background:#493d39;border:1px solid #9b8d80;border-radius:8px';close.onclick=()=>pending.remove();
-    panel.append(label,close);pending.append(panel);document.body.append(pending);
+   ch02Dialog('사망진단서','원본 기록을 불러오는 중…');
+   const dialog=document.getElementById('hmCh02NewDialog');
+   if(dialog){
+    const waiting=dialog;
+    setTimeout(()=>{if(document.getElementById('hmCh02NewDialog')===waiting){
+     ch02Dialog('진단서 연결 확인','사망진단서 응답이 도착하지 않았어. 팀 연결 상태를 확인하고 다시 조사해 줘.');
+    }},7000);
    }
   }
   ch02Send('ch02_new_inspect',{site});
