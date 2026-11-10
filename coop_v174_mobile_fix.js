@@ -227,7 +227,10 @@
   if(message.complete){document.querySelectorAll('#hmReceptionCoop input').forEach(input=>input.disabled=true);}
  }
  function installSplitTrigger(){
-  const panel=$('ch01PuzzlePanel');if(!panel||$('hmCh01SplitTrigger'))return;
+  const legacy=$('ch01PuzzlePanel');
+  const notice=[...document.querySelectorAll('p,div,span')].find(el=>el.children.length===0&&/호출벨과 협동 절차를 먼저 진행해야 하는 구역/.test(el.textContent||''));
+  const panel=(notice?.closest('section,article,[role="dialog"],.hmPlaySheet,.hm-play-sheet')||notice?.parentElement||legacy);
+  if(!panel||$('hmCh01SplitTrigger'))return;
   const button=document.createElement('button');button.id='hmCh01SplitTrigger';button.type='button';
   button.textContent='접수실 조사 시작';
   button.style.cssText='display:block;width:100%;min-height:56px;margin:12px 0;padding:14px;border:1px solid #a87a91;border-radius:10px;background:#482638;color:#fff;font:700 17px system-ui';
