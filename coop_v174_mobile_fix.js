@@ -382,6 +382,10 @@
   // Keep exactly one bell, preserving the original click handler.
   const originalBell=scene.querySelector('[data-action="bell"]');
   if(originalBell){
+   // The approved bell is no longer a progression gate.
+   originalBell.hidden=true;originalBell.style.display='none';
+   originalBell.setAttribute('aria-hidden','true');
+   originalBell.disabled=true;
    originalBell.textContent='🔔';
    originalBell.setAttribute('aria-label','금이 간 호출벨 · 강제 분리');
    originalBell.title='호출벨을 누르면 조사원들이 강제로 분리됩니다';
