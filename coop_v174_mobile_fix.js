@@ -666,9 +666,9 @@
      e.preventDefault();e.stopImmediatePropagation();
      if(!active||phase!=='ch02')return;
      ch02Send('ch02_new_inspect',{site});
-     if(site==='certificate')ch02Dialog('回明病院 · 사망진단서','문서 번호 : HM-302-□□□□\\n환자명 : [훼손]\\n사망 일시 : [판독 불가]\\n사망 원인 : [판독 불가]\\n담당 의사 : [서명 훼손]');
-     if(site==='ecg')ch02Dialog('심전도 기록','전원 공급 장치가 끊겨 있다.\\n기록의 마지막 생체 신호는 사망 이후에도 이어진다.\\nPATIENT STATUS : ALIVE');
-     if(site==='eight')ch02Dialog('침대 끝 · 8번 표지','지워진 표식 아래 작은 문구가 남아 있다.\\n「사망을 기록한 네 글자를 읽어라.」');
+     if(site==='certificate')ch02Dialog('回明病院 · 사망진단서','문서 번호 : HM-302-□□□□\n환자명 : [훼손]\n사망 일시 : [판독 불가]\n사망 원인 : [판독 불가]\n담당 의사 : [서명 훼손]');
+     if(site==='ecg')ch02Dialog('심전도 기록','전원 공급 장치가 끊겨 있다.\n기록의 마지막 생체 신호는 사망 이후에도 이어진다.\nPATIENT STATUS : ALIVE');
+     if(site==='eight')ch02Dialog('침대 끝 · 8번 표지','지워진 표식 아래 작은 문구가 남아 있다.\n「사망을 기록한 네 글자를 읽어라.」');
      if(site==='underbed')ch02HandPending=true;
     },true);
     layer.append(btn);
