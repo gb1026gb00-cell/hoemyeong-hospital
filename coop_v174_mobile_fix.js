@@ -435,18 +435,37 @@
   if(!message||!['mirror','cabinet','ledger'].includes(message.object))return;
   $('hmSceneClueOverlay')?.remove();
   const overlay=document.createElement('div');overlay.id='hmSceneClueOverlay';
-  overlay.style.cssText='position:fixed;inset:0;z-index:999996;background:#08070bdc;display:flex;align-items:center;justify-content:center;padding:16px';
-  const card=document.createElement('section');card.style.cssText='width:min(480px,100%);max-height:80vh;overflow:auto;background:#19141b;border:1px solid #9c8292;border-radius:9px;padding:22px;color:#e8dce4;text-align:center;box-shadow:0 20px 80px #000';
-  const heading=document.createElement('h2');heading.textContent=message.label||'조사 단서';heading.style.cssText='font:700 21px serif';
-  const body=document.createElement('p');body.textContent=(message.lines||[]).join('\\n');body.style.cssText='white-space:pre-line;font:15px/1.8 system-ui';
+  overlay.style.cssText='position:fixed;inset:0;z-index:999996;background:#08070be9;display:flex;align-items:center;justify-content:center;padding:16px';
+  const card=document.createElement('section');card.style.cssText='width:min(550px,100%);max-height:85vh;overflow:auto;background:#171218;border:1px solid #826674;border-radius:10px;padding:22px;color:#e8dce4;text-align:center;box-shadow:0 20px 80px #000';
+  const heading=document.createElement('h2');heading.textContent=message.label||'조사 단서';heading.style.cssText='font:700 21px serif;margin:0 0 14px';
   card.append(heading);
-  if(message.object==='mirror'&&message.shadowCount){
-   const glass=document.createElement('div');glass.style.cssText='display:flex;align-items:center;justify-content:space-around;gap:10px;min-height:160px;padding:18px;margin:15px 0;background:linear-gradient(130deg,#2b2c30,#45454b 48%,#1a1b20);border:8px ridge #4a444a;box-shadow:inset 0 0 40px #000';
-   for(let i=0;i<message.shadowCount;i++){const blob=document.createElement('span');blob.style.cssText='display:block;flex:1;max-width:68px;height:'+(80+i%2*20)+'px;border-radius:43% 57% 62% 38% / 55% 42% 58% 45%;background:#030305;filter:blur(3px);box-shadow:0 0 15px 9px #050507';glass.append(blob);}
+  if(message.object==='mirror'){
+   const glass=document.createElement('div');glass.setAttribute('aria-label','거울에 비친 검은 그림자 '+message.shadowCount+'개');
+   glass.style.cssText='position:relative;height:220px;overflow:hidden;margin:12px 0;border:12px ridge #413b40;background:linear-gradient(110deg,#17191d,#4b4d50 46%,#24252a 67%,#3e4044);box-shadow:inset 0 0 60px #08090b';
+   const count=Math.max(1,Math.min(4,Number(message.shadowCount)||1));
+   for(let i=0;i<count;i++){
+    const shadow=document.createElement('div');
+    shadow.style.cssText='position:absolute;bottom:18px;left:'+((i+.5)*100/count-32/count)+'%;width:'+Math.min(22,74/count)+'%;height:'+(95+i%3*21)+'px;background:#030305;opacity:.94;border-radius:49% 51% 44% 56% / 39% 54% 46% 61%;transform:rotate('+(i%2?9:-8)+'deg);filter:blur(4px);box-shadow:0 0 22px 12px #07070b';
+    glass.append(shadow);
+   }
+   const fog=document.createElement('div');fog.style.cssText='position:absolute;inset:0;background:linear-gradient(125deg,#ffffff12,transparent 35%,#ffffff0b 66%,transparent);pointer-events:none';glass.append(fog);
    card.append(glass);
+   const hint=document.createElement('p');hint.textContent='각 조사원의 거울에 비친 검은 덩어리 수를 모두 더하라.';card.append(hint);
+  }else if(message.object==='cabinet'){
+   const cabinet=document.createElement('div');cabinet.style.cssText='padding:24px 14px;margin:12px 0;background:linear-gradient(110deg,#393b3e,#1d1d20 50%,#333538);border:12px ridge #5c5d60;box-shadow:inset 0 0 38px #050506';
+   const metal=document.createElement('div');metal.textContent='回明病院 / 보관함 분리 기록';metal.style.cssText='font:12px serif;color:#a9a7a5;letter-spacing:.08em;margin-bottom:20px';cabinet.append(metal);
+   const slots=document.createElement('div');slots.style.cssText='display:flex;gap:8px;justify-content:center';
+   const sequence=String(message.sequence||'').trim().split(/\\s+/).filter(Boolean);
+   sequence.forEach((digit,i)=>{const slot=document.createElement('div');slot.textContent=digit;slot.style.cssText='min-width:0;flex:1;max-width:68px;padding:16px 4px;background:#111113;color:'+(digit==='○'?'#e5a7b2':'#d8d6d0')+';border:2px solid #777477;border-radius:4px;font:700 clamp(22px,6vw,32px) monospace;box-shadow:inset 0 0 10px #000';slots.append(slot);});
+   cabinet.append(slots);card.append(cabinet);
+   const hint=document.createElement('p');hint.textContent='빈자리 ○는 다른 조사원의 기록과 대조해야 한다.';card.append(hint);
+  }else{
+   const paper=document.createElement('div');paper.style.cssText='padding:28px 18px;margin:12px 0;background:repeating-linear-gradient(#c9c0aa,#c9c0aa 31px,#9e9486 32px);border:6px solid #4b3b30;box-shadow:inset 0 0 26px #5a4b3a;color:#28221e;transform:rotate(-1deg)';
+   const label=document.createElement('div');label.textContent='回明病院 · 접수 명부';label.style.cssText='font:700 22px serif;border-bottom:2px solid #54443b;padding-bottom:12px';paper.append(label);
+   const record=document.createElement('div');record.textContent='11월 '+message.date+'일  /  입실 '+message.people+'명';record.style.cssText='font:700 24px serif;padding:28px 0';paper.append(record);card.append(paper);
+   const hint=document.createElement('p');hint.textContent='조사원들이 확인한 날짜별 입실 인원을 대조하라.';card.append(hint);
   }
-  card.append(body);
-  const close=document.createElement('button');close.textContent='현장으로 돌아가기';close.style.cssText='width:100%;margin-top:12px;padding:13px;background:#463345;border:1px solid #957b90;color:white;border-radius:8px';close.onclick=()=>overlay.remove();
+  const close=document.createElement('button');close.textContent='현장으로 돌아가기';close.style.cssText='width:100%;margin-top:14px;padding:13px;background:#463345;border:1px solid #957b90;color:white;border-radius:8px';close.onclick=()=>overlay.remove();
   card.append(close);overlay.append(card);document.body.append(overlay);
  }
  document.addEventListener('click',event=>{
@@ -457,7 +476,7 @@
   const object=({reception_desk:'desk',reception:'desk',drawer:'desk',desk:'desk',mirror:'mirror',cabinet:'cabinet',ledger:'ledger'})[raw];
   if(!object)return;
   event.preventDefault();event.stopImmediatePropagation();
-  if(object==='desk')playReceptionHand();
+  if(object==='desk'&&!receptionHandPlaying)playReceptionHand();
   socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));
  },true);
  // Route the FIRST actual CH01 investigation through the server before legacy
