@@ -400,6 +400,20 @@
   socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'cabinet'}));
  },true);
 
+
+ // CH01 / step 1-3 ONLY: intercept the approved ledger hotspot before its
+ // obsolete text clue handler. Preserve mirror, cabinet and all video triggers.
+ window.addEventListener('click',event=>{
+  if(!active||phase!=='separated'||socket?.readyState!==NativeWS.OPEN)return;
+  const origin=event.target instanceof Element?event.target:null;
+  if(!origin||origin.closest('#hmCh01InspectionScreen,#hmReceptionCodeModal,#hmForcedSeparation,#hmReceptionScare,#hmReceptionHandScare,#hmCoopPanel,#hmV175Gate'))return;
+  const target=origin.closest('[data-obj="ledger"],[data-object="ledger"],[data-action="ledger"],[data-hotspot="ledger"]');
+  if(!target)return;
+  event.preventDefault();event.stopImmediatePropagation();
+  $('hmSceneClueOverlay')?.remove();
+  socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'ledger'}));
+ },true);
+
  // CH01 single object router: exact hotspot identity, never a parent's text.
  // In particular a ledger click may never be interpreted as a desk/drawer click.
  document.addEventListener('click',event=>{
