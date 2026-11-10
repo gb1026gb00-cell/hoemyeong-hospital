@@ -39,7 +39,7 @@ async function check(label,fn){await fn();checks.push(label);console.log('PASS',
  await check('four-player room reassigns senses after one disconnect and reconnect',async()=>{
    const team=[client(),client(),client(),client()];
    for(const c of team)await connect(c);
-   const room4='V160FOUR';
+   const created4=await fetch('http://127.0.0.1:'+PORT+'/api/rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({capacity:4})});assert.equal(created4.status,201);const room4=(await created4.json()).code;
    const tokens=[];
    for(let i=0;i<4;i++){
      send(team[i],{type:'join',room:room4,role:i,character:i,capacity:4});
