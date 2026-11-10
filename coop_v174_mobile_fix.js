@@ -417,13 +417,17 @@
  // old textual investigation record. Keep old controls in DOM for compatibility.
  function hideLegacyCh01Record(){
   if(!active||phase!=='separated')return;
-  const tabs=[...document.querySelectorAll('button')].find(x=>x.textContent.trim()==='조사 기록');
-  if(!tabs)return;
-  const root=tabs.closest('[role="dialog"],.hmPlaySheet,.hm-play-sheet')||tabs.parentElement?.parentElement;
-  if(root&&root!==document.body){
-   const legacy=root.querySelector('#ch01PuzzlePanel');
-   if(legacy)legacy.style.display='none';
+  // The V172 'investigation record' is a separate sheet, not a child of
+  // #ch01PuzzlePanel. Close it using its own existing scene-return control.
+  const legacyText=[...document.querySelectorAll('p,div,section')].find(el=>el.children.length===0&&/실사형 접수실에서 사물을 터치해 단서를 확인하세요/.test(el.textContent||''));
+  if(!legacyText||legacyText.offsetParent===null)return;
+  const returnButton=[...document.querySelectorAll('button')].find(el=>/현장으로/.test(el.textContent||'')&&el.offsetParent!==null);
+  if(returnButton&&!returnButton.dataset.hmAutoReturned){
+   returnButton.dataset.hmAutoReturned='1';returnButton.click();return;
   }
+  // Fall back to hiding only the obsolete text form, never the scene.
+  const panel=$('ch01PuzzlePanel');
+  if(panel){panel.hidden=true;panel.style.display='none';}
  }
  document.addEventListener('hm-v175-state',hideLegacyCh01Record);
  document.addEventListener('click',()=>requestAnimationFrame(hideLegacyCh01Record));
