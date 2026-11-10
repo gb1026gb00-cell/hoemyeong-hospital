@@ -386,6 +386,20 @@
   socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'mirror'}));
  },true);
 
+
+ // CH01 / step 1-2 ONLY: cabinet hotspot takes precedence over the V172
+ // text-only demo handler. Mirror and all existing cinematics remain untouched.
+ window.addEventListener('click',event=>{
+  if(!active||phase!=='separated'||socket?.readyState!==NativeWS.OPEN)return;
+  const origin=event.target instanceof Element?event.target:null;
+  if(!origin||origin.closest('#hmCh01InspectionScreen,#hmReceptionCodeModal,#hmForcedSeparation,#hmReceptionScare,#hmReceptionHandScare,#hmCoopPanel,#hmV175Gate'))return;
+  const target=origin.closest('[data-obj="cabinet"],[data-object="cabinet"],[data-action="cabinet"],[data-hotspot="cabinet"]');
+  if(!target)return;
+  event.preventDefault();event.stopImmediatePropagation();
+  $('hmSceneClueOverlay')?.remove();
+  socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'cabinet'}));
+ },true);
+
  // CH01 single object router: exact hotspot identity, never a parent's text.
  // In particular a ledger click may never be interpreted as a desk/drawer click.
  document.addEventListener('click',event=>{
