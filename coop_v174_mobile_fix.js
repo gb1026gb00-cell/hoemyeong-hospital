@@ -133,6 +133,32 @@
  }
  document.addEventListener('hm-v175-state',mountCh02GroupIntro);
  document.addEventListener('hm-v175-started',mountCh02GroupIntro);
+
+ // Subsequent chapter story intros: narrative only, never modify cooperative puzzles.
+ const laterStory={
+  ch03:[['홍중','다들 엘리베이터 탔어?'],['윤호','홍중이 형, 층 표시가 이상해. 숫자가 자꾸 바뀌어.'],['민기','나 방금 분명 3층 눌렀는데?'],['성화','버튼에서 손 떼. 지금 어디로 가는지부터 보자.'],['여상','형, 안내판에는 없는 층이 하나 더 있어.'],['종호','문 열리면 바로 나가지 마.'],['우영','산아, 너 내 뒤에 있지?'],['산','응. 우영아, 손 놓지 마.']],
+  ch04:[['홍중','여긴 기록실인가 봐. 다들 들어왔어?'],['성화','서류가 왜 이렇게 흩어져 있어?'],['윤호','홍중이 형, CCTV 화면에 우리 모습이 나와.'],['민기','근데 인원이 안 맞는데?'],['여상','나도 봤어. 한 명 더 있어.'],['종호','형들, 뒤돌아보지 마.'],['우영','야, 그런 말 하지 마. 더 무섭잖아.'],['산','우영아, 화면부터 확인하자.']],
+  ch05:[['성화','다들 목소리 들려? 여긴 너무 조용해.'],['홍중','각자 위치부터 확인하자.'],['여상','성화 형, 천장에 뭐가 지나갔어.'],['민기','윤호야, 너도 봤어?'],['윤호','응. 일단 불빛 있는 쪽으로 가지 마.'],['종호','형들, 저쪽 문이 혼자 닫혔어.'],['우영','산아, 나 지금 장난 못 받아줘.'],['산','알아. 내 옆에 있어.']],
+  ch06:[['홍중','여기가 마지막인 것 같아. 다들 준비됐어?'],['성화','홍중아, 아직 끝난 거 아니야. 조심해.'],['윤호','민기야, 지금까지 찾은 단서 다 기억하지?'],['민기','응. 하나도 안 놓쳤어.'],['여상','형, 제0유물 반응이 점점 커져.'],['종호','형들, 문 열리기 전에 확인할 게 있어.'],['우영','산아, 우리 이번엔 같이 나가자.'],['산','응. 누구도 두고 가지 마.']]
+ };
+ const laterIntroSeen=new Set();
+ function mountLaterGroupIntro(){
+  for(const old of document.querySelectorAll('.hmLaterStoryIntro'))if(old.dataset.phase!==phase)old.remove();
+  if(!active||!laterStory[phase]||laterIntroSeen.has(phase))return;
+  laterIntroSeen.add(phase);
+  const overlay=document.createElement('div');overlay.className='hmLaterStoryIntro';overlay.dataset.phase=phase;
+  overlay.style.cssText='position:fixed;inset:0;z-index:999995;background:#050505;color:#f5f5f5;display:flex;justify-content:center;align-items:center;padding:14px;box-sizing:border-box;font:14px/1.5 system-ui';
+  const phone=document.createElement('section');phone.style.cssText='width:min(500px,100%);height:min(720px,92dvh);display:flex;flex-direction:column;background:#101010;border:1px solid #343434;border-radius:15px;overflow:hidden;box-shadow:0 16px 50px #000';
+  const head=document.createElement('header');head.textContent='회명병원 · 단체 대화 (8)';head.style.cssText='padding:17px 19px;border-bottom:1px solid #303030;font-weight:700;text-align:center';phone.append(head);
+  const thread=document.createElement('div');thread.style.cssText='flex:1;overflow:auto;padding:17px 15px;display:flex;flex-direction:column;gap:11px';
+  for(const [name,message] of laterStory[phase]){const row=document.createElement('div');row.style.cssText='display:flex;flex-direction:column;align-items:flex-start;gap:4px';const label=document.createElement('span');label.textContent=name;label.style.cssText='font-size:12px;color:#bcbcbc';const bubble=document.createElement('div');bubble.textContent=message;bubble.style.cssText='max-width:90%;background:#292929;border-radius:4px 13px 13px 13px;padding:10px 13px;color:#f5f5f5;white-space:pre-wrap';row.append(label,bubble);thread.append(row);}
+  phone.append(thread);
+  const footer=document.createElement('div');footer.style.cssText='padding:14px;border-top:1px solid #303030;background:#101010';
+  const start=document.createElement('button');start.type='button';start.textContent='조사 시작하기';start.style.cssText='width:100%;padding:15px;border:1px solid #777;border-radius:9px;background:#272727;color:#fff;font:700 16px system-ui;cursor:pointer;touch-action:manipulation';start.onclick=()=>overlay.remove();
+  footer.append(start);phone.append(footer);overlay.append(phone);document.body.append(overlay);
+ }
+ document.addEventListener('hm-v175-state',mountLaterGroupIntro);
+ document.addEventListener('hm-v175-started',mountLaterGroupIntro);
  document.addEventListener('hm-v175-state',mountCh01GroupIntro);
  document.addEventListener('hm-v175-started',mountCh01GroupIntro);
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountCh01GroupIntro,{once:true});else mountCh01GroupIntro();
