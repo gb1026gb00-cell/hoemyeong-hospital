@@ -27,6 +27,7 @@
     }
     if(m.type==='ch03_event'&&m.event==='enter'){
      document.getElementById('hmCh02ClearScene')?.remove();
+     document.getElementById('hmCh02NewDialog')?.remove();
      ch02ClearShown=false;
     }
     if(m.type==='reception_clue'&&m.object!=='desk')showSceneClue(m);
@@ -52,6 +53,8 @@
       video.addEventListener('error',finish,{once:true});
       // A blocked or missing media source should not strand the puzzle.
       video.addEventListener('abort',finish,{once:true});
+      // The media controller may finish before the chapter message handler attaches.
+      if(video.ended||(video.error&&video.networkState===HTMLMediaElement.NETWORK_NO_SOURCE))finish();
      }else showCh02Answer();
     }
     if((m.type==='chapter_event'&&m.event==='escape')||((m.type==='state'||m.type==='joined')&&m.chapter&&['escaped','ch02','ch03','ch04','ch05','ch06','finished'].includes(m.chapter.phase))){$('hmReceptionCodeModal')?.remove();$('hmCh01InspectionScreen')?.remove();}
