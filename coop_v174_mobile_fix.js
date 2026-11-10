@@ -172,11 +172,11 @@
  function mountIndependentCh03(){
   const old=document.getElementById('hmIndependentCh03');
   if(!active||phase!=='ch03'){old?.remove();return;}
-  if(old)return;
+  if(old){old.style.setProperty('display','flex','important');return;}
   document.getElementById('hmCh02ClearScene')?.remove();
   document.getElementById('hmCh02NewDialog')?.remove();
   const root=document.createElement('section');root.id='hmIndependentCh03';
-  root.style.cssText='position:fixed;inset:0;z-index:999900;background:#050506;color:#e9e3dd;display:flex;flex-direction:column;font:14px/1.5 system-ui;overflow:auto';
+  root.style.cssText='position:fixed!important;inset:0!important;z-index:2147483000!important;background:#050506;color:#e9e3dd;display:flex;flex-direction:column;font:14px/1.5 system-ui;overflow:auto';
   const header=document.createElement('header');header.textContent='03. 엘리베이터 · 回明病院';
   header.style.cssText='padding:13px 18px;background:#0d0d10;border-bottom:1px solid #494149;letter-spacing:1px;text-align:center';root.append(header);
   const scene=document.createElement('div');scene.style.cssText='position:relative;flex:1;min-height:280px;max-height:78dvh;overflow:hidden;background:#0a090b';
@@ -195,6 +195,26 @@
   const note=document.createElement('div');note.id='hmIndependentCh03Note';note.textContent='엘리베이터 내부를 조사하고 팀원과 단서를 공유하세요.';note.style.cssText='flex-basis:100%;white-space:pre-wrap;color:#cfc4cd';bottom.append(note);root.append(bottom);
   document.body.append(root);
  }
+ // Keep the server-authoritative chapter above the legacy V172 scene.
+ // V172 may re-render the reception asynchronously after a chapter event.
+ function reconcileChapterSurface(){
+  if(!active)return;
+  if(phase==='ch02_cleared'){
+   document.getElementById('hmIndependentCh03')?.remove();
+   if(!document.getElementById('hmCh02ClearScene'))showCh02Clear();
+   const cleared=document.getElementById('hmCh02ClearScene');
+   if(cleared)cleared.style.setProperty('z-index','2147482999','important');
+  }else if(phase==='ch03'){
+   document.getElementById('hmCh02ClearScene')?.remove();
+   mountIndependentCh03();
+  }else if(phase!=='ch02'){
+   document.getElementById('hmIndependentCh03')?.remove();
+  }
+ }
+ document.addEventListener('hm-v175-state',reconcileChapterSurface);
+ document.addEventListener('hm-v175-started',reconcileChapterSurface);
+ // Legacy UI mutates its scene after WebSocket events; reassert only for cleared/CH03.
+ setInterval(()=>{if(active&&(phase==='ch02_cleared'||phase==='ch03'))reconcileChapterSurface();},750);
  document.addEventListener('hm-v175-state',mountIndependentCh03);
  document.addEventListener('hm-v175-started',mountIndependentCh03);
  const laterStory={
