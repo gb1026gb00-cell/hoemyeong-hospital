@@ -5,7 +5,16 @@
  let started=false,enteredLobby=false,waitingRoom=false;
  function gate(){return $('hmV175Gate')}
  function setGate(show){const g=gate();if(g)g.hidden=!show;}
- function gameStarted(){started=true;waitingRoom=false;setGate(false)}
+ function renameInGameCoopButton(){
+  const open=$('hmCoopOpen'),close=$('hmCoopClose');
+  if(!open)return;
+  if(started){
+   open.textContent='👥 협동 조사';
+   open.setAttribute('aria-label','협동 조사 화면 열기');
+   if(close)close.textContent='현장으로 돌아가기 ×';
+  }
+ }
+ function gameStarted(){started=true;waitingRoom=false;setGate(false);renameInGameCoopButton()}
  function lobby(){
   if(started)return;
   enteredLobby=true;waitingRoom=false;
