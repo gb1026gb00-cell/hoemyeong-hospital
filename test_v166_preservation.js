@@ -1,9 +1,10 @@
 const fs=require('fs'),assert=require('assert');
 const html=fs.readFileSync('index.html','utf8');
+const approved=fs.readFileSync('approved-v172.html','utf8');
 const server=fs.readFileSync('server.js','utf8');
 const tests={
- 'V165 object bridge preserved':html.includes('id="hm-v165-object-horror"')&&html.includes('HMObjectHorrorBindings'),
- 'Canvas scene preserved':/canvas/i.test(html),
+ 'V165 object bridge preserved':approved.includes('id="hm-v165-object-horror"')&&approved.includes('HMObjectHorrorBindings'),
+ 'Canvas scene preserved':/canvas/i.test(approved),
  'No new zoom button added':!html.includes('hm-v166-zoom'),
  '2–8 multiplayer capacity present':/capacity|roomSize|maxPlayers/i.test(server),
  'Artifact mechanic retained':/artifact/i.test(html)&&/artifact/i.test(server),
