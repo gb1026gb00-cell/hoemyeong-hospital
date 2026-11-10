@@ -142,15 +142,20 @@
 
  // Subsequent chapter story intros: narrative only, never modify cooperative puzzles.
  const laterStory={
-  ch03:[['홍중','다들 엘리베이터 탔어?'],['윤호','홍중이 형, 층 표시가 이상해. 숫자가 자꾸 바뀌어.'],['민기','나 방금 분명 3층 눌렀는데?'],['성화','버튼에서 손 떼. 지금 어디로 가는지부터 보자.'],['여상','형, 안내판에는 없는 층이 하나 더 있어.'],['종호','문 열리면 바로 나가지 마.'],['우영','산아, 너 내 뒤에 있지?'],['산','응. 우영아, 손 놓지 마.']],
+  ch03:[['홍중','다들 들었지? 방금 스피커에서 우리 이름 불렀어.'],['종호','홍중이 형, 난 아직 이름 말한 적 없는데.'],['민기','잠깐, 엘리베이터 문 닫혔잖아. 누가 열림 버튼 누르고 있어?'],['윤호','민기야, 버튼에서 손 떼. 지금 아무도 안 누르고 있어.'],['여상','성화 형, 거울 봐. 우리 여덟인데... 하나가 더 보여.'],['성화','여상아, 거울 보지 마. 다들 앞만 봐.'],['우영','산아, 아까부터 내 뒤에 누가 숨 쉬는 것 같아.'],['산','우영아, 뒤돌지 마. 내가 확인할게.'],['홍중','층수 버튼이랑 스피커부터 확인하자. 찾은 건 여기 공유해.']],
   ch04:[['홍중','여긴 기록실인가 봐. 다들 들어왔어?'],['성화','서류가 왜 이렇게 흩어져 있어?'],['윤호','홍중이 형, CCTV 화면에 우리 모습이 나와.'],['민기','근데 인원이 안 맞는데?'],['여상','나도 봤어. 한 명 더 있어.'],['종호','형들, 뒤돌아보지 마.'],['우영','야, 그런 말 하지 마. 더 무섭잖아.'],['산','우영아, 화면부터 확인하자.']],
   ch05:[['성화','다들 목소리 들려? 여긴 너무 조용해.'],['홍중','각자 위치부터 확인하자.'],['여상','성화 형, 천장에 뭐가 지나갔어.'],['민기','윤호야, 너도 봤어?'],['윤호','응. 일단 불빛 있는 쪽으로 가지 마.'],['종호','형들, 저쪽 문이 혼자 닫혔어.'],['우영','산아, 나 지금 장난 못 받아줘.'],['산','알아. 내 옆에 있어.']],
   ch06:[['홍중','여기가 마지막인 것 같아. 다들 준비됐어?'],['성화','홍중아, 아직 끝난 거 아니야. 조심해.'],['윤호','민기야, 지금까지 찾은 단서 다 기억하지?'],['민기','응. 하나도 안 놓쳤어.'],['여상','형, 제0유물 반응이 점점 커져.'],['종호','형들, 문 열리기 전에 확인할 게 있어.'],['우영','산아, 우리 이번엔 같이 나가자.'],['산','응. 누구도 두고 가지 마.']]
  };
  const laterIntroSeen=new Set();
+ let ch03IntroAudioWindowElapsed=false,ch03IntroAudioTimer=null;
  function mountLaterGroupIntro(){
   for(const old of document.querySelectorAll('.hmLaterStoryIntro'))if(old.dataset.phase!==phase)old.remove();
   if(!active||!laterStory[phase]||laterIntroSeen.has(phase))return;
+  if(phase==='ch03'&&!ch03IntroAudioWindowElapsed){
+   if(!ch03IntroAudioTimer){ch03IntroAudioTimer=setTimeout(()=>{ch03IntroAudioWindowElapsed=true;ch03IntroAudioTimer=null;mountLaterGroupIntro();},2800);}
+   return;
+  }
   laterIntroSeen.add(phase);
   const overlay=document.createElement('div');overlay.className='hmLaterStoryIntro';overlay.dataset.phase=phase;
   overlay.style.cssText='position:fixed;inset:0;z-index:999995;background:#050505;color:#f5f5f5;display:flex;justify-content:center;align-items:center;padding:14px;box-sizing:border-box;font:14px/1.5 system-ui';
