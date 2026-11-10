@@ -195,8 +195,14 @@
   const status=document.createElement('p');status.style.cssText='font-size:13px;color:#e2b5c9';
   const submit=document.createElement('button');submit.textContent='봉인 해제 · CH.02 입장';submit.style.cssText='width:100%;padding:15px;background:#53354d;border:1px solid #ac8da4;border-radius:8px;color:white;font-weight:700';
   submit.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN){status.textContent='서버 연결을 확인하세요.';return;}const answer=inputs.map(x=>x.value).join('');if(answer.length!==6){status.textContent='여섯 자리 숫자를 모두 입력하세요.';return;}socket.send(JSON.stringify({type:'chapter',action:'reception_submit',answer}));status.textContent='팀원 확인을 기다리는 중…';};
-  content.append(heading,notice,cells,status,submit);overlay.append(content);document.body.append(overlay);
-  inputs[0].focus();
+  const sealNotice=document.createElement('div');sealNotice.style.cssText='position:fixed;inset:0;z-index:2;background:#070507;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:25px;text-align:center;color:#eee3e9';
+  const hospital=document.createElement('div');hospital.textContent='回明病院';hospital.style.cssText='font:700 clamp(32px,9vw,58px) serif;letter-spacing:.12em;color:#a93645';
+  const heading2=document.createElement('h2');heading2.textContent='제01조 · 봉인 해제 절차';heading2.style.cssText='font:600 23px serif';
+  const text2=document.createElement('p');text2.textContent='비친 것을 먼저 헤아리고,\\n잠긴 것의 빈자리를 채운 뒤,\\n마지막으로 남겨진 기록을 대조하라.';text2.style.cssText='white-space:pre-line;font:17px/2 serif';
+  const foot=document.createElement('p');foot.textContent='※ 순서를 어길 경우 봉인은 해제되지 않습니다.';foot.style.cssText='font:12px system-ui;color:#a99aa4';
+  const proceed=document.createElement('button');proceed.textContent='봉인 번호 입력';proceed.style.cssText='padding:14px 28px;background:#493347;border:1px solid #9e7f94;color:white;border-radius:8px';proceed.onclick=()=>{sealNotice.remove();inputs[0].focus();};
+  sealNotice.append(hospital,heading2,text2,foot,proceed);
+  content.append(heading,notice,cells,status,submit);overlay.append(content,sealNotice);document.body.append(overlay);
  }
  // G08 is owned by the transition above; all other approved horror videos
  // continue through the original V172 media handler unchanged.
