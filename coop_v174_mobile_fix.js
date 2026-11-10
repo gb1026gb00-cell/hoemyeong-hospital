@@ -9,8 +9,8 @@
  class CoopSocket extends NativeWS{
   constructor(...args){super(...args);socket=this;
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
-    if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;hideLobby();}
-    if(m.type==='state'||m.type==='joined'){active=!!m.started;phase=m.chapter?.phase||phase;updateBell();}
+    if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;hideLobby();document.dispatchEvent(new Event('hm-v175-started'));}
+    if(m.type==='state'||m.type==='joined'){active=!!m.started;phase=m.chapter?.phase||phase;updateBell();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='chat'){const box=$('hmV174ChatLog');if(box){const line=document.createElement('div');line.textContent=(m.item?.role!==undefined?'조사원 '+(m.item.role+1)+': ':'')+(m.item?.text||m.item?.message||'');box.append(line);box.scrollTop=box.scrollHeight;}}
    });
    this.addEventListener('close',()=>{if(socket===this){active=false;updateBell();}});
