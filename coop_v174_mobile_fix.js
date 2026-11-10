@@ -402,22 +402,33 @@
  // visible window whenever it opens, without destroying legacy puzzle handlers.
  // CH01 clues are inspected from the approved photorealistic scene, not the
  // old textual investigation record. Keep old controls in DOM for compatibility.
+ // CH01 must use only the approved V172 photorealistic scene.
+ // Remove the obsolete four-tab textual control surface from the player UI.
  function hideLegacyCh01Record(){
-  if(!active||phase!=='separated')return;
-  // The V172 'investigation record' is a separate sheet, not a child of
-  // #ch01PuzzlePanel. Close it using its own existing scene-return control.
-  const legacyText=[...document.querySelectorAll('p,div,section')].find(el=>el.children.length===0&&/실사형 접수실에서 사물을 터치해 단서를 확인하세요/.test(el.textContent||''));
-  if(!legacyText||legacyText.offsetParent===null)return;
-  const returnButton=[...document.querySelectorAll('button')].find(el=>/현장으로/.test(el.textContent||'')&&el.offsetParent!==null);
-  if(returnButton&&!returnButton.dataset.hmAutoReturned){
-   returnButton.dataset.hmAutoReturned='1';returnButton.click();return;
+  if(!active||!['reception','separated'].includes(phase))return;
+  const names=new Set(['조사 기록','공동 수사판','심전도 복원','내 제어판']);
+  const buttons=[...document.querySelectorAll('button,[role="tab"]')].filter(el=>names.has(el.textContent.trim()));
+  for(const btn of buttons){
+   const strip=btn.parentElement;
+   if(strip&&[...strip.querySelectorAll('button,[role="tab"]')].filter(el=>names.has(el.textContent.trim())).length>=3){
+    strip.hidden=true;strip.style.display='none';
+   }else{btn.hidden=true;btn.style.display='none';}
   }
-  // Fall back to hiding only the obsolete text form, never the scene.
-  const panel=$('ch01PuzzlePanel');
-  if(panel){panel.hidden=true;panel.style.display='none';}
+  // The old record is a legacy modal/sheet. Return to the actual scene.
+  const legacy=[...document.querySelectorAll('p,div,section')].find(el=>el.children.length===0&&/실사형 접수실에서 사물을 터치해 단서를 확인하세요/.test(el.textContent||'')&&el.getClientRects().length);
+  if(legacy){
+   const returnBtn=[...document.querySelectorAll('button')].find(el=>/현장으로/.test(el.textContent||'')&&el.getClientRects().length&&!el.closest('#hmSceneClueOverlay,#hmReceptionCodeModal'));
+   if(returnBtn&&!returnBtn.dataset.hmAutoReturned){returnBtn.dataset.hmAutoReturned='1';returnBtn.click();}
+  }
+  const legacyPanel=$('ch01PuzzlePanel');
+  if(legacyPanel){legacyPanel.hidden=true;legacyPanel.style.display='none';}
+  const board=$('hmReceptionCoop');
+  if(board){board.hidden=true;board.style.display='none';}
  }
  document.addEventListener('hm-v175-state',hideLegacyCh01Record);
  document.addEventListener('click',()=>requestAnimationFrame(hideLegacyCh01Record));
+ const legacyWatcher=new MutationObserver(()=>{if(active&&['reception','separated'].includes(phase))requestAnimationFrame(hideLegacyCh01Record);});
+ legacyWatcher.observe(document.body||document.documentElement,{childList:true,subtree:true});
  function showSceneClue(message){
   if(!message||!['mirror','cabinet','ledger'].includes(message.object))return;
   $('hmSceneClueOverlay')?.remove();
