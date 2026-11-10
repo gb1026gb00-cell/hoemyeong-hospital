@@ -49,17 +49,23 @@
     }
     if(m.type==='horror_video'&&m.id==='H01'&&phase==='ch02'&&ch02HandPending){
      ch02HandPending=false;
-     const video=document.getElementById('hmHorrorVideo');
-     if(video){
-      let shown=false;
-      const finish=()=>{if(shown||phase!=='ch02')return;shown=true;showCh02Answer();};
+     // Wait for the approved media controller to attach its actual H01 video.
+     // Never reveal the answer dialog immediately just because the video is not mounted yet.
+     let completed=false;
+     const finish=()=>{if(completed||phase!=='ch02')return;completed=true;showCh02Answer();};
+     const bindVideo=()=>{
+      const video=document.getElementById('hmHorrorVideo');
+      if(!video)return false;
       video.addEventListener('ended',finish,{once:true});
-      video.addEventListener('error',finish,{once:true});
-      // A blocked or missing media source should not strand the puzzle.
-      video.addEventListener('abort',finish,{once:true});
-      // The media controller may finish before the chapter message handler attaches.
-      if(video.ended||(video.error&&video.networkState===HTMLMediaElement.NETWORK_NO_SOURCE))finish();
-     }else showCh02Answer();
+      video.addEventListener('error',()=>{if(!completed&&phase==='ch02')ch02Dialog('영상 재생 오류','H01 영상을 재생하지 못했습니다. 병실로 돌아가 다시 조사해 주세요.');},{once:true});
+      if(video.ended)finish();
+      return true;
+     };
+     if(!bindVideo()){
+      const observer=new MutationObserver(()=>{if(bindVideo())observer.disconnect();});
+      observer.observe(document.body,{childList:true,subtree:true});
+      setTimeout(()=>{observer.disconnect();if(!completed&&phase==='ch02'&&!document.getElementById('hmHorrorVideo'))ch02Dialog('영상 연결 확인','H01 영상 플레이어가 열리지 않았습니다. 병실에서 다시 조사해 주세요.');},4000);
+     }
     }
     if((m.type==='chapter_event'&&m.event==='escape')||((m.type==='state'||m.type==='joined')&&m.chapter&&['escaped','ch02','ch03','ch04','ch05','ch06','finished'].includes(m.chapter.phase))){$('hmReceptionCodeModal')?.remove();$('hmCh01InspectionScreen')?.remove();}
     handleHospitalSoundEvent(m);
@@ -651,7 +657,7 @@
   const media=window.HMCanvasHorror;
   if(!media||typeof media.enqueue!=='function'||media.__ch02RebuiltGuard)return;
   const original=media.enqueue.bind(media);
-  media.enqueue=function(id){if(active&&phase==='ch02')return;return original(id)};
+  media.enqueue=function(id){if(active&&phase==='ch02'&&id!=='H01')return;return original(id)};
   media.__ch02RebuiltGuard=true;
  }
  guardCh02Horror();
