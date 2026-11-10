@@ -40,7 +40,7 @@
   constructor(...args){super(...args);socket=this;
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
-    if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity))){receptionAnswerLength=Number(m.capacity)/2+3;ch02RoomCapacity=Number(m.capacity);}if(Array.isArray(m.roles))ch02RoomRoles=m.roles.filter(Number.isInteger).slice().sort((a,b)=>a-b);active=!!m.started;phase=m.chapter?.phase||phase;if(Array.isArray(m.artifactFragments))ch03FragmentCollected=m.artifactFragments.includes(2);if(Array.isArray(m.pieces))sharedInventory.pieces=m.pieces.map(Number);if(Array.isArray(m.artifactFragments))sharedInventory.artifactFragments=m.artifactFragments.map(Number);renderSharedInventory();const inv=document.getElementById('hmCh03Inventory');if(inv)inv.textContent='🎒 제0유물 파편 · '+(m.artifactFragments?.length||0)+'/5'+(ch03FragmentCollected?' · 거울 파편 획득':' · 거울 파편 미획득');updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
+    if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity))){receptionAnswerLength=Number(m.capacity)/2+3;ch02RoomCapacity=Number(m.capacity);}if(Array.isArray(m.roles))ch02RoomRoles=m.roles.filter(Number.isInteger).slice().sort((a,b)=>a-b);active=!!m.started;phase=m.chapter?.phase||phase;if(Array.isArray(m.artifactFragments))ch03FragmentCollected=m.artifactFragments.includes(2);if(Array.isArray(m.pieces))sharedInventory.pieces=m.pieces.map(Number);if(Array.isArray(m.artifactFragments))sharedInventory.artifactFragments=m.artifactFragments.map(Number);renderSharedInventory();const inv=document.getElementById('hmCh03Inventory');if(inv)inv.textContent='🎒 제0유물 파편 · '+(m.artifactFragments?.length||0)+'/5'+(ch03FragmentCollected?' · 거울 파편 획득':' · 거울 파편 미획득');if(Array.isArray(m.chat))integratedChatHistory=m.chat.slice(-25);refreshIntegratedChat();updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='joined'&&typeof m.isHost==='boolean')ch02IsHost=m.isHost;
     if((m.type==='joined'||m.type==='state')&&m.yourRole!==undefined&&m.yourRole!==null&&Number.isInteger(Number(m.yourRole)))ch02AssignedRole=Number(m.yourRole);
     if(m.type==='ch02_certificate'&&Number.isInteger(Number(m.role)))ch02AssignedRole=Number(m.role);
@@ -63,8 +63,8 @@
      if(status)status.textContent=m.message||'파편 수집 상태를 확인해 주세요.';
     }
     if((m.type==='state'||m.type==='joined')&&m.chapter?.phase==='ch02_cleared'&&!document.getElementById('hmCh02ClearScene'))showCh02Clear();
-    if(m.type==='ch04_event'&&m.event==='enter'){if(!ch03ToCh04Playing)appendCh04StoryChat();}
-    if((m.type==='state'||m.type==='joined')&&m.chapter?.phase==='ch04'&&!ch03ToCh04Playing)appendCh04StoryChat();
+    if(m.type==='ch04_event'&&m.event==='enter')refreshIntegratedChat();
+    if((m.type==='state'||m.type==='joined')&&m.chapter?.phase==='ch04')refreshIntegratedChat();
     if(m.type==='ch03_event'&&m.event==='enter'){
      phase='ch03';
      const image=document.getElementById('sceneImage');
@@ -146,7 +146,7 @@
 
     if(m.type==='horror_video'&&m.id==='G01')playReceptionScare();
     // Drawer video is triggered only by an explicit scene drawer click, never by a clue response.
-    if(m.type==='chat'){const box=$('hmV174ChatLog');if(box){const line=document.createElement('div');line.textContent=(Number.isInteger(m.item?.character)&&m.item.character>=0&&m.item.character<8?['홍중','성화','윤호','여상','산','민기','우영','종호'][m.item.character]+': ':(m.item?.role!==undefined?'조사원 '+(m.item.role+1)+': ':''))+(m.item?.text||m.item?.message||'');box.append(line);box.scrollTop=box.scrollHeight;}}
+    if(m.type==='chat'&&m.item){integratedChatHistory.push(m.item);integratedChatHistory=integratedChatHistory.slice(-25);refreshIntegratedChat();}
    });
    this.addEventListener('close',()=>{if(socket===this){active=false;updateBell();updateConnectionStatus();}});
    this.addEventListener('open',()=>{if(socket===this)updateConnectionStatus();});
@@ -535,6 +535,20 @@
   ch05:[['성화','다들 목소리 들려? 여긴 너무 조용해.'],['홍중','각자 위치부터 확인하자.'],['여상','성화 형, 천장에 뭐가 지나갔어.'],['민기','윤호야, 너도 봤어?'],['윤호','응. 일단 불빛 있는 쪽으로 가지 마.'],['종호','형들, 저쪽 문이 혼자 닫혔어.'],['우영','산아, 나 지금 장난 못 받아줘.'],['산','알아. 내 옆에 있어.']],
   ch06:[['홍중','여기가 마지막인 것 같아. 다들 준비됐어?'],['성화','홍중아, 아직 끝난 거 아니야. 조심해.'],['윤호','민기야, 지금까지 찾은 단서 다 기억하지?'],['민기','응. 하나도 안 놓쳤어.'],['여상','형, 제0유물 반응이 점점 커져.'],['종호','형들, 문 열리기 전에 확인할 게 있어.'],['우영','산아, 우리 이번엔 같이 나가자.'],['산','응. 누구도 두고 가지 마.']]
  };
+
+ let integratedChatHistory=[];
+ function refreshIntegratedChat(){
+  const log=$('hmV174ChatLog');if(!log)return;
+  const key=phase==='ch03_cleared'?'ch03':phase==='ch04_cleared'?'ch04':phase==='ch05_cleared'?'ch05':phase;
+  const story=laterStory[key]||[];
+  log.replaceChildren();
+  const title=document.createElement('div');title.textContent='CH.'+({'ch03':'03','ch04':'04','ch05':'05','ch06':'06'}[key]||'01')+' · 기존 단체 대화';title.style.cssText='text-align:center;color:#cdb5d5;padding:8px';log.append(title);
+  for(const [name,msg] of story){const row=document.createElement('div');row.style.cssText='margin:9px 0';const label=document.createElement('small');label.textContent=name;label.style.cssText='display:block;color:#bcaec2';const bubble=document.createElement('div');bubble.textContent=msg;bubble.style.cssText='display:inline-block;max-width:88%;background:#39313e;padding:9px 12px;border-radius:4px 12px 12px 12px';row.append(label,bubble);log.append(row);}
+  const divider=document.createElement('div');divider.textContent='여기부터 실제 조사원 채팅';divider.style.cssText='border-top:1px solid #927c99;margin:18px 0 12px;padding-top:10px;text-align:center;color:#d5bedc;font-size:12px';log.append(divider);
+  const names=['홍중','성화','윤호','여상','산','민기','우영','종호'];
+  for(const item of integratedChatHistory){const row=document.createElement('div');row.style.cssText='background:#30243b;padding:10px 12px;border-radius:9px;margin:8px 0';const name=document.createElement('small');name.textContent=(names[item.character]||'조사원 '+(Number(item.role)+1))+' · 조사원';name.style.cssText='display:block;color:#d8c2e3';const message=document.createElement('span');message.textContent=item.message||item.text||'';row.append(name,message);log.append(row);}
+  log.scrollTop=log.scrollHeight;
+ }
  const laterIntroSeen=new Set();
  let ch03IntroAudioWindowElapsed=false,ch03IntroAudioTimer=null;
  function mountLaterGroupIntro(){
@@ -1573,14 +1587,14 @@
   if(e){e.preventDefault();e.stopImmediatePropagation();}
   let box=$('hmV174Chat');if(!box){
    box=document.createElement('section');box.id='hmV174Chat';box.setAttribute('role','dialog');box.setAttribute('aria-label','협동 대화');
-   box.style.cssText='position:fixed;z-index:2147483400;inset:auto 12px calc(85px + env(safe-area-inset-bottom)) 12px;max-height:55vh;overflow:auto;background:#211729;color:#fff;border:1px solid #9178a3;border-radius:14px;padding:15px;box-shadow:0 10px 35px #000b';
-   box.innerHTML='<strong>팀 대화</strong><button type="button" id="hmV174ChatClose" style="float:right">닫기 ×</button><div id="hmV174ChatLog" style="max-height:28vh;overflow:auto;margin:12px 0;white-space:pre-wrap"></div><div style="display:flex;gap:7px"><input id="hmV174ChatInput" maxlength="180" placeholder="팀원에게 메시지" style="flex:1;min-width:0;padding:10px;background:#120f18;color:white;border:1px solid #9178a3;border-radius:8px"><button id="hmV174ChatSend" type="button">전송</button></div>';
+   box.style.cssText='position:fixed;z-index:2147483400;inset:5dvh 12px calc(70px + env(safe-area-inset-bottom)) 12px;display:flex;flex-direction:column;background:#17131c;color:#fff;border:1px solid #9178a3;border-radius:14px;padding:15px;box-shadow:0 10px 35px #000b';
+   box.innerHTML='<strong>회명병원 · 단체 대화 (9)</strong><button type="button" id="hmV174ChatClose" style="float:right">닫기 ×</button><div id="hmV174ChatLog" style="flex:1;min-height:0;overflow:auto;margin:12px 0;white-space:pre-wrap"></div><div style="display:flex;gap:7px"><input id="hmV174ChatInput" maxlength="180" placeholder="팀원에게 메시지" style="flex:1;min-width:0;padding:10px;background:#120f18;color:white;border:1px solid #9178a3;border-radius:8px"><button id="hmV174ChatSend" type="button">전송</button></div>';
    document.body.append(box);
    $('hmV174ChatClose').onclick=()=>box.hidden=true;
    const send=()=>{const input=$('hmV174ChatInput');const value=input.value.trim();if(value&&socket?.readyState===NativeWS.OPEN){socket.send(JSON.stringify({type:'chat',message:value}));input.value='';}};
    $('hmV174ChatSend').onclick=send;$('hmV174ChatInput').onkeydown=e=>{if(e.key==='Enter')send();};
   }
-  box.hidden=false;
+  box.hidden=false;refreshIntegratedChat();
  }
  if(chatButton)chatButton.addEventListener('click',openTeamChat,true);
  function mountTeamChatButton(){
