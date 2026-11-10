@@ -52,20 +52,24 @@
      // Wait for the approved media controller to attach its actual H01 video.
      // Never reveal the answer dialog immediately just because the video is not mounted yet.
      let completed=false;
-     const finish=()=>{if(completed||phase!=='ch02')return;completed=true;showCh02Answer();};
-     const bindVideo=()=>{
-      const video=document.getElementById('hmHorrorVideo');
-      if(!video)return false;
-      video.addEventListener('ended',finish,{once:true});
-      video.addEventListener('error',()=>{if(!completed&&phase==='ch02')ch02Dialog('영상 재생 오류','H01 영상을 재생하지 못했습니다. 병실로 돌아가 다시 조사해 주세요.');},{once:true});
-      if(video.ended)finish();
-      return true;
-     };
-     if(!bindVideo()){
-      const observer=new MutationObserver(()=>{if(bindVideo())observer.disconnect();});
-      observer.observe(document.body,{childList:true,subtree:true});
-      setTimeout(()=>{observer.disconnect();if(!completed&&phase==='ch02'&&!document.getElementById('hmHorrorVideo'))ch02Dialog('영상 연결 확인','H01 영상 플레이어가 열리지 않았습니다. 병실에서 다시 조사해 주세요.');},4000);
-     }
+     const finish=()=>{if(completed||phase!=='ch02')return;completed=true;document.removeEventListener('ended',onEnded,true);showCh02Answer();};
+     const onEnded=e=>{if(e.target instanceof HTMLVideoElement)finish();};
+     // The original horror player may remove its video on completion.
+     // Capture the native ended event before the original cleanup handler runs.
+     document.addEventListener('ended',onEnded,true);
+     const video=document.getElementById('hmHorrorVideo');
+     if(video?.ended)finish();
+     // If the media controller dispatches completion by removing its player,
+     // wait until playback has actually started before treating removal as completion.
+     let played=!!(video&&!video.paused&&!video.ended);
+     const observe=new MutationObserver(()=>{
+      if(completed||phase!=='ch02'){observe.disconnect();return;}
+      const current=document.getElementById('hmHorrorVideo');
+      if(current&&!current.paused&&!current.ended)played=true;
+      if(played&&!current){observe.disconnect();finish();}
+     });
+     observe.observe(document.body,{childList:true,subtree:true});
+     setTimeout(()=>{observe.disconnect();if(!completed)document.removeEventListener('ended',onEnded,true);},120000);
     }
     if((m.type==='chapter_event'&&m.event==='escape')||((m.type==='state'||m.type==='joined')&&m.chapter&&['escaped','ch02','ch03','ch04','ch05','ch06','finished'].includes(m.chapter.phase))){$('hmReceptionCodeModal')?.remove();$('hmCh01InspectionScreen')?.remove();}
     handleHospitalSoundEvent(m);
@@ -635,10 +639,9 @@
    b.addEventListener('click',event=>{
     event.preventDefault();event.stopImmediatePropagation();
     if(!active||phase!=='ch02')return;
-    if(kind==='certificate')openCh02CertificatePreview();
-    else if(kind==='hand')openCh02RebuildNote('침대 아래 · 손 영상과 암호 입력은 다음 단계에서 연결됩니다.');
-    else if(kind==='ecg')openCh02RebuildNote('전기코드 · 심전도 기록은 다음 단계에서 연결됩니다.');
-    else openCh02RebuildNote('8번 표지 · 숨겨진 기록은 다음 단계에서 연결됩니다.');
+    const site=kind==='hand'?'underbed':kind;
+    if(site==='underbed')ch02HandPending=true;
+    ch02Send('ch02_new_inspect',{site});
    },true);
    root.append(b);
   }
@@ -664,7 +667,7 @@
  document.addEventListener('hm-v175-state',guardCh02Horror);
  // CH02 standalone investigation layer; approved scene photo remains untouched.
  const ch02Css=document.createElement('style');
- ch02Css.textContent='html.hm-ch02-clean #ch02PuzzlePanel,html.hm-ch02-clean .hm-object-guide,html.hm-ch02-clean .narrative,html.hm-ch02-clean #sceneNarrative,html.hm-ch02-clean #sceneDescription,html.hm-ch02-clean #sceneText,html.hm-ch02-clean .scene-caption{display:none!important}html.hm-ch02-clean #mainScene>:not(img):not(#hmCh02NewLayer){display:none!important}html.hm-ch02-clean #hmCh02NewLayer{display:block!important}#hmCh02NewLayer{position:absolute;inset:0;z-index:999;pointer-events:none}#hmCh02NewLayer button{position:absolute;pointer-events:auto;background:transparent;border:0;color:transparent;font-size:0;touch-action:manipulation}#hmCh02NewLayer button:focus-visible{outline:2px solid #e9c6d7}';
+ ch02Css.textContent='html.hm-ch02-clean #ch02PuzzlePanel,html.hm-ch02-clean .hm-object-guide,html.hm-ch02-clean .narrative,html.hm-ch02-clean #sceneNarrative,html.hm-ch02-clean #sceneDescription,html.hm-ch02-clean #sceneText,html.hm-ch02-clean .scene-caption{display:none!important}html.hm-ch02-clean #mainScene>:not(img):not(#hmCh02NewLayer){display:none!important}html.hm-ch02-clean #hmCh02NewLayer{display:none!important}#hmCh02NewLayer{position:absolute;inset:0;z-index:999;pointer-events:none}#hmCh02NewLayer button{position:absolute;pointer-events:auto;background:transparent;border:0;color:transparent;font-size:0;touch-action:manipulation}#hmCh02NewLayer button:focus-visible{outline:2px solid #e9c6d7}';
  document.head.append(ch02Css);
  let ch02HandPending=false;
  function ch02Send(action,extra={}){
