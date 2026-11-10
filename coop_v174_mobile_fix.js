@@ -2,7 +2,7 @@
 /* V174 additive mobile co-op UI bridge; approved scenes/puzzles untouched. */
 (()=>{
  const $=id=>document.getElementById(id);
- let active=false,phase='reception',socket=null;
+ let active=false,phase='reception',socket=null,roomCapacity=2;
  let startedOnce=false;
  const NativeWS=window.WebSocket;
  function hideLobby(){const p=$('hmCoopPanel');if(p)p.hidden=true;}
@@ -13,7 +13,7 @@
   constructor(...args){super(...args);socket=this;
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
-    if(m.type==='state'||m.type==='joined'){active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
+    if(m.type==='state'||m.type==='joined'){active=!!m.started;phase=m.chapter?.phase||phase;roomCapacity=m.capacity||roomCapacity;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='reception_clue'||m.type==='reception_result')showReceptionResult(m);
     handleHospitalSoundEvent(m);
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
@@ -311,7 +311,7 @@
   if(!panel)return;
   const section=document.createElement('section');section.id='hmReceptionCoop';
   section.style.cssText='margin:12px 0;padding:14px;border:1px solid #91677c;border-radius:12px;background:linear-gradient(#271820,#100d15);color:#f4e8ee';
-  const title=document.createElement('strong');title.textContent='접수명부 · 여섯 자리 봉인';
+  const title=document.createElement('strong');title.textContent='접수명부 · '+codeLength+'자리 봉인';
   const intro=document.createElement('p');intro.textContent='각자 보이는 물건이 다릅니다. 거울의 그림자를 세고, 접수대 날짜와 명부를 대조하고, 캐비닛을 확인하세요. 팀원과 공유해 여섯 칸을 완성하세요.';intro.style.cssText='font-size:12px;line-height:1.6;color:#d5c2ce';
   const objects=document.createElement('div');objects.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0';
   for(const [object,label] of [['desk','📖 접수대'],['mirror','◈ 거울'],['cabinet','▤ 캐비닛'],['ledger','📋 접수명부']]){
@@ -323,12 +323,13 @@
   const shadows=document.createElement('div');shadows.id='hmReceptionShadows';shadows.hidden=true;shadows.style.cssText='display:flex;justify-content:center;align-items:end;flex-wrap:wrap;gap:8px;min-height:130px;padding:12px;background:radial-gradient(#3b3540,#0a090d);border:3px ridge #71616f;border-radius:8px;margin:9px 0';
   const output=document.createElement('pre');output.id='hmReceptionOutput';output.textContent='접수대, 거울, 캐비닛, 접수명부를 조사하세요.';output.style.cssText='white-space:pre-wrap;line-height:1.7;padding:12px;background:#110e15;border:1px solid #5d4759;border-radius:8px;min-height:80px;font:13px/1.7 system-ui';
   const hint=document.createElement('p');hint.textContent='팀원과 숫자·기호를 공유하세요. 각 칸에 숫자 하나씩 입력하세요. 모든 조사원이 확인하면 봉인이 풀립니다.';hint.style.cssText='font-size:12px;color:#d8c1ce';
-  const cells=document.createElement('div');cells.style.cssText='display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin-top:10px';
+  const codeLength=({2:4,4:6,6:8,8:10})[roomCapacity]||4;
+  const cells=document.createElement('div');cells.style.cssText='display:grid;grid-template-columns:repeat('+Math.min(codeLength,5)+',minmax(0,1fr));gap:5px;margin-top:10px';
   const digitInputs=[];
-  for(let i=0;i<6;i++){
+  for(let i=0;i<codeLength;i++){
    const field=document.createElement('input');field.type='text';field.inputMode='numeric';field.maxLength=1;field.autocomplete='off';field.setAttribute('aria-label',(i+1)+'번째 숫자');
    field.placeholder=String(i+1);field.style.cssText='width:100%;min-width:0;height:48px;text-align:center;font:700 21px system-ui;color:#fff;background:#140f17;border:1px solid #92758a;border-radius:8px';
-   field.addEventListener('input',()=>{field.value=field.value.replace(/[^0-9]/g,'').slice(0,1);if(field.value&&i<5)digitInputs[i+1].focus();});
+   field.addEventListener('input',()=>{field.value=field.value.replace(/[^0-9]/g,'').slice(0,1);if(field.value&&i<codeLength-1)digitInputs[i+1].focus();});
    field.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!field.value&&i>0)digitInputs[i-1].focus();});
    digitInputs.push(field);cells.append(field);
   }
