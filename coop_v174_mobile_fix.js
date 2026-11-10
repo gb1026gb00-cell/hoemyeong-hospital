@@ -309,6 +309,7 @@
   if($('hmReceptionCoop'))return;
   const panel=$('ch01PuzzlePanel')||[...document.querySelectorAll('section,article,[role="dialog"]')].find(el=>/접수실|접수대|조사 기록/.test(el.textContent||'')&&el.getClientRects().length);
   if(!panel)return;
+  const codeLength=({2:4,4:6,6:8,8:10})[roomCapacity]||4;
   const section=document.createElement('section');section.id='hmReceptionCoop';
   section.style.cssText='margin:12px 0;padding:14px;border:1px solid #91677c;border-radius:12px;background:linear-gradient(#271820,#100d15);color:#f4e8ee';
   const title=document.createElement('strong');title.textContent='접수명부 · '+codeLength+'자리 봉인';
@@ -323,7 +324,6 @@
   const shadows=document.createElement('div');shadows.id='hmReceptionShadows';shadows.hidden=true;shadows.style.cssText='display:flex;justify-content:center;align-items:end;flex-wrap:wrap;gap:8px;min-height:130px;padding:12px;background:radial-gradient(#3b3540,#0a090d);border:3px ridge #71616f;border-radius:8px;margin:9px 0';
   const output=document.createElement('pre');output.id='hmReceptionOutput';output.textContent='접수대, 거울, 캐비닛, 접수명부를 조사하세요.';output.style.cssText='white-space:pre-wrap;line-height:1.7;padding:12px;background:#110e15;border:1px solid #5d4759;border-radius:8px;min-height:80px;font:13px/1.7 system-ui';
   const hint=document.createElement('p');hint.textContent='팀원과 숫자·기호를 공유하세요. 각 칸에 숫자 하나씩 입력하세요. 모든 조사원이 확인하면 봉인이 풀립니다.';hint.style.cssText='font-size:12px;color:#d8c1ce';
-  const codeLength=({2:4,4:6,6:8,8:10})[roomCapacity]||4;
   const cells=document.createElement('div');cells.style.cssText='display:grid;grid-template-columns:repeat('+Math.min(codeLength,5)+',minmax(0,1fr));gap:5px;margin-top:10px';
   const digitInputs=[];
   for(let i=0;i<codeLength;i++){
