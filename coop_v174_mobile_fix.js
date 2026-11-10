@@ -39,7 +39,7 @@
      if(status)status.textContent=m.message||'파편 수집 상태를 확인해 주세요.';
     }
     if((m.type==='state'||m.type==='joined')&&m.chapter?.phase==='ch02_cleared'&&!document.getElementById('hmCh02ClearScene'))showCh02Clear();
-    if(m.type==='ch03_event'&&m.event==='enter'){
+    if(m.type==='ch03_event'&&m.event==='enter'){ch03VideoSeen=false;
      phase='ch03';
      const image=document.getElementById('sceneImage');
      if(image){image.src='/elevator_hall.webp';image.alt='회명병원 엘리베이터';}
@@ -108,8 +108,12 @@
     handleHospitalSoundEvent(m);
     if(m.type==='chapter_event'&&m.event==='blackout'){document.getElementById('hmCh01GroupIntro')?.remove();appendCh01StoryChat();}
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
-    if(m.type==='horror_video'&&m.id==='G06'&&phase==='ch03')playCh03ElevatorVideo();
-    if(m.type==='ch03_event'&&m.event==='cleared'){phase='ch03_cleared';showCh03Cleared();}
+    if(m.type==='mandatory_video')showMandatoryVideo(m.id,m.video);
+    if(m.type==='mandatory_video_progress'&&m.id===mandatoryGateId){const status=document.getElementById('hmMandatoryVideoStatus');if(status)status.textContent='영상 시청 완료 '+m.done.length+' / '+m.online.length+'명 · 나머지 조사원 대기';}
+    if(m.type==='ch03_event'&&m.event==='video'){ch03VideoSeen=true;const form=document.getElementById('hmCh03CodeForm');if(form){form.hidden=false;form.style.display='flex';}}
+    if((m.type==='state'||m.type==='joined')&&m.chapter?.videoGate){const gate=m.chapter.videoGate;const done=gate.done||[];if(done.includes(ch02AssignedRole)){mandatoryGateId=gate.id;const existing=document.getElementById('hmMandatoryVideo');if(!existing)showMandatoryVideo(gate.id,gate.video);const video=document.querySelector('#hmMandatoryVideo video');if(video)video.pause();const status=document.getElementById('hmMandatoryVideoStatus');if(status)status.textContent='이미 시청 완료 · 다른 조사원을 기다리는 중…';}else showMandatoryVideo(gate.id,gate.video);}
+    if((m.type==='state'||m.type==='joined')&&!m.chapter?.videoGate&&mandatoryGateId)clearMandatoryVideo();
+    if(m.type==='ch03_event'&&m.event==='cleared'){phase='ch03_video_wait';}
     if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2){ch03FragmentCollected=true;const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent='제0유물 파편이 공동 소지품에 등록되었습니다.';}
     if(m.type==='ch03_result'&&m.ok===false&&phase==='ch03'){const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent=m.message||'조사 요청을 완료하지 못했습니다.';}
     if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2&&phase==='ch03'){const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent='제0유물 파편이 공동 소지품에 등록되었습니다. 이제 운행 코드를 입력할 수 있습니다.';}
@@ -315,20 +319,36 @@
   card.append(result,run);overlay.append(card);document.body.append(overlay);
  }
 
- let ch03VideoSeen=false;
- function playCh03ElevatorVideo(){
-  document.getElementById('hmCh03G06')?.remove();
-  const overlay=document.createElement('div');overlay.id='hmCh03G06';
-  overlay.style.cssText='position:fixed;inset:0;z-index:2147483650;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#e8dfdb;font:14px system-ui';
-  const video=document.createElement('video');video.src='/G06.mp4';video.autoplay=true;video.playsInline=true;video.controls=false;video.preload='auto';video.style.cssText='width:100%;max-height:90dvh;object-fit:contain';
-  const info=document.createElement('div');info.textContent='엘리베이터 내부 감시 기록 재생 중';info.style.cssText='padding:12px;color:#cbbbc0;text-align:center';
-  const finish=()=>{ch03VideoSeen=true;overlay.remove();const form=document.getElementById('hmCh03CodeForm');if(form){form.hidden=false;form.style.display='flex';}const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent='환자복의 형체가 사라졌다. 계산한 운행 코드를 입력하십시오.';};
-  video.addEventListener('ended',finish,{once:true});
-  video.addEventListener('error',()=>{info.textContent='영상 재생에 실패했습니다. 운행 코드를 입력할 수 있습니다.';finish();},{once:true});
-  overlay.append(video,info);document.body.append(overlay);
-  video.play().catch(()=>{video.muted=true;video.play().catch(()=>{info.textContent='자동재생이 차단되었습니다. 영상을 눌러 재생하십시오.';video.controls=true;});});
- }
 
+ let ch03VideoSeen=false;
+ let mandatoryGateId=null;
+ function showMandatoryVideo(id,asset){
+  if(!id||!/^G(?:0[1-9]|1[0-8])$/.test(asset))return;
+  if(mandatoryGateId===id&&document.getElementById('hmMandatoryVideo'))return;
+  mandatoryGateId=id;
+  document.getElementById('hmMandatoryVideo')?.remove();
+  const overlay=document.createElement('div');overlay.id='hmMandatoryVideo';
+  overlay.style.cssText='position:fixed;inset:0;z-index:2147483640;background:#000;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:12px;box-sizing:border-box;font:14px system-ui';
+  const title=document.createElement('strong');title.textContent='회명병원 · 전체 조사원 필수 영상';overlay.append(title);
+  const video=document.createElement('video');video.src='/'+asset+'.mp4';video.autoplay=true;video.playsInline=true;video.controls=false;video.preload='auto';video.style.cssText='width:100%;max-height:70dvh;object-fit:contain';overlay.append(video);
+  const status=document.createElement('div');status.id='hmMandatoryVideoStatus';status.textContent='영상 재생 중 · 모든 조사원의 시청 완료를 기다립니다.';status.style.cssText='text-align:center;color:#d2c8d0';overlay.append(status);
+  const retry=document.createElement('button');retry.type='button';retry.textContent='영상 다시 재생';retry.hidden=true;retry.style.cssText='padding:12px 20px;background:#302536;color:#fff;border:1px solid #9a8d9c;border-radius:7px';overlay.append(retry);
+  let acknowledged=false;
+  const completed=()=>{
+   if(acknowledged)return;acknowledged=true;
+   status.textContent='영상 시청 완료 · 다른 조사원을 기다리는 중…';
+   retry.hidden=true;video.controls=false;
+   if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'mandatory_video_done',id}));
+  };
+  video.addEventListener('ended',completed);
+  video.addEventListener('error',()=>{status.textContent='영상을 불러오지 못했습니다. 다시 재생을 눌러주세요.';retry.hidden=false;});
+  retry.onclick=()=>{retry.hidden=true;status.textContent='영상 재생 중…';video.load();video.play().catch(()=>{video.muted=true;video.play().catch(()=>{status.textContent='자동재생이 차단되었습니다. 재생 버튼을 눌러주세요.';video.controls=true;retry.hidden=false;});});};
+  document.body.append(overlay);
+  video.play().catch(()=>{video.muted=true;video.play().catch(()=>{status.textContent='자동재생이 차단되었습니다. 재생 버튼을 눌러주세요.';video.controls=true;retry.hidden=false;});});
+ }
+ function clearMandatoryVideo(){
+  mandatoryGateId=null;document.getElementById('hmMandatoryVideo')?.remove();
+ }
  let ch03FragmentCollected=false;
  function showCh03Cleared(){
   if(!active||phase!=='ch03_cleared'){document.getElementById('hmCh03Cleared')?.remove();return;}
