@@ -62,6 +62,29 @@ const server=http.createServer((req,res)=>{
   if(req.method==='HEAD')return res.end();
   return require('fs').createReadStream(require('path').join(__dirname,'coop_v174_mobile_fix.js')).pipe(res);
  }
+ if((req.method==='GET'||req.method==='HEAD')&&pathname==='/reception_hand.mp4'){
+  const fs=require('fs'),path=require('path');
+  const file=path.join(__dirname,'reception_hand.mp4');
+  fs.stat(file,(err,stat)=>{
+   if(err||!stat.isFile()){res.writeHead(404,{'Content-Type':'text/plain'});return res.end('Reception video unavailable');}
+   const range=req.headers.range;
+   const headers={'Content-Type':'video/mp4','Accept-Ranges':'bytes','Cache-Control':'public, max-age=3600'};
+   if(range){
+    const match=/^bytes=(\\d*)-(\\d*)$/.exec(range);
+    if(!match){res.writeHead(416,{'Content-Range':'bytes */'+stat.size});return res.end();}
+    let start=match[1]?Number(match[1]):0,end=match[2]?Number(match[2]):stat.size-1;
+    if(!match[1]&&match[2]){start=Math.max(0,stat.size-Number(match[2]));end=stat.size-1;}
+    if(start>=stat.size||end<start){res.writeHead(416,{'Content-Range':'bytes */'+stat.size});return res.end();}
+    end=Math.min(end,stat.size-1);
+    res.writeHead(206,{...headers,'Content-Length':end-start+1,'Content-Range':'bytes '+start+'-'+end+'/'+stat.size});
+    if(req.method==='HEAD')return res.end();
+    fs.createReadStream(file,{start,end}).pipe(res);return;
+   }
+   res.writeHead(200,{...headers,'Content-Length':stat.size});
+   if(req.method==='HEAD')return res.end();
+   fs.createReadStream(file).pipe(res);
+  });return;
+ }
  if((req.method==='GET'||req.method==='HEAD')&&pathname==='/play'){
   const fs=require('fs'),path=require('path');
   const approved=path.join(__dirname,'approved-v172.html');
