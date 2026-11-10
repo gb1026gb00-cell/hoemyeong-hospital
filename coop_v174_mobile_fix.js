@@ -322,21 +322,18 @@
    const symbol=document.createElement('span');symbol.textContent=ch03Symbols[i];symbol.style.cssText='font:700 27px Georgia,serif;color:#c9b6a0';
    const input=document.createElement('input');input.type='text';input.inputMode='numeric';input.maxLength=1;input.placeholder='?';input.autocomplete='off';input.setAttribute('aria-label',ch03Symbols[i]+' 기호 숫자');
    input.style.cssText='width:100%;max-width:55px;min-width:0;box-sizing:border-box;text-align:center;padding:8px 3px;border:1px solid #706c64;background:#090c0d;color:#fff;border-radius:4px;font:600 20px system-ui';
-   input.addEventListener('input',()=>{input.value=input.value.replace(/[^0-9]/g,'').slice(0,1);result.textContent='기호의 값을 모두 입력한 뒤 연산하십시오.';});
+   input.addEventListener('input',()=>{input.value=input.value.replace(/[^0-9]/g,'').slice(0,1);result.textContent='기호의 값을 확인하고 수식은 직접 계산하세요.';});
    inputs.push(input);field.append(symbol,input);grid.append(field);
   }
   card.append(grid);
   const formula=document.createElement('div');formula.textContent=expression.label;formula.style.cssText='padding:16px 8px;border:1px solid #675e54;background:#111312;text-align:center;border-radius:6px;font:600 18px/1.6 Georgia,serif;overflow-wrap:anywhere';card.append(formula);
-  const result=document.createElement('p');result.textContent='기호의 값을 모두 입력한 뒤 연산하십시오.';result.style.cssText='min-height:48px;text-align:center;color:#d9c5b8;white-space:pre-wrap;line-height:1.6';
-  const run=document.createElement('button');run.type='button';run.textContent='연산 실행';run.style.cssText='width:100%;padding:14px;background:#443542;color:#fff;border:1px solid #9e8299;border-radius:6px;font:600 15px system-ui';
+  const result=document.createElement('p');result.textContent='기호별 숫자를 대조한 뒤 수식을 직접 계산하세요. 최종값은 엘리베이터에서 입력합니다.';result.style.cssText='min-height:48px;text-align:center;color:#d9c5b8;white-space:pre-wrap;line-height:1.6';
+  const run=document.createElement('button');run.type='button';run.textContent='기호 대응 확인';run.style.cssText='width:100%;padding:14px;background:#443542;color:#fff;border:1px solid #9e8299;border-radius:6px;font:600 15px system-ui';
   run.onclick=()=>{
    const values=inputs.map(input=>input.value===''?null:Number(input.value));
    if(values.some(v=>v===null)){result.textContent='빈 기호가 있습니다. 팀원들의 단서를 확인하십시오.';return;}
    const expected=ch03ExpectedSymbolValues(capacity);
-   if(values.some((v,i)=>v!==expected[i])){result.textContent='기호와 숫자의 대응이 일치하지 않습니다.\n거울과 층별 안내문을 다시 대조하십시오.';return;}
-   const answer=expression.evaluate(values);
-   if(!Number.isInteger(answer)||answer<0){result.textContent='연산 오류. 기록을 다시 확인하십시오.';return;}
-   result.textContent='운행 계산 완료 · 최종 산출값 '+String(answer)+'\n이 값을 엘리베이터 암호로 사용하십시오.';
+   result.textContent=values.some((v,i)=>v!==expected[i])?'기호와 숫자의 대응이 일치하지 않습니다. 거울과 안내문을 다시 대조하세요.':'기호와 숫자의 대응이 맞습니다. 표시된 수식은 직접 계산해서 엘리베이터 운행 코드에 입력하세요.';
   };
   card.append(result,run);overlay.append(card);document.body.append(overlay);
  }
@@ -420,7 +417,7 @@
   grime.style.cssText='position:absolute;left:76%;top:10%;width:17%;height:76%;pointer-events:none;opacity:.9;mix-blend-mode:multiply;background:radial-gradient(ellipse at 23% 15%,#070a09 0%,#161e1a 18%,transparent 46%),radial-gradient(ellipse at 78% 43%,#080b09 0%,#161d18 23%,transparent 53%),radial-gradient(ellipse at 42% 73%,#060807 0%,#18211c 27%,transparent 60%),linear-gradient(102deg,transparent 5%,#101411a8 39%,transparent 72%);filter:blur(2px)';scene.append(grime);
   root.append(scene);
   const bottom=document.createElement('div');bottom.style.cssText='flex:none;padding:13px 16px 24px;background:#100d12;border-top:1px solid #494149;display:grid;grid-template-columns:1fr 1fr;gap:10px';
-  const note=document.createElement('div');note.id='hmIndependentCh03Note';note.textContent='거울을 닦고 가장자리의 틈도 살펴보세요. 안내문·계산판·엘리베이터 버튼을 직접 눌러 조사할 수 있습니다.';note.style.cssText='grid-column:1/-1;min-height:52px;white-space:pre-wrap;color:#d9c9d5;padding:10px;background:#1e1721;border:1px solid #4b394d;border-radius:6px';bottom.append(note);
+  const note=document.createElement('div');note.id='hmIndependentCh03Note';note.textContent='왼쪽 거울을 문질러 숫자를 찾으세요. 제0유물은 거울 오른쪽 테두리의 틈에 있습니다. 오른쪽 벽의 작은 버튼으로 엘리베이터를 작동하고, 안내문·계산판은 각각 직접 눌러 조사하세요.';note.style.cssText='grid-column:1/-1;min-height:52px;white-space:pre-wrap;color:#d9c9d5;padding:10px;background:#1e1721;border:1px solid #4b394d;border-radius:6px';bottom.append(note);
   function sendInvestigation(action,extra,label){
    note.textContent=label+' 조사 요청 중…';
    if(socket?.readyState===NativeWS.OPEN){socket.send(JSON.stringify({type:'chapter',action,...extra}));}
@@ -443,10 +440,10 @@
    scene.append(button);return button;
   }
   hotspot('거울 문지르기',6,12,30,58,openCh03Mirror);
-  const fragmentHotspot=hotspot('거울 가장자리 틈 · 제0유물 조사',32,19,5,48,()=>sendInvestigation('ch03_fragment',{},'거울 가장자리'));fragmentHotspot.style.zIndex='3';
+  const fragmentHotspot=hotspot('거울 가장자리 틈 · 제0유물 조사',23,19,10,43,()=>sendInvestigation('ch03_fragment',{},'거울 가장자리'));fragmentHotspot.style.zIndex='3';
   hotspot('거울 아래 층별 안내문',7,71,33,24,openCh03FloorDirectory);
   hotspot('우측 아래 기호 계산판',71,67,25,29,openCh03SymbolCalculator);
-  hotspot('엘리베이터 운행 버튼',76,14,20,46,()=>sendInvestigation('ch03_video',{},'엘리베이터'));
+  hotspot('엘리베이터 운행 버튼',68,46,8,15,()=>sendInvestigation('ch03_video',{},'엘리베이터'));
   const form=document.createElement('form');form.id='hmCh03CodeForm';form.hidden=!ch03VideoSeen;form.style.cssText='grid-column:1/-1;display:'+(ch03VideoSeen?'flex':'none')+';gap:8px';
   const input=document.createElement('input');input.placeholder='운행 코드 입력';input.inputMode='numeric';input.maxLength=2;input.autocomplete='off';input.style.cssText='min-width:0;flex:1;padding:12px;background:#161119;color:#fff;border:1px solid #766477;border-radius:6px;font-size:16px';
   const submit=document.createElement('button');submit.type='submit';submit.textContent='암호 입력';submit.style.cssText='padding:12px 15px;background:#4b354e;color:#fff;border:1px solid #a18ba5;border-radius:6px;font-size:14px';
