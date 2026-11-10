@@ -389,7 +389,7 @@
   video.addEventListener('ended',()=>{
    info.textContent='영상 시청 완료 · CH.04 입장 중…';
     overlay.remove();ch03ToCh04Playing=false;
-    if(phase==='ch04')appendCh04StoryChat();
+    if(phase==='ch04')refreshIntegratedChat();
    if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'ch03_transition_video_done'}));
   },{once:true});
   video.addEventListener('error',()=>{info.textContent='G02 영상을 불러오지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.';video.controls=true;},{once:true});
@@ -1592,6 +1592,7 @@
   b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(!active||!socket||socket.readyState!==NativeWS.OPEN)return;socket.send(JSON.stringify({type:'chapter',action:'bell'}));});
   if(originalBell){b.hidden=true;}else{scene.append(b);}
  }
+ const chatVisibilityStyle=document.createElement('style');chatVisibilityStyle.textContent='#hmV174Chat[hidden]{display:none!important}';document.head.append(chatVisibilityStyle);
  const chatButton=document.querySelector('[data-menu="chat"]');
  function openTeamChat(e){
   if(!active)return;
