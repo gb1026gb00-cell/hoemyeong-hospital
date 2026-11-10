@@ -37,16 +37,28 @@
   $('hmV175Join').onclick=()=>openRoom('join');
   const close=$('hmCoopClose');
   if(close)close.addEventListener('click',()=>{if(!started&&enteredLobby)queueMicrotask(()=>{waitingRoom=false;setGate(true);});});
-  const intro=$('introCover');
-  if(intro){
-   const obs=new MutationObserver(()=>{if(!intro.isConnected||intro.classList.contains('fade-out')){obs.disconnect();lobby();}});
-   obs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
-   if(!intro.isConnected||intro.classList.contains('fade-out')){obs.disconnect();lobby();}
-  }else{
-   const video=$('introVideo')||document.querySelector('video');
-   if(video&&!video.ended){video.addEventListener('ended',lobby,{once:true});}
-   else lobby();
+  // V172 hides #introCover via class "hidden", not "fade-out".
+  // Its cinematic is #introPlayer, not #introVideo.
+  const intro=$('introCover'),player=$('introPlayer');
+  let introPlayed=false;
+  const completed=()=>{
+   if(started||enteredLobby)return;
+   // Never interrupt the original intro cinematic.
+   if(player&&(player.classList.contains('active')||(!player.paused&&!player.ended)))return;
+   if(intro&&intro.isConnected&&!intro.classList.contains('hidden')&&!intro.classList.contains('fade-out'))return;
+   lobby();
+  };
+  if(player){
+   player.addEventListener('play',()=>{introPlayed=true;},{once:true});
+   player.addEventListener('ended',()=>{introPlayed=true;queueMicrotask(completed);},{once:true});
   }
+  if(intro){
+   const obs=new MutationObserver(completed);
+   obs.observe(intro,{attributes:true,attributeFilter:['class','style']});
+   if(intro.classList.contains('hidden'))completed();
+  }else if(!player||player.ended){lobby();}
+  // Keep the game gated if V172 removes the cover after playback.
+  if(intro){const removal=new MutationObserver(()=>{if(!intro.isConnected){removal.disconnect();completed();}});removal.observe(document.body,{childList:true,subtree:true});}
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build,{once:true});else build();
  window.addEventListener('message',()=>{},false);
