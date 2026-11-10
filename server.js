@@ -114,6 +114,43 @@ const server=http.createServer((req,res)=>{
    fs.createReadStream(file).pipe(res);
   });return;
  }
+
+ // V177: Deliver every approved game asset from Render itself, with byte ranges.
+ // GitHub Pages is not a reliable cross-origin media host for the multiplayer page.
+ const mediaPath=pathname.slice(1);
+ const safeMedia=/^(?:G(?:0[1-9]|1[0-8])|H0[134]|intro_only)\.mp4$/.test(mediaPath)
+  ||/^voice_(?:original_)?ch0[1-6]\.mp3$/.test(mediaPath)
+  ||/^[A-Za-z0-9_-]+\.webp$/.test(mediaPath)
+  ||/^audio\/[A-Za-z0-9_-]+\.(?:mp3|wav|ogg)$/.test(mediaPath)
+  ||/^assets\/images\/[A-Za-z0-9_-]+\.webp$/.test(mediaPath);
+ if((req.method==='GET'||req.method==='HEAD')&&safeMedia){
+  const fs=require('fs'),path=require('path');
+  const file=path.join(__dirname,mediaPath);
+  return fs.stat(file,(err,stat)=>{
+   if(err||!stat.isFile()){res.writeHead(404,{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'});return res.end('Game media not found');}
+   const ext=path.extname(file).toLowerCase();
+   const mime={'.mp4':'video/mp4','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.webp':'image/webp'}[ext];
+   const headers={'Content-Type':mime,'Accept-Ranges':'bytes','Cache-Control':'public,max-age=3600','X-Content-Type-Options':'nosniff'};
+   const range=req.headers.range;
+   if(range){
+    const match=/^bytes=(\d*)-(\d*)$/.exec(range);
+    if(!match||(!match[1]&&!match[2])){res.writeHead(416,{'Content-Range':'bytes */'+stat.size});return res.end();}
+    const rawStart=match[1],rawEnd=match[2];
+    let start=rawStart?Number(rawStart):Math.max(0,stat.size-Number(rawEnd));
+    let end=rawEnd&&rawStart?Number(rawEnd):stat.size-1;
+    if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||start>=stat.size||end<start){
+     res.writeHead(416,{'Content-Range':'bytes */'+stat.size});return res.end();
+    }
+    end=Math.min(end,stat.size-1);
+    res.writeHead(206,{...headers,'Content-Length':end-start+1,'Content-Range':'bytes '+start+'-'+end+'/'+stat.size});
+    if(req.method==='HEAD')return res.end();
+    return fs.createReadStream(file,{start,end}).pipe(res);
+   }
+   res.writeHead(200,{...headers,'Content-Length':stat.size});
+   if(req.method==='HEAD')return res.end();
+   fs.createReadStream(file).pipe(res);
+  });
+ }
  if((req.method==='GET'||req.method==='HEAD')&&(pathname==='/play'||pathname==='/play-drawer-test')){
   const fs=require('fs'),path=require('path');
   const approved=path.join(__dirname,'approved-v172.html');
@@ -122,7 +159,8 @@ const server=http.createServer((req,res)=>{
    fs.readFile(approved,'utf8',(readError,html)=>{
     if(readError){res.writeHead(503,{'Content-Type':'text/plain; charset=utf-8'});return res.end('Game file read failed');}
     const script='<script src="/coop-v174-mobile-fix.js"></script><script src="/coop-v175-lobby.js"></script>';
-    const output=/<\/body>/i.test(html)?html.replace(/<\/body>/i,script+'</body>'):html+script;
+    const localHtml=html.split('https://gb1026gb00-cell.github.io/hoemyeong-hospital/').join('/');
+    const output=/<\/body>/i.test(localHtml)?localHtml.replace(/<\/body>/i,script+'</body>'):localHtml+script;
     res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
     res.end(req.method==='HEAD'?'':output);
    });
