@@ -16,7 +16,7 @@
   constructor(...args){super(...args);socket=this;
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
-    if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity))){receptionAnswerLength=Number(m.capacity)/2+3;ch02RoomCapacity=Number(m.capacity);}if(Array.isArray(m.roles))ch02RoomRoles=m.roles.filter(Number.isInteger).slice().sort((a,b)=>a-b);if(Number.isInteger(Number(m.yourRole)))ch02AssignedRole=Number(m.yourRole);if(m.chapter?.phase==='ch03'&&m.chapter.ch03?.videoTriggered)ch03VideoSeen=true;active=!!m.started;phase=m.chapter?.phase||phase;if(Array.isArray(m.artifactFragments))ch03FragmentCollected=m.artifactFragments.includes(2);updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
+    if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity))){receptionAnswerLength=Number(m.capacity)/2+3;ch02RoomCapacity=Number(m.capacity);}if(Array.isArray(m.roles))ch02RoomRoles=m.roles.filter(Number.isInteger).slice().sort((a,b)=>a-b);active=!!m.started;phase=m.chapter?.phase||phase;if(Array.isArray(m.artifactFragments))ch03FragmentCollected=m.artifactFragments.includes(2);updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='joined'&&typeof m.isHost==='boolean')ch02IsHost=m.isHost;
     if((m.type==='joined'||m.type==='state')&&m.yourRole!==undefined&&m.yourRole!==null&&Number.isInteger(Number(m.yourRole)))ch02AssignedRole=Number(m.yourRole);
     if(m.type==='ch02_certificate'&&Number.isInteger(Number(m.role)))ch02AssignedRole=Number(m.role);
@@ -39,7 +39,7 @@
      if(status)status.textContent=m.message||'파편 수집 상태를 확인해 주세요.';
     }
     if((m.type==='state'||m.type==='joined')&&m.chapter?.phase==='ch02_cleared'&&!document.getElementById('hmCh02ClearScene'))showCh02Clear();
-    if(m.type==='ch03_event'&&m.event==='enter'){ch03VideoSeen=false;
+    if(m.type==='ch03_event'&&m.event==='enter'){
      phase='ch03';
      const image=document.getElementById('sceneImage');
      if(image){image.src='/elevator_hall.webp';image.alt='회명병원 엘리베이터';}
@@ -73,7 +73,7 @@
     if(m.type==='ch02_new_result'&&m.site==='answer'){
      const status=document.getElementById('hmCh02NewStatus');
      if(status)status.textContent=m.message||'';
-     if(m.ok&&m.scene==='death_record_invalidated'){const status=document.getElementById('hmCh02NewStatus');if(status)status.textContent='정답 확인 · 모든 조사원의 영상 시청이 끝나면 CH.03으로 자동 이동합니다.';}
+     if(m.ok&&m.scene==='death_record_invalidated')showCh02Clear();
      else if(!m.ok)ch02Dialog('기록 정정 실패',m.message||'조사 기록이 부족합니다. 네 조사 지점을 다시 확인해 주세요.');
     }
     if(m.type==='ch02_new_result'&&m.site==='underbed'&&phase==='ch02'&&!m.videoPending){
@@ -108,12 +108,8 @@
     handleHospitalSoundEvent(m);
     if(m.type==='chapter_event'&&m.event==='blackout'){document.getElementById('hmCh01GroupIntro')?.remove();appendCh01StoryChat();}
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
-    if(m.type==='mandatory_video')showMandatoryVideo(m.id,m.video);
-    if(m.type==='mandatory_video_progress'&&m.id===mandatoryGateId){const status=document.getElementById('hmMandatoryVideoStatus');if(status){status.textContent='영상 시청 완료 '+m.done.length+' / '+m.online.length+'명 · 나머지 조사원 대기';if(m.online.length>0&&m.online.every(role=>m.done.includes(role))&&socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'sync'}));}}
-    if(m.type==='ch03_event'&&m.event==='video'){ch03VideoSeen=true;const form=document.getElementById('hmCh03CodeForm');if(form){form.hidden=false;form.style.display='flex';}}
-    if((m.type==='state'||m.type==='joined')&&m.chapter?.videoGate){document.getElementById('hmCh02ClearScene')?.remove();const gate=m.chapter.videoGate;const done=gate.done||[];if(done.includes(ch02AssignedRole)){if(mandatoryGateId!==gate.id||!document.getElementById('hmMandatoryVideo'))showMandatoryVideo(gate.id,gate.video);const video=document.querySelector('#hmMandatoryVideo video');if(video){video.pause();video.hidden=true;video.removeAttribute('src');}const retry=document.querySelector('#hmMandatoryVideo button');if(retry)retry.hidden=true;const status=document.getElementById('hmMandatoryVideoStatus');if(status)status.textContent='이미 시청 완료 · 다른 조사원을 기다리는 중…';}else showMandatoryVideo(gate.id,gate.video);}
-    if((m.type==='state'||m.type==='joined')&&!m.chapter?.videoGate&&mandatoryGateId)clearMandatoryVideo();
-    if(m.type==='ch03_event'&&m.event==='cleared'){phase='ch03_video_wait';}
+    if(m.type==='horror_video'&&m.id==='G06'&&phase==='ch03')playCh03ElevatorVideo();
+    if(m.type==='ch03_event'&&m.event==='cleared'){phase='ch03_cleared';showCh03Cleared();}
     if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2){ch03FragmentCollected=true;const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent='제0유물 파편이 공동 소지품에 등록되었습니다.';}
     if(m.type==='ch03_result'&&m.ok===false&&phase==='ch03'){const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent=m.message||'조사 요청을 완료하지 못했습니다.';}
     if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2&&phase==='ch03'){const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent='제0유물 파편이 공동 소지품에 등록되었습니다. 이제 운행 코드를 입력할 수 있습니다.';}
@@ -256,7 +252,7 @@
   const labels=['접수실','진료실','검사실','기록보관실','수술실','입원병동','폐쇄병동','기계실'];
   for(let i=0;i<8;i++){
    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;min-height:39px;border-bottom:1px dashed #7e7067;padding:3px 8px;gap:10px;'+(i===floor-1?'background:#7c514b28;':'');
-   const name=document.createElement('span');name.textContent=String(i+1).padStart(2,'0')+'F  '+(i>=8-capacity?(i===floor-1&&ownSymbol!==null?'': '???'):labels[i]);name.style.cssText='font:600 16px Georgia,serif;letter-spacing:.4px';
+   const name=document.createElement('span');name.textContent=String(i+1).padStart(2,'0')+'F  '+(i>=8-capacity?(i===floor-1&&ownSymbol!==null?ownSymbol:'???'):labels[i]);name.style.cssText='font:600 16px Georgia,serif;letter-spacing:.4px';
    const stamp=document.createElement('span');stamp.style.cssText='font:bold 23px Georgia,serif;color:#702d2a;min-width:40px;text-align:center;transform:rotate(-8deg)';
    stamp.textContent=i===floor-1&&ownSymbol!==null?ownSymbol:'';
    row.append(name,stamp);paper.append(row);
@@ -319,36 +315,20 @@
   card.append(result,run);overlay.append(card);document.body.append(overlay);
  }
 
-
  let ch03VideoSeen=false;
- let mandatoryGateId=null;
- function showMandatoryVideo(id,asset){
-  if(!id||!(/^(?:G(?:0[1-9]|1[0-8])|H0[1-4])$/).test(asset))return;
-  if(mandatoryGateId===id&&document.getElementById('hmMandatoryVideo'))return;
-  mandatoryGateId=id;
-  document.getElementById('hmMandatoryVideo')?.remove();
-  const overlay=document.createElement('div');overlay.id='hmMandatoryVideo';
-  overlay.style.cssText='position:fixed;inset:0;z-index:2147483640;background:#000;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:12px;box-sizing:border-box;font:14px system-ui';
-  const title=document.createElement('strong');title.textContent='회명병원 · 전체 조사원 필수 영상';overlay.append(title);
-  const video=document.createElement('video');video.src='/'+asset+'.mp4';video.autoplay=true;video.playsInline=true;video.controls=false;video.preload='auto';video.style.cssText='width:100%;max-height:70dvh;object-fit:contain';overlay.append(video);
-  const status=document.createElement('div');status.id='hmMandatoryVideoStatus';status.textContent='영상 재생 중 · 모든 조사원의 시청 완료를 기다립니다.';status.style.cssText='text-align:center;color:#d2c8d0';overlay.append(status);
-  const retry=document.createElement('button');retry.type='button';retry.textContent='영상 다시 재생';retry.hidden=true;retry.style.cssText='padding:12px 20px;background:#302536;color:#fff;border:1px solid #9a8d9c;border-radius:7px';overlay.append(retry);
-  let acknowledged=false;
-  const completed=()=>{
-   if(acknowledged)return;acknowledged=true;
-   status.textContent='영상 시청 완료 · 다른 조사원을 기다리는 중…';
-   retry.hidden=true;video.controls=false;
-   if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'mandatory_video_done',id}));else {acknowledged=false;status.textContent='연결이 끊어졌습니다. 재접속 후 시청 완료를 다시 확인합니다.';}
-  };
-  video.addEventListener('ended',completed);
-  video.addEventListener('error',()=>{status.textContent='영상을 불러오지 못했습니다. 다시 재생을 눌러주세요.';retry.hidden=false;});
-  retry.onclick=()=>{retry.hidden=true;status.textContent='영상 재생 중…';video.load();video.play().catch(()=>{video.muted=true;video.play().catch(()=>{status.textContent='자동재생이 차단되었습니다. 재생 버튼을 눌러주세요.';video.controls=true;retry.hidden=false;});});};
-  document.body.append(overlay);
-  video.play().catch(()=>{video.muted=true;video.play().catch(()=>{status.textContent='자동재생이 차단되었습니다. 재생 버튼을 눌러주세요.';video.controls=true;retry.hidden=false;});});
+ function playCh03ElevatorVideo(){
+  document.getElementById('hmCh03G06')?.remove();
+  const overlay=document.createElement('div');overlay.id='hmCh03G06';
+  overlay.style.cssText='position:fixed;inset:0;z-index:2147483650;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#e8dfdb;font:14px system-ui';
+  const video=document.createElement('video');video.src='/G06.mp4';video.autoplay=true;video.playsInline=true;video.controls=false;video.preload='auto';video.style.cssText='width:100%;max-height:90dvh;object-fit:contain';
+  const info=document.createElement('div');info.textContent='엘리베이터 내부 감시 기록 재생 중';info.style.cssText='padding:12px;color:#cbbbc0;text-align:center';
+  const finish=()=>{ch03VideoSeen=true;overlay.remove();const form=document.getElementById('hmCh03CodeForm');if(form){form.hidden=false;form.style.display='flex';}const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent='환자복의 형체가 사라졌다. 계산한 운행 코드를 입력하십시오.';};
+  video.addEventListener('ended',finish,{once:true});
+  video.addEventListener('error',()=>{info.textContent='영상 재생에 실패했습니다. 운행 코드를 입력할 수 있습니다.';finish();},{once:true});
+  overlay.append(video,info);document.body.append(overlay);
+  video.play().catch(()=>{video.muted=true;video.play().catch(()=>{info.textContent='자동재생이 차단되었습니다. 영상을 눌러 재생하십시오.';video.controls=true;});});
  }
- function clearMandatoryVideo(){
-  mandatoryGateId=null;document.getElementById('hmMandatoryVideo')?.remove();
- }
+
  let ch03FragmentCollected=false;
  function showCh03Cleared(){
   if(!active||phase!=='ch03_cleared'){document.getElementById('hmCh03Cleared')?.remove();return;}
@@ -383,7 +363,7 @@
  function mountIndependentCh03(){
   const old=document.getElementById('hmIndependentCh03');
   if(!active||phase!=='ch03'){old?.remove();return;}
-  if(old){old.style.setProperty('display','flex','important');const form=old.querySelector('#hmCh03CodeForm');if(form&&ch03VideoSeen){form.hidden=false;form.style.display='flex';}return;}
+  if(old){old.style.setProperty('display','flex','important');return;}
   document.getElementById('hmCh02ClearScene')?.remove();
   document.getElementById('hmCh02NewDialog')?.remove();
   const root=document.createElement('section');root.id='hmIndependentCh03';
@@ -609,9 +589,9 @@
  }
  // The uploaded reception-drawer video has its own stable asset path.
  // It is intentionally not aliased to any G/H clip until the binary is uploaded.
- let receptionHandPlaying=false,receptionHandWatched=false;
+ let receptionHandPlaying=false;
  function playReceptionHand(){
-  if(receptionHandPlaying||receptionHandWatched)return;
+  if(receptionHandPlaying||$('hmReceptionCodeModal'))return;
   receptionHandPlaying=true;
   const overlay=document.createElement('div');
   overlay.id='hmReceptionHandScare';
@@ -624,7 +604,7 @@
   const retry=document.createElement('button');retry.type='button';retry.textContent='영상 재생하기';
   retry.style.cssText='position:absolute;bottom:12%;padding:14px 22px;border:1px solid #9e5263;border-radius:10px;background:#2c131d;color:white;font:700 15px system-ui';
   retry.hidden=true;
-  const finish=()=>{video.pause();overlay.remove();receptionHandPlaying=false;receptionHandWatched=true;if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'cabinet'}));};
+  const finish=()=>{video.pause();overlay.remove();receptionHandPlaying=false;openReceptionCodePanel();};
   video.addEventListener('ended',finish,{once:true});
   video.addEventListener('error',()=>{retry.textContent='영상 로딩 실패 · 다시 시도';retry.hidden=false;},{once:true});
   retry.onclick=()=>{retry.hidden=true;video.muted=false;video.load();video.play().catch(()=>{retry.hidden=false;retry.textContent='영상 재생하기';});};
@@ -869,7 +849,7 @@
   if(!target)return;
   event.preventDefault();event.stopImmediatePropagation();
   $('hmSceneClueOverlay')?.remove();
-  if(!receptionHandWatched)playReceptionHand();else socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'cabinet'}));
+  socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'cabinet'}));
  },true);
 
 
@@ -896,7 +876,7 @@
   if(!target||target.id==='hmReceptionDeskSealButton')return;
   event.preventDefault();event.stopImmediatePropagation();
   $('hmSceneClueOverlay')?.remove();
-  openReceptionCodePanel();
+  playReceptionHand();
  },true);
 
  // CH01 single object router: exact hotspot identity, never a parent's text.
@@ -920,8 +900,7 @@
   if(!object)return;
   event.preventDefault();event.stopImmediatePropagation();
   if(phase!=='separated'){showConnectionStatus('접수실 조사 시작 버튼을 눌러 강제 분리를 완료한 뒤 조사해 주세요.');return;}
-  if(object==='desk'||object==='drawer'){openReceptionCodePanel();return;}
-  if(object==='cabinet'&&!receptionHandWatched){playReceptionHand();return;}
+  if(object==='desk'||object==='drawer'){playReceptionHand();return;}
   socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));
  },true);
 
