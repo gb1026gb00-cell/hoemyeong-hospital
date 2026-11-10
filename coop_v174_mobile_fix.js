@@ -843,6 +843,30 @@
   wrap.append(panel);document.body.append(wrap);
  }
  // Local CH02 document data mirrors server allocation; no wait for network response.
+ function openLocalCh02Clue(site){
+  const count=[2,4,8].includes(ch02RoomCapacity)?ch02RoomCapacity:2;
+  const role=((ch02AssignedRole%count)+count)%count;
+  if(site==='ecg'){
+   const archive=[
+    {device:'ECG-01',last:'03:09',signal:'정상 맥박 지속',flag:'사망 처리 후에도 기록됨'},
+    {device:'ECG-02',last:'03:21',signal:'정상 맥박 지속',flag:'사망 처리 후에도 기록됨'},
+    {device:'ECG-03',last:'03:17',signal:'정상 맥박 지속',flag:'사망 처리 후에도 기록됨'},
+    {device:'ECG-04',last:'03:14',signal:'정상 맥박 지속',flag:'사망 처리 후에도 기록됨'}
+   ];
+   const records=count===2?archive.slice(role*2,role*2+2):count===4?[archive[role]]:role>=4?[archive[role-4]]:[];
+   showCh02ECG({role,capacity:count,records,locked:count===8&&role<4});
+  }else if(site==='eight'){
+   const tags=[
+    {patient:'302-A',device:'ECG-04',letter:'D',tag:'08-A'},
+    {patient:'302-B',device:'ECG-01',letter:'E',tag:'08-B'},
+    {patient:'302-C',device:'ECG-02',letter:'D',tag:'08-C'},
+    {patient:'302-D',device:'ECG-03',letter:'A',tag:'08-D'}
+   ];
+   const records=count===2?tags.slice(role*2,role*2+2):count===4?[tags[role]]:role<4?[]:[tags[role-4]];
+   showCh02BedTags({role,capacity:count,records,locked:count===8&&role<4,rule:'사망 판정 이후에도 심장 신호가 남은 시간. 가장 오래 지속된 기록부터 읽어라.'});
+  }
+  if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'ch02_new_inspect',site}));
+ }
  function openLocalCh02Certificate(){
   const records=[
    {id:'A-01',patient:'성명 불명 / 302-A',time:'02:41',cause:'심정지',stamp:'사망 확인',trace:'사망 판정 후 심전도 자료가 삭제 처리됨',revision:'원본 판정란 위에 재기입 흔적'},
@@ -1039,6 +1063,10 @@
   if(site==='underbed')ch02HandPending=true;
   if(site==='certificate'){
    openLocalCh02Certificate();
+   return;
+  }
+  if(site==='ecg'||site==='eight'){
+   openLocalCh02Clue(site);
    return;
   }
   ch02Send('ch02_new_inspect',{site});
