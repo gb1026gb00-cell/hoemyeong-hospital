@@ -218,7 +218,7 @@ function chapterVoiceOnce(r,index){if(!r.chapter||!Number.isInteger(index)||inde
 function broadcast(r,o){if(o.type==='state'){
  if([...r.clients].some(c=>c.ws&&c.ws.readyState===WebSocket.OPEN))r.lastActiveAt=Date.now();
  persist();o=state(r);
- }for(const c of r.clients)if(c.ws)send(c.ws,o)}
+ }for(const c of r.clients)if(c.ws)send(c.ws,o.type==='state'?{...o,yourRole:c.role,isHost:c===r.host}:o)}
 const FRAGMENT_PHASES=['escaped','ch02_cleared','ch03_cleared','ch04_cleared','ch05_cleared'];
 const FRAGMENT_SITES=['cabinet','drawer','mirror','ledger','glass'];
 const FRAGMENT_DESCRIPTIONS=[
