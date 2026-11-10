@@ -6,7 +6,7 @@
  let startedOnce=false;
  let ch02IsHost=false;
  let receptionAnswerLength=4;
- let ch02AssignedRole=null,ch02RoomCapacity=2;
+ let ch02AssignedRole=null,ch02RoomCapacity=2,ch02RoomRoles=[];
  const NativeWS=window.WebSocket;
  function hideLobby(){const p=$('hmCoopPanel');if(p)p.hidden=true;}
  function showConnectionStatus(message){let el=$('hmV174ConnectionStatus');if(!el){el=document.createElement('div');el.id='hmV174ConnectionStatus';el.setAttribute('role','alert');el.style.cssText='position:fixed;top:12px;left:12px;right:12px;z-index:99980;padding:13px 16px;border:1px solid #d1a2a2;border-radius:10px;background:#29151df2;color:#fff;font:14px system-ui;text-align:center;pointer-events:none';document.body.append(el);}el.textContent=message;el.hidden=!message;}
@@ -16,7 +16,7 @@
   constructor(...args){super(...args);socket=this;
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
-    if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity))){receptionAnswerLength=Number(m.capacity)/2+3;ch02RoomCapacity=Number(m.capacity);}active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
+    if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity))){receptionAnswerLength=Number(m.capacity)/2+3;ch02RoomCapacity=Number(m.capacity);}if(Array.isArray(m.roles))ch02RoomRoles=m.roles.filter(Number.isInteger).slice().sort((a,b)=>a-b);active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='joined'&&typeof m.isHost==='boolean')ch02IsHost=m.isHost;
     if((m.type==='joined'||m.type==='state')&&m.yourRole!==undefined&&m.yourRole!==null&&Number.isInteger(Number(m.yourRole)))ch02AssignedRole=Number(m.yourRole);
     if(m.type==='ch02_certificate'&&Number.isInteger(Number(m.role)))ch02AssignedRole=Number(m.role);
@@ -873,7 +873,8 @@
  function openLocalCh02Clue(site){
   if(!Number.isInteger(ch02AssignedRole)){ch02Dialog('조사원 정보 확인 중','서버에서 담당 조사원 번호를 아직 받지 못했습니다. 잠시 후 다시 조사해 주세요.');return;}
   const count=[2,4,8].includes(ch02RoomCapacity)?ch02RoomCapacity:2;
-  const role=((ch02AssignedRole%count)+count)%count;
+  const role=ch02RoomRoles.indexOf(ch02AssignedRole);
+  if(role<0||role>=count){ch02Dialog('조사원 배정 확인','현재 방의 조사원 순서를 확인할 수 없습니다. 잠시 후 다시 조사해 주세요.');return;}
   if(site==='ecg'){
    const archive=[
     {device:'ECG-01',last:'03:09',signal:'정상 맥박 지속',flag:'사망 처리 후에도 기록됨'},
@@ -910,7 +911,8 @@
    {id:'대조-04',patient:'302-D / 도장 대조',time:'02:52',cause:'판정 도장 대조',stamp:'원본 확인 필요',trace:'원본의 판정란과 재발급본이 다름',revision:'D 문서의 수정 이력 확인'}
   ];
   const count=[2,4,8].includes(ch02RoomCapacity)?ch02RoomCapacity:2;
-  const role=((ch02AssignedRole%count)+count)%count;
+  const role=ch02RoomRoles.indexOf(ch02AssignedRole);
+  if(role<0||role>=count){ch02Dialog('조사원 배정 확인','현재 방의 조사원 순서를 확인할 수 없습니다. 잠시 후 다시 조사해 주세요.');return;}
   const assigned=count===2?[records.slice(0,2),records.slice(2,4)][role]:count===4?[records[role]]:role<4?[records[role]]:[verification[role-4]];
   showCh02Certificate({role,capacity:count,records:assigned});
   if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'ch02_new_inspect',site:'certificate'}));
