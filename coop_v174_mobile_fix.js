@@ -8,7 +8,7 @@
  function hideLobby(){const p=$('hmCoopPanel');if(p)p.hidden=true;}
  function showConnectionStatus(message){let el=$('hmV174ConnectionStatus');if(!el){el=document.createElement('div');el.id='hmV174ConnectionStatus';el.setAttribute('role','alert');el.style.cssText='position:fixed;top:12px;left:12px;right:12px;z-index:99980;padding:13px 16px;border:1px solid #d1a2a2;border-radius:10px;background:#29151df2;color:#fff;font:14px system-ui;text-align:center;pointer-events:none';document.body.append(el);}el.textContent=message;el.hidden=!message;}
  function updateConnectionStatus(){showConnectionStatus(startedOnce&&(!active||!socket||socket.readyState!==NativeWS.OPEN)?'협동 서버 연결이 끊어졌습니다. 팀원과 연결을 복구하기 전에는 진행하지 마세요.':'');}
- function updateBell(){const b=$('hmV174Bell');if(!b)return;b.hidden=!active||phase!=='reception';}
+ function updateBell(){const b=$('hmV174Bell');if(!b)return;b.hidden=true;}
  class CoopSocket extends NativeWS{
   constructor(...args){super(...args);socket=this;
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
@@ -60,7 +60,7 @@
   action.hidden=true;
   overlay.append(video,action);document.body.append(overlay);
   let done=false;
-  const finish=()=>{if(done)return;done=true;video.pause();separationVoice.pause();overlay.remove();separationPlaying=false;};
+  const finish=()=>{if(done)return;done=true;video.pause();separationVoice.pause();video.hidden=true;action.hidden=true;const card=document.createElement('div');card.style.cssText='position:absolute;inset:0;background:#070507;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;padding:24px';card.innerHTML='<div style="color:#a93645;font:700 clamp(34px,9vw,62px) serif;letter-spacing:.14em">回明病院</div><div style="color:#f3e8ee;font:600 21px system-ui">다른 조사원들과 떨어졌습니다.</div><div style="color:#ab96a2;font:13px system-ui">서로의 목소리만이 남아 있습니다.</div>';overlay.append(card);setTimeout(()=>{overlay.remove();separationPlaying=false;},2400);};
   video.addEventListener('playing',()=>{action.hidden=true;pendingSeparation=true;startSeparationVoice();});
   video.addEventListener('ended',finish);
   video.addEventListener('error',()=>{action.hidden=false;action.textContent='영상 로드 실패 · 조사 계속하기';action.onclick=finish;});
@@ -68,7 +68,7 @@
   video.volume=soundVolume();video.muted=soundVolume()===0;
   video.play().catch(()=>{action.hidden=false;});
  }
- // G01 uses its own mobile-safe player. Every newly created room gets a fresh
+ // G01 is the opening nurse cinematic. Every newly created room gets a fresh
  // server witness list; revisiting the desk in the same room does not replay.
  let receptionScarePlaying=false;
  function playReceptionScare(){
@@ -80,7 +80,7 @@
   video.src='https://gb1026gb00-cell.github.io/hoemyeong-hospital/G01.mp4';
   video.style.cssText='width:100%;height:100%;object-fit:contain';
   video.volume=soundVolume();video.muted=soundVolume()===0;
-  const play=document.createElement('button');play.type='button';play.textContent='접수대 영상 재생';
+  const play=document.createElement('button');play.type='button';play.textContent='시작 영상 재생';
   play.style.cssText='position:absolute;bottom:12%;padding:14px 22px;background:#2c131d;color:white;border:1px solid #9e5263;border-radius:10px';
   play.hidden=true;
   const finish=()=>{video.pause();overlay.remove();receptionScarePlaying=false;};
@@ -219,6 +219,9 @@
   const guide=$('hmCh01Guide');if(guide)guide.before(section);else panel.querySelector('strong')?.after(section);
   // Hide only the obsolete CH01 numeric form, retaining its DOM and all server
   // handlers for backward compatibility. Other chapters and artifacts untouched.
+  // Retire the old CH01 sense / cross-key form from the player UI.
+  const senseForm=$('senseIndex')?.closest('div');
+  if(senseForm){senseForm.hidden=true;senseForm.style.display='none';}
   const old=panel.querySelector('#senseIndex')?.closest('div');
   if(old){old.hidden=true;old.style.display='none';}
   const oldControls=panel.querySelector('[data-ch01="inspect"]')?.parentElement;
