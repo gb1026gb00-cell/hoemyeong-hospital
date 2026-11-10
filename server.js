@@ -38,7 +38,7 @@ function allocateRoom(capacity){
   const tmp=roomCounterFile+'.'+process.pid+'.tmp';
   fs.writeFileSync(tmp,String(roomCounter),{mode:0o600});fs.renameSync(tmp,roomCounterFile);
  }
- const room={code,clients:new Set(),pieces:new Set(),chat:[],host:null,started:false,capacity:([2,4,6,8].includes(capacity)?capacity:2),devSolo:false,allocated:true};
+ const room={code,clients:new Set(),pieces:new Set(),chat:[],host:null,started:false,capacity:([2,4,8].includes(capacity)?capacity:2),devSolo:false,allocated:true};
  rooms.set(code,room);
  persist(); // Save newly allocated but not-yet-joined rooms before sharing invites.
  return code;
@@ -340,7 +340,7 @@ wss.on('connection',ws=>{
      [...r.clients].filter(x=>x.ws&&x.ws.readyState===WebSocket.OPEN).length<2){
     return send(ws,{type:'error',message:'협동 진행 대기: 최소 2명의 조사원이 연결되어야 퍼즐을 진행할 수 있습니다.'});
   }
-  if(m.type==='set_capacity'){if(r.started||r.host!==player)return send(ws,{type:'error',message:'방장만 게임 시작 전에 인원을 변경할 수 있습니다.'});if(![2,4,6,8].includes(m.capacity))return send(ws,{type:'error',message:'2·4·6·8인 중 선택할 수 있습니다.'});if(r.clients.size>m.capacity)return send(ws,{type:'error',message:'현재 참가자보다 적은 인원으로 변경할 수 없습니다.'});r.capacity=m.capacity;broadcast(r,state(r));return}
+  if(m.type==='set_capacity'){if(r.started||r.host!==player)return send(ws,{type:'error',message:'방장만 게임 시작 전에 인원을 변경할 수 있습니다.'});if(![2,4,8].includes(m.capacity))return send(ws,{type:'error',message:'2·4·8인 중 선택할 수 있습니다.'});if(r.clients.size>m.capacity)return send(ws,{type:'error',message:'현재 참가자보다 적은 인원으로 변경할 수 없습니다.'});r.capacity=m.capacity;broadcast(r,state(r));return}
   if(m.type==='ready'){if(r.started)return;player.ready=!!m.ready;broadcast(r,state(r));return}
   if(m.type==='start'){if(r.host!==player)return send(ws,{type:'error',message:'방장만 시작할 수 있습니다.'});if(r.clients.size<2)return send(ws,{type:'error',message:'게임 시작에는 최소 2명의 조사원이 필요합니다.'});if([...r.clients].some(x=>!x.ws||x.ws.readyState!==WebSocket.OPEN))return send(ws,{type:'error',message:'모든 조사원이 연결된 상태여야 시작할 수 있습니다.'});if([...r.clients].some(x=>!x.ready))return send(ws,{type:'error',message:'모든 조사원이 준비해야 합니다.'});r.senseRoles=[...r.clients].map(x=>x.role).sort((a,b)=>a-b);r.started=true;r.lastActiveAt=Date.now();r.chapter={phase:r.drawerTest?'separated':'reception',solved:[],bellBy:null,inspected:{},sensoryDone:[],ecgSolved:false,evidenceFound:[],evidenceSolved:false,sensoryDigits:Array.from({length:8},()=>require('crypto').randomInt(1,10)),crossKeys:Array.from({length:8},()=>String(require('crypto').randomInt(10,100))),codes:Object.fromEntries([...r.clients].map(x=>[x.role,String(10+require('crypto').randomInt(90))]))};if(r.drawerTest)r.chapter.receptionCoop={...makeReceptionPuzzle(r),confirmed:[],g01Witnessed:[]};broadcast(r,{type:'started'});if(r.drawerTest){broadcast(r,{type:'chapter_event',event:'blackout',by:player.role});broadcast(r,{type:'horror_video',id:'G08',scope:'all'});}else broadcast(r,{type:'horror_video',id:'G01',scope:'all'});for(const member of r.clients)send(member.ws,{type:'sense_assignment',senses:assignedSenses(r,member.role).map(x=>x.sense)});broadcast(r,state(r));chapterVoiceOnce(r,1);return}
   
