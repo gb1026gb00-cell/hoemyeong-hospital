@@ -16,8 +16,7 @@
     if(m.type==='state'||m.type==='joined'){active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='reception_clue'&&m.object!=='desk')showSceneClue(m);
     if(m.type==='reception_result')showReceptionAnswerResult(m);
-    if(m.type==='reception_result'&&m.ok===false){const modal=$('hmReceptionCodeModal');if(modal){const p=modal.querySelector('p:nth-of-type(2)');if(p)p.textContent=m.message||'번호를 다시 확인하세요.';}}
-    if(m.type==='reception_result'&&m.complete){$('hmReceptionCodeModal')?.remove();}
+    if((m.type==='chapter_event'&&m.event==='escape')||((m.type==='state'||m.type==='joined')&&m.chapter&&['escaped','ch02','ch03','ch04','ch05','ch06','finished'].includes(m.chapter.phase))){$('hmReceptionCodeModal')?.remove();$('hmCh01InspectionScreen')?.remove();}
     handleHospitalSoundEvent(m);
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
     if(m.type==='horror_video'&&m.id==='G01')playReceptionScare();
@@ -119,9 +118,9 @@
   video.addEventListener('playing',()=>{action.hidden=true;armSeparation();});
   video.addEventListener('ended',finish);
   video.addEventListener('error',()=>{action.hidden=false;action.textContent='영상 로드 실패 · 조사 계속하기';action.onclick=finish;});
-  action.addEventListener('click',()=>{if(video.error){finish();return;}video.play().catch(()=>{action.hidden=false;});});
+  action.addEventListener('click',()=>{if(video.error){finish();return;}video.muted=soundVolume()===0;video.volume=soundVolume();video.play().then(()=>{action.hidden=true;startSeparationVoice();}).catch(()=>{action.textContent='영상 재생하기';action.hidden=false;});});
   video.volume=soundVolume();video.muted=soundVolume()===0;
-  video.play().catch(()=>{action.hidden=false;});
+  video.play().catch(()=>{video.muted=true;video.play().then(()=>{action.textContent='🔊 소리 켜기';action.hidden=false;}).catch(()=>{action.textContent='강제 분리 영상 재생';action.hidden=false;});});
  }
  // G01 is the opening nurse cinematic. Every newly created room gets a fresh
  // server witness list; revisiting the desk in the same room does not replay.
@@ -142,9 +141,9 @@
   const finish=()=>{video.pause();overlay.remove();receptionScarePlaying=false;};
   video.addEventListener('ended',finish,{once:true});
   video.addEventListener('error',()=>{play.textContent='영상 오류 · 닫기';play.hidden=false;},{once:true});
-  play.onclick=()=>{if(video.error){finish();return;}video.play().catch(()=>{play.hidden=false;});};
+  play.onclick=()=>{if(video.error){finish();return;}video.muted=soundVolume()===0;video.volume=soundVolume();video.play().then(()=>{play.hidden=true;}).catch(()=>{play.textContent='영상 재생하기';play.hidden=false;});};
   overlay.append(video,play);document.body.append(overlay);
-  video.play().catch(()=>{play.hidden=false;});
+  video.play().catch(()=>{video.muted=true;video.play().then(()=>{play.textContent='🔊 소리 켜기';play.hidden=false;}).catch(()=>{play.textContent='시작 영상 재생';play.hidden=false;});});
  }
  // The uploaded reception-drawer video has its own stable asset path.
  // It is intentionally not aliased to any G/H clip until the binary is uploaded.
