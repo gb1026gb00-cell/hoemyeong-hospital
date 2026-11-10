@@ -281,6 +281,15 @@ wss.on('connection',ws=>{
    if(!r.started)return;
    if(!r.chapter)r.chapter={phase:'reception',solved:[],bellBy:null};
    const ch=r.chapter;
+   // CH01 direct entry: no legacy call-bell, sensory-key, or UI gate.
+   if(ch.phase==='reception'&&m.action==='start_investigation'){
+    ch.phase='separated';ch.bellBy=player.role;
+    ch.receptionCoop={answer:'273476',confirmed:[],g01Witnessed:[]};
+    ch.inspected=ch.inspected||{};
+    broadcast(r,{type:'chapter_event',event:'blackout',by:player.role});
+    broadcast(r,{type:'horror_video',id:'G08',scope:'all'});
+    broadcast(r,state(r));persist();return;
+   }
    
    // [수정 반영] 누락되었던 영안실(G10), 계단 8층(G12) 공포 영상 트리거를 sites 매핑에 정식 추가
    if(m.action==='horror_inspect'){
