@@ -156,6 +156,21 @@ function broadcast(r,o){if(o.type==='state'){
  if([...r.clients].some(c=>c.ws&&c.ws.readyState===WebSocket.OPEN))r.lastActiveAt=Date.now();
  persist();o=state(r);
  }for(const c of r.clients)if(c.ws)send(c.ws,o)}
+// CH01 length grows with the room capacity (2/4/6/8 investigators).
+const receptionLength=r=>({2:4,4:6,6:8,8:10}[r.capacity]||4);
+const receptionAnswer=r=>'2734761859'.slice(0,receptionLength(r));
+function receptionRoleClues(r,role){
+ const roles=[...r.clients].map(c=>c.role).sort((a,b)=>a-b);
+ const idx=roles.indexOf(role),answer=receptionAnswer(r);
+ if(idx<0)return [];
+ const count=idx<2?2:1;
+ const offset=idx<2?idx*2:idx+2;
+ return [...answer.slice(offset,offset+count)].map((digit,j)=>{
+  const value=Number(digit),position=offset+j+1;
+  const add=(position*3)%5+2;
+  return '봉인 '+position+'번째 칸: 야간 기록의 수 '+(value+add)+'에서 봉인 표시 '+add+'를 빼라.';
+ });
+}
 const FRAGMENT_PHASES=['escaped','ch02_cleared','ch03_cleared','ch04_cleared','ch05_cleared'];
 const FRAGMENT_SITES=['cabinet','drawer','mirror','ledger','glass'];
 const FRAGMENT_DESCRIPTIONS=[
@@ -288,7 +303,7 @@ wss.on('connection',ws=>{
    // CH01 direct entry: no legacy call-bell, sensory-key, or UI gate.
    if(ch.phase==='reception'&&m.action==='start_investigation'){
     ch.phase='separated';ch.bellBy=player.role;
-    ch.receptionCoop={answer:'273476',confirmed:[],g01Witnessed:[]};
+    ch.receptionCoop={answer:receptionAnswer(r),confirmed:[],g01Witnessed:[]};
     ch.inspected=ch.inspected||{};
     broadcast(r,{type:'chapter_event',event:'blackout',by:player.role});
     broadcast(r,{type:'horror_video',id:'G08',scope:'all'});
@@ -684,7 +699,7 @@ wss.on('connection',ws=>{
     const object=String(m.object||'');
     if(['desk','mirror','cabinet','ledger','intercom'].includes(object)){
      ch.phase='separated';ch.bellBy=player.role;
-     ch.receptionCoop={answer:'273476',confirmed:[],g01Witnessed:[]};
+     ch.receptionCoop={answer:receptionAnswer(r),confirmed:[],g01Witnessed:[]};
      broadcast(r,{type:'chapter_event',event:'blackout',by:player.role});
      broadcast(r,{type:'horror_video',id:'G08',scope:'all'});
      broadcast(r,state(r));return;
@@ -718,7 +733,10 @@ wss.on('connection',ws=>{
       ['접수명부 마지막 장: 「거울의 차이 → 접수 인원 → 봉인 약병 → 야간 근무자 → 거울의 합에서 3을 뺀 수 → 파손 열쇠」','모든 숫자는 한 자리씩, 왼쪽부터 입력한다.']
      ]
     };
-    const lines=clues[object][side];
+    const lines=[...clues[object][side],...receptionRoleClues(r,player.role)];
+    // Every investigator owns unique numbered slots; two earliest roles own
+    // two slots each and all other roles own one.
+
     send(ws,{type:'reception_clue',object,label:{desk:'접수대',mirror:'거울',cabinet:'캐비닛',ledger:'접수명부'}[object],lines,shadowCount:object==='mirror'?(side===0?4:6):null});
     if(object==='desk'){
      // Do not suppress the scare if the browser failed to load it previously.
@@ -729,7 +747,61 @@ wss.on('connection',ws=>{
    if(m.action==='reception_submit'&&ch.phase==='separated'){
     const p=ch.receptionCoop;if(!p)return;
     const attempt=String(m.answer||'').trim();
-    if(!/^[0-9]{6}$/.test(attempt))return send(ws,{type:'reception_result',ok:false,message:'각 단서에서 구한 숫자를 한 칸씩, 총 여섯 칸에 입력하세요.'});
+    if(!new RegExp('^[0-9]{'+receptionLength(r)+'}
+    if(attempt!==p.answer)return send(ws,{type:'reception_result',ok:false,message:'틀린 칸이 있습니다. 거울·접수대·캐비닛·명부를 팀원과 다시 대조하세요.'});
+    if(!p.confirmed.includes(player.role))p.confirmed.push(player.role);
+    broadcast(r,{type:'reception_result',ok:true,message:'접수번호 대조 성공. '+p.confirmed.length+'명의 조사원이 확인했습니다.'});
+    const online=[...r.clients].filter(c=>c.ws?.readyState===WebSocket.OPEN);
+    if(online.length>=2&&online.every(c=>p.confirmed.includes(c.role))){
+     ch.ecgSolved=true;ch.solved=online.map(c=>c.role);ch.phase='escaped';
+     broadcast(r,{type:'chapter_event',event:'escape'});
+     broadcast(r,{type:'reception_result',ok:true,complete:true,message:'접수대 봉인이 풀렸다. 서류함에서 제0유물 파편을 찾아 다음 구역으로 이동하세요.'});
+    }
+    broadcast(r,state(r));persist();return;
+   }
+   if(m.action==='solve'&&ch.phase==='separated'){
+    if(ch.solved.includes(player.role))return;
+    if(!ch.ecgSolved)return send(ws,{type:'chapter_event',event:'sense_locked'});
+    const answer=String(m.answer||'').trim();
+    const expected=ch.codes?.[player.role] ? panelAnswer(player.role,ch.codes[player.role]) : null;
+    if(answer!==expected)return send(ws,{type:'chapter_event',event:'wrong'});
+    ch.solved.push(player.role);broadcast(r,{type:'chapter_event',event:'solved',by:player.role});
+    const online=[...r.clients].filter(x=>x.ws&&x.ws.readyState===WebSocket.OPEN);
+    if((r.devSolo||online.length>=2)&&online.every(x=>ch.solved.includes(x.role))){ch.phase='escaped';broadcast(r,{type:'chapter_event',event:'escape'});}
+    broadcast(r,state(r));return;
+   }
+   return;
+  }
+  if(m.type==='chat'){if(typeof m.message!=='string')return;const msg=m.message.trim().slice(0,180);if(!msg)return;const item={role:player.role,character:player.character,message:msg};r.chat.push(item);r.chat=r.chat.slice(-25);broadcast(r,{type:'chat',item});
+    const echoPhase=r.chapter?.phase||'';
+    const echoChapter=echoPhase==='blackout'||echoPhase==='reception'||echoPhase==='escaped'?'ch01':(echoPhase.match(/^ch0[2-6]/)||[])[0];
+    if(r.started&&echoChapter&&echoPhase!=='finished'&&msg.length>=2&&msg.length<=100){
+      const ch=r.chapter;
+      if(ch.echoChapter!==echoChapter){ch.echoChapter=echoChapter;ch.echoCount=0;ch.echoLastAt=0;}
+      const max=echoChapter==='ch03'||echoChapter==='ch05'?2:1;
+      const now=Date.now();
+      if(ch.echoCount<max&&now-(ch.echoLastAt||0)>30000&&require('crypto').randomInt(100)<35){
+        ch.echoCount++;ch.echoLastAt=now;
+        broadcast(r,{type:'hospital_echo',chapter:echoChapter,message:msg,sequence:ch.echoCount});
+      }
+    }
+    persist();return}
+  if(m.type==='clue'){if(typeof m.clue!=='string')return;broadcast(r,{type:'clue',role:player.role,clue:m.clue.slice(0,160)});return}
+  if(m.type==='piece'){
+    if(!r.started||!Number.isInteger(m.piece)||m.piece<0||m.piece>3)return;
+    const phase=r.chapter?.phase||'';
+    const allowed=[['ch02_cleared','ch03','ch03_cleared','ch04','ch04_cleared','ch05','ch05_cleared','ch06','finished'],['ch03_cleared','ch04','ch04_cleared','ch05','ch05_cleared','ch06','finished'],['ch04_cleared','ch05','ch05_cleared','ch06','finished'],['ch05_cleared','ch06','finished']];
+    if(!allowed[m.piece].includes(phase))return send(ws,{type:'error',message:'아직 해당 인형 부품을 회수할 수 없습니다. 챕터 조사를 완료하세요.'});
+    if(r.pieces.has(m.piece))return;
+    r.pieces.add(m.piece);
+    broadcast(r,{type:'piece',pieces:[...r.pieces].sort(),complete:r.pieces.size===4});
+    if(r.pieces.size===4){broadcast(r,{type:'horror_video',id:'G03',scope:'all'});broadcast(r,{type:'doll_event',event:'complete',message:'울음이 멎는다. 인형이 천천히 웃는다. 「기록된 숫자만 믿지 마. 마지막 문 앞에서는 누가 먼저 들어왔는지 확인해.」'});}
+    broadcast(r,state(r));return;
+   }
+ });ws.on('close',()=>{const p=ws.player||c;if(p.ws===ws)leave(p)});ws.on('error',()=>{const p=ws.player||c;if(p.ws===ws)leave(p)});
+});
+server.listen(PORT,'0.0.0.0',()=>console.log('Hoemyeong multiplayer v6.0-test listening on '+PORT));
+).test(attempt))return send(ws,{type:'reception_result',ok:false,message:'이번 조사실의 비밀번호는 '+receptionLength(r)+'자리입니다. 모든 조사원의 단서를 모아 입력하세요.'});
     if(attempt!==p.answer)return send(ws,{type:'reception_result',ok:false,message:'틀린 칸이 있습니다. 거울·접수대·캐비닛·명부를 팀원과 다시 대조하세요.'});
     if(!p.confirmed.includes(player.role))p.confirmed.push(player.role);
     broadcast(r,{type:'reception_result',ok:true,message:'접수번호 대조 성공. '+p.confirmed.length+'명의 조사원이 확인했습니다.'});
