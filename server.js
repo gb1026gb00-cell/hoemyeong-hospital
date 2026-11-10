@@ -740,9 +740,18 @@ wss.on('connection',ws=>{
     broadcast(r,{type:'reception_result',ok:true,message:'접수번호 대조 성공. '+p.confirmed.length+'명의 조사원이 확인했습니다.'});
     const online=[...r.clients].filter(c=>c.ws?.readyState===WebSocket.OPEN);
     if(online.length>=2&&online.every(c=>p.confirmed.includes(c.role))){
-     ch.ecgSolved=true;ch.solved=online.map(c=>c.role);ch.phase='escaped';
+     ch.ecgSolved=true;ch.evidenceSolved=true;ch.solved=online.map(c=>c.role);ch.phase='escaped';
      broadcast(r,{type:'chapter_event',event:'escape'});
-     broadcast(r,{type:'reception_result',ok:true,complete:true,message:'접수대 봉인이 풀렸다. 서류함에서 제0유물 파편을 찾아 다음 구역으로 이동하세요.'});
+     // Preserve the real CH01 fragment in the shared artifact collection.
+     if(!r.artifactFragments)r.artifactFragments=new Set();
+     if(!r.artifactFragments.has(0)){
+      r.artifactFragments.add(0);
+      broadcast(r,{type:'fragment_result',ok:true,index:0,message:FRAGMENT_DESCRIPTIONS[0]+' (팀 공동 소지품에 등록)'});
+     }
+     broadcast(r,{type:'reception_result',ok:true,complete:true,message:'접수대 봉인 해제. 제0유물 파편을 공동 소지품에 등록했습니다. 208호로 이동합니다.'});
+     ch.phase='ch02';ch.ch02={found:[],switches:[],unlocked:false,explored:[],alarm:false,pressure:[],pressureSolved:false,pressureLastRole:null};
+     broadcast(r,{type:'ch02_event',event:'enter',message:'208호. 비어 있다는 병실에서 호출벨이 울린다. 문틈으로 낡은 환자 차트가 밀려 나온다. 차트 상단에는 「회명병원 / 개원 1988년 / 환자번호 0208」이라고 인쇄되어 있다.'});
+     chapterVoiceOnce(r,2);
     }
     broadcast(r,state(r));persist();return;
    }
