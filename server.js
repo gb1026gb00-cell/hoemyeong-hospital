@@ -593,6 +593,8 @@ wss.on('connection',ws=>{
    }
    // Cooperative reception ledger: three two-digit entries, distributed across
    // all investigators; the six-digit solution is server-validated.
+   // Fixed, object-led cooperative CH01: every investigator sees only one half
+   // of each clue. No random room codes or sensory-key input.
    if(m.action==='reception_clue'&&ch.phase==='separated'){
     const p=ch.receptionCoop;if(!p)return;
     const object=String(m.object||'');
@@ -600,13 +602,27 @@ wss.on('connection',ws=>{
     const roles=[...r.clients].map(c=>c.role).sort((a,b)=>a-b);
     const position=roles.indexOf(player.role);
     if(position<0)return;
-    const owned=p.entries.filter((e,i)=>i%roles.length===position);
-    const labels={desk:'접수대',mirror:'거울',cabinet:'캐비닛',ledger:'접수명부'};
-    const lines=object==='ledger'
-     ?['명부의 오래된 문구: 「원은 처음, 사각형은 다음, 삼각형은 마지막.」','각 기호의 두 자리 접수번호를 이 순서대로 이어 붙여라.']
-     :owned.length?owned.map(e=>object==='desk'?'접수번호 '+e.number:object==='mirror'?'유리에 새겨진 기호 '+e.symbol: '보관함 꼬리표 '+e.symbol+' / 접수번호 '+e.number)
-     :['이곳에는 당신에게만 보이는 기록이 없다. 다른 조사원에게 물어보세요.'];
-    send(ws,{type:'reception_clue',object,label:labels[object],lines});
+    const side=position%2;
+    const clues={
+     mirror:[
+      ['거울에 얼굴이 검게 지워진 간호사 그림자가 4명 서 있다.','유리 아래에는 「먼저 두 거울의 인원 차이를 적으라」고 새겨져 있다.'],
+      ['거울에 얼굴이 검게 지워진 간호사 그림자가 6명 서 있다.','유리 아래에는 「다음으로 양쪽 거울의 인원 합에서 3을 빼라」고 새겨져 있다.']
+     ],
+     desk:[
+      ['접수대 날짜 도장: 11월 9일. 해당 날짜의 접수 인원을 명부에서 찾아라.','그 아래에 붉은 표식 「두 번째 숫자」가 찍혀 있다.'],
+      ['접수대의 낡은 출입 대장: 11월 9일 입실 7명, 11월 10일 입실 5명.','접수 인원은 명부의 날짜와 대조해야 한다.']
+     ],
+     cabinet:[
+      ['캐비닛 왼쪽 선반: 봉인된 약병 3개, 빈 약병 2개.','「세 번째 숫자는 봉인된 약병 수」'],
+      ['캐비닛 오른쪽 선반: 파손된 열쇠 6개, 멀쩡한 열쇠 1개.','「여섯 번째 숫자는 파손된 열쇠 수」']
+     ],
+     ledger:[
+      ['접수명부의 찢어진 첫 장: 「네 번째 숫자는 야간 근무자 수」','야간 근무표의 이름 네 개가 적혀 있다.'],
+      ['접수명부 마지막 장: 「거울의 차이 → 접수 인원 → 봉인 약병 → 야간 근무자 → 거울의 합에서 3을 뺀 수 → 파손 열쇠」','모든 숫자는 한 자리씩, 왼쪽부터 입력한다.']
+     ]
+    };
+    const lines=clues[object][side];
+    send(ws,{type:'reception_clue',object,label:{desk:'접수대',mirror:'거울',cabinet:'캐비닛',ledger:'접수명부'}[object],lines,shadowCount:object==='mirror'?(side===0?4:6):null});
     if(object==='desk'){
      if(!Array.isArray(p.g01Witnessed))p.g01Witnessed=[];
      if(!p.g01Witnessed.includes(player.role)){p.g01Witnessed.push(player.role);send(ws,{type:'horror_video',id:'G01',scope:'self'});}
@@ -616,8 +632,8 @@ wss.on('connection',ws=>{
    if(m.action==='reception_submit'&&ch.phase==='separated'){
     const p=ch.receptionCoop;if(!p)return;
     const attempt=String(m.answer||'').trim();
-    if(!/^\\d{6}$/.test(attempt))return send(ws,{type:'reception_result',ok:false,message:'접수번호 세 개를 순서대로 이어 붙인 여섯 자리 숫자를 입력하세요.'});
-    if(attempt!==p.answer)return send(ws,{type:'reception_result',ok:false,message:'명부의 기호 순서와 각 조사원의 접수번호를 다시 대조하세요.'});
+    if(!/^\\d{6}$/.test(attempt))return send(ws,{type:'reception_result',ok:false,message:'각 단서에서 구한 숫자를 한 칸씩, 총 여섯 칸에 입력하세요.'});
+    if(attempt!==p.answer)return send(ws,{type:'reception_result',ok:false,message:'틀린 칸이 있습니다. 거울·접수대·캐비닛·명부를 팀원과 다시 대조하세요.'});
     if(!p.confirmed.includes(player.role))p.confirmed.push(player.role);
     broadcast(r,{type:'reception_result',ok:true,message:'접수번호 대조 성공. '+p.confirmed.length+'명의 조사원이 확인했습니다.'});
     const online=[...r.clients].filter(c=>c.ws?.readyState===WebSocket.OPEN);
@@ -630,7 +646,7 @@ wss.on('connection',ws=>{
    }
    if(m.action==='bell'&&ch.phase==='reception'){
     ch.phase='separated';ch.bellBy=player.role;
-    {const symbols=['○','□','△'];const entries=symbols.map(symbol=>({symbol,number:String(10+randomBytes(1)[0]%90)}));ch.receptionCoop={entries,answer:entries.map(e=>e.number).join(''),confirmed:[],g01Witnessed:[]};}
+    ch.receptionCoop={answer:'273476',confirmed:[],g01Witnessed:[]};
     broadcast(r,{type:'chapter_event',event:'blackout',by:player.role});broadcast(r,{type:'horror_video',id:'G08',scope:'all'});broadcast(r,state(r));return;
    }
    if(m.action==='solve'&&ch.phase==='separated'){
