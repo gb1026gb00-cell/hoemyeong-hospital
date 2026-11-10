@@ -35,6 +35,13 @@
      const status=document.getElementById('hmCh02TransitionStatus');
      if(status)status.textContent=m.message||'파편 수집 상태를 확인해 주세요.';
     }
+    if((m.type==='state'||m.type==='joined')&&m.chapter?.phase==='ch02_cleared'&&!document.getElementById('hmCh02ClearScene'))showCh02Clear();
+    if((m.type==='state'||m.type==='joined')&&m.chapter?.phase==='ch03'){
+     const scene=document.getElementById('hmWardScene')||document.getElementById('mainScene');
+     if(scene){scene.style.backgroundImage='url("/elevator_hall.webp")';scene.dataset.hmChapterScene='ch03';}
+     const bg=scene?.querySelector('.bg');
+     if(bg){bg.style.backgroundImage='url("/elevator_hall.webp")';bg.dataset.hmImageKey='ch03-elevator';}
+    }
     if(m.type==='ch03_event'&&m.event==='enter'){
      document.getElementById('hmCh02ClearScene')?.remove();
      document.getElementById('hmCh02NewDialog')?.remove();
@@ -909,11 +916,18 @@
    const page=document.createElement('div');page.style.cssText='position:relative;margin:0 0 18px;padding:13px 12px 18px;border:1px solid #7c6c57;background:#e3d7bc66';
    const top=document.createElement('div');top.textContent='회명병원 의무기록부   HM-302 / '+record.id;top.style.cssText='font:11px system-ui;border-bottom:1px solid #8b7b64;padding-bottom:9px;margin-bottom:11px';
    page.append(top);
-   const rows=[['환자 성명',record.patient],['사망 일시','1988. 11. 26. '+record.time],['기재 사인',record.cause],['담당 의사','[서명 번짐]'],['수정 흔적',record.revision||'판독 불가']];
+   const rows=[['환자 성명',record.patient],['사망 일시','1988. 11. 26. '+record.time],['기재 사인',record.cause],['담당 의사','김  ○  ○'],['수정 흔적',record.revision||'판독 불가']];
    for(const [label,value] of rows){
     const row=document.createElement('div');row.style.cssText='display:grid;grid-template-columns:88px 1fr;border-bottom:1px solid #9b8a734d;min-height:41px;align-items:center;gap:8px';
     const l=document.createElement('span');l.textContent=label;l.style.cssText='font-size:12px;color:#5d5040';
-    const v=document.createElement('span');v.textContent=value;row.append(l,v);page.append(row);
+    const v=document.createElement('span');v.textContent=value;
+    if(label==='담당 의사'||label==='환자 성명'){
+     v.style.cssText='position:relative;isolation:isolate;min-height:32px;display:flex;align-items:center;filter:contrast(.83)';
+     const blot=document.createElement('i');blot.setAttribute('aria-hidden','true');
+     blot.style.cssText='position:absolute;z-index:2;left:12%;top:-7px;width:70%;height:44px;pointer-events:none;opacity:.92;background:radial-gradient(ellipse at 26% 50%,#454b3433 0 14%,#414b37aa 19%,transparent 48%),radial-gradient(ellipse at 60% 55%,#333c2cbb 0 7%,#52604799 14%,transparent 37%),radial-gradient(circle at 76% 20%,#303b2a99 0 5%,transparent 14%),radial-gradient(circle at 17% 83%,#343d2d99 0 4%,transparent 12%),radial-gradient(ellipse at 45% 45%,#706c5e9e,transparent 60%);filter:blur(2.7px) saturate(.65);transform:rotate(-8deg)';
+     v.append(blot);
+    }
+    row.append(l,v);page.append(row);
    }
    const stamp=document.createElement('div');stamp.textContent=record.stamp;stamp.style.cssText='margin:12px 0 0 auto;width:max-content;padding:5px 12px;border:2px solid #833e3b;color:#833e3b;transform:rotate(-9deg);font-weight:bold;opacity:.8';
    const trace=document.createElement('p');trace.textContent='기록 대조 메모: '+record.trace;trace.style.cssText='margin:22px 0 0;padding:10px;border-top:1px dashed #85735e;font-size:13px';
@@ -941,8 +955,7 @@
   const artifact=document.createElement('div');artifact.style.cssText='margin:23px 0;padding:15px;border:1px solid #584756;background:#221b26';
   const aTitle=document.createElement('div');aTitle.textContent='제0유물 · 균열의 파편';aTitle.style.cssText='font-size:17px;color:#d9b8d9;font-weight:bold';artifact.append(aTitle);
   const aBody=document.createElement('p');aBody.textContent='302호의 봉인이 해제되었습니다. 파편이 공동 수집함에 등록되었습니다.';aBody.style.cssText='font-size:13px;margin:8px 0 0';artifact.append(aBody);panel.append(artifact);
-  const next=document.createElement('button');next.type='button';next.textContent='병실로 돌아가기';next.style.cssText='display:block;width:100%;margin-top:22px;padding:13px;background:#382b37;border:1px solid #776073;color:#fff;font:15px system-ui';
-  next.onclick=()=>overlay.remove();panel.append(next);
+  // Do not dismiss the success scene back to the legacy CH01 reception.
   const transition=document.createElement('div');transition.style.cssText='border-top:1px solid #4c4446;margin-top:22px;padding-top:19px';
   const prompt=document.createElement('p');prompt.textContent='병실의 봉인이 풀렸다. 복도 끝에서 엘리베이터가 한 번 울린다. 다음 구역으로 향할 준비가 되었는가?';prompt.style.cssText='font-size:14px;line-height:1.8';transition.append(prompt);
   const call=document.createElement('button');call.type='button';call.textContent=ch02IsHost?'03. 엘리베이터 호출':'03. 방장의 엘리베이터 호출 대기';call.disabled=!ch02IsHost;
