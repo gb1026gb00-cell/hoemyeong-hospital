@@ -218,6 +218,42 @@
   const fallback=document.createElement('button');fallback.type='button';fallback.textContent='거울 문지르기 (접근성 버튼)';fallback.style.cssText='width:100%;padding:12px;background:#2b3031;color:#eae4dc;border:1px solid #5d6666;border-radius:6px';fallback.onclick=rub;card.append(fallback);
   overlay.append(card);document.body.append(overlay);paint();
  }
+
+ // CH03 floor directory: each investigator receives one private ordering mark.
+ // These positions are stable per room capacity and never require a server request to open.
+ function openCh03FloorDirectory(){
+  document.getElementById('hmCh03FloorDirectory')?.remove();
+  const capacity=[2,4,8].includes(ch02RoomCapacity)?ch02RoomCapacity:2;
+  const index=ch03MirrorIndex();
+  const orderByCapacity={2:[2,1],4:[3,1,4,2],8:[3,1,6,2,8,4,7,5]};
+  const order=orderByCapacity[capacity];
+  // For 2/4 players, all private marks are hidden in the forbidden floors.
+  // For 8 players, the eight floor rows each hold one investigator's private mark.
+  const floor=capacity===8?index+1:5+index;
+  const rank=index>=0&&index<capacity?order[index]:null;
+  const overlay=document.createElement('div');overlay.id='hmCh03FloorDirectory';
+  overlay.style.cssText='position:fixed;inset:0;z-index:2147483600;background:#030405f5;color:#f2eae3;display:flex;align-items:center;justify-content:center;padding:15px;box-sizing:border-box;font:14px system-ui';
+  const card=document.createElement('section');card.style.cssText='width:min(440px,100%);max-height:94dvh;overflow:auto;background:#171513;border:1px solid #5b534b;border-radius:10px;padding:15px;box-sizing:border-box';
+  const header=document.createElement('div');header.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px';
+  const title=document.createElement('strong');title.textContent='회명병원 · 층별 안내문';
+  const close=document.createElement('button');close.type='button';close.textContent='닫기';close.style.cssText='padding:9px 14px;background:#302d30;color:white;border:1px solid #71656c;border-radius:6px';close.onclick=()=>overlay.remove();
+  header.append(title,close);card.append(header);
+  const paper=document.createElement('div');paper.style.cssText='padding:18px 14px;background:radial-gradient(ellipse at 13% 7%,#5e594d70,transparent 38%),radial-gradient(ellipse at 90% 88%,#514a3f91,transparent 48%),repeating-linear-gradient(2deg,#b5a994 0 2px,#b9ad98 3px 7px);border:2px solid #70675b;color:#29231f;box-shadow:inset 0 0 25px #443c36a3;transform:rotate(-.4deg)';
+  const heading=document.createElement('div');heading.textContent='回明病院 / 층별 시설 안내';heading.style.cssText='font:bold 19px serif;text-align:center;border-bottom:2px solid #5c5047;padding-bottom:10px;margin-bottom:12px';paper.append(heading);
+  const labels=['접수실','진료실','검사실','기록보관실','???','???','???','???'];
+  for(let i=0;i<8;i++){
+   const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;min-height:39px;border-bottom:1px dashed #7e7067;padding:3px 8px;gap:10px;'+(i===floor-1?'background:#7c514b28;':'');
+   const name=document.createElement('span');name.textContent=String(i+1).padStart(2,'0')+'F  '+labels[i];name.style.cssText='font:600 16px Georgia,serif;letter-spacing:.4px';
+   const stamp=document.createElement('span');stamp.style.cssText='font:bold 23px Georgia,serif;color:#702d2a;min-width:40px;text-align:center;transform:rotate(-8deg)';
+   stamp.textContent=i===floor-1&&rank!==null?String(rank):'';
+   row.append(name,stamp);paper.append(row);
+  }
+  const footer=document.createElement('div');footer.textContent='※ 안내문 임의 수정 금지 / 5층 이상 기록 훼손';footer.style.cssText='font:11px serif;text-align:center;margin-top:14px;color:#514238';paper.append(footer);
+  card.append(paper);
+  const help=document.createElement('p');help.style.cssText='color:#c9b8ae;font-size:13px;line-height:1.6;margin:13px 0 0';
+  help.textContent=rank===null?'조사원 배정 정보를 확인할 수 없습니다. 팀 연결 상태를 확인하세요.':'붉은 숫자는 층수가 아니라 배열 순서를 뜻하는 듯하다. 거울에서 발견한 숫자와 함께 팀원에게 전달하자.';
+  card.append(help);overlay.append(card);document.body.append(overlay);
+ }
  function mountIndependentCh03(){
   const old=document.getElementById('hmIndependentCh03');
   if(!active||phase!=='ch03'){old?.remove();return;}
@@ -250,7 +286,7 @@
   control('층수 버튼','ch03_explore',{object:'panel'});
   const mirrorButton=document.createElement('button');mirrorButton.type='button';mirrorButton.textContent='거울 닦기';mirrorButton.style.cssText='min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c;color:#f5edf3;font:600 14px system-ui;cursor:pointer';mirrorButton.onclick=openCh03Mirror;bottom.append(mirrorButton);
   control('스피커','ch03_explore',{object:'speaker'});
-  control('운행 일지','ch03_clue',{station:'log'});
+  const directoryButton=document.createElement('button');directoryButton.type='button';directoryButton.textContent='거울 아래 층수 안내문';directoryButton.style.cssText='min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c;color:#f5edf3;font:600 14px system-ui;cursor:pointer';directoryButton.onclick=openCh03FloorDirectory;bottom.append(directoryButton);
   control('반사면 분석','ch03_clue',{station:'reflection'});
   const form=document.createElement('form');form.style.cssText='grid-column:1/-1;display:flex;gap:8px';
   const input=document.createElement('input');input.placeholder='세 자리 암호';input.inputMode='numeric';input.maxLength=3;input.autocomplete='off';input.style.cssText='min-width:0;flex:1;padding:12px;background:#161119;color:#fff;border:1px solid #766477;border-radius:6px;font-size:16px';
