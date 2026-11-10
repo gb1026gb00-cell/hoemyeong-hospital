@@ -14,7 +14,8 @@
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
     if(m.type==='state'||m.type==='joined'){active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
-    if(m.type==='reception_clue'||m.type==='reception_result')showReceptionResult(m);
+    if(m.type==='reception_clue'&&m.object!=='desk')showSceneClue(m);
+    if(m.type==='reception_result')showReceptionResult(m);
     if(m.type==='reception_result'&&m.ok===false){const modal=$('hmReceptionCodeModal');if(modal){const p=modal.querySelector('p:nth-of-type(2)');if(p)p.textContent=m.message||'번호를 다시 확인하세요.';}}
     if(m.type==='reception_result'&&m.complete){$('hmReceptionCodeModal')?.remove();}
     handleHospitalSoundEvent(m);
@@ -300,7 +301,7 @@
     }
     out.after(blobs);
   }
-  if(message.object==='cabinet'&&message.popup){
+  if(false&&message.object==='cabinet'&&message.popup){
     const existing=$('hmCabinetNotice');if(existing)existing.remove();
     const overlay=document.createElement('div');overlay.id='hmCabinetNotice';
     overlay.style.cssText='position:fixed;inset:0;z-index:999995;display:grid;place-items:center;background:#050307dd;padding:18px';
@@ -406,44 +407,49 @@
  // The approved V172 CH01 investigation opens a separate investigation-record
  // window, not #ch01PuzzlePanel. Move the new cooperative board into that
  // visible window whenever it opens, without destroying legacy puzzle handlers.
- function mountReceptionInInvestigation(){
+ // CH01 clues are inspected from the approved photorealistic scene, not the
+ // old textual investigation record. Keep old controls in DOM for compatibility.
+ function hideLegacyCh01Record(){
   if(!active||phase!=='separated')return;
-  let board=$('hmReceptionCoop');
-  if(!board){installReceptionCoop();board=$('hmReceptionCoop');}
-  if(!board)return;
-  const headings=[...document.querySelectorAll('button')].filter(el=>/^(조사 기록|공동 수사판|심전도 복원|내 제어판)$/.test(el.textContent.trim()));
-  const tabs=headings.find(el=>el.textContent.trim()==='조사 기록');
+  const tabs=[...document.querySelectorAll('button')].find(x=>x.textContent.trim()==='조사 기록');
   if(!tabs)return;
-  let host=tabs.parentElement;
-  for(let i=0;i<5&&host;i++,host=host.parentElement){
-   if(host.querySelectorAll('button').length>=4&&host.scrollHeight>350)break;
+  const root=tabs.closest('[role="dialog"],.hmPlaySheet,.hm-play-sheet')||tabs.parentElement?.parentElement;
+  if(root&&root!==document.body){
+   const legacy=root.querySelector('#ch01PuzzlePanel');
+   if(legacy)legacy.style.display='none';
   }
-  if(!host)return;
-  const scroll=host.querySelector('[style*="overflow"]')||host;
-  if(board.parentElement!==scroll){
-   scroll.insertBefore(board,scroll.firstChild);
-  }
-  // Hide only obsolete investigation-record prose/forms in the currently
-  // active CH01 tab. Never remove other tabs, puzzle data, or scene hotspots.
-  if(scroll!==host&&scroll.contains(board)){
-   for(const child of [...scroll.children]){
-    if(child===board)continue;
-    if(child.dataset?.hmLegacyHidden==='1')continue;
-    child.dataset.hmLegacyHidden='1';
-    child.hidden=true;child.style.display='none';
-   }
-  }
-  // Keep the legacy investigation controls available in other tabs;
-  // the new CH01 board is the first section of the investigation record.
-  board.hidden=false;board.style.display='block';
  }
- const scheduleReceptionMount=()=>requestAnimationFrame(mountReceptionInInvestigation);
- document.addEventListener('hm-v175-state',scheduleReceptionMount);
- document.addEventListener('click',scheduleReceptionMount);
- const receptionMountObserver=new MutationObserver(()=>{if(active&&phase==='separated')scheduleReceptionMount();});
- receptionMountObserver.observe(document.body||document.documentElement,{childList:true,subtree:true});
-
-
+ document.addEventListener('hm-v175-state',hideLegacyCh01Record);
+ document.addEventListener('click',()=>requestAnimationFrame(hideLegacyCh01Record));
+ function showSceneClue(message){
+  if(!message||!['mirror','cabinet','ledger'].includes(message.object))return;
+  $('hmSceneClueOverlay')?.remove();
+  const overlay=document.createElement('div');overlay.id='hmSceneClueOverlay';
+  overlay.style.cssText='position:fixed;inset:0;z-index:999996;background:#08070bdc;display:flex;align-items:center;justify-content:center;padding:16px';
+  const card=document.createElement('section');card.style.cssText='width:min(480px,100%);max-height:80vh;overflow:auto;background:#19141b;border:1px solid #9c8292;border-radius:9px;padding:22px;color:#e8dce4;text-align:center;box-shadow:0 20px 80px #000';
+  const heading=document.createElement('h2');heading.textContent=message.label||'조사 단서';heading.style.cssText='font:700 21px serif';
+  const body=document.createElement('p');body.textContent=(message.lines||[]).join('\\n');body.style.cssText='white-space:pre-line;font:15px/1.8 system-ui';
+  card.append(heading);
+  if(message.object==='mirror'&&message.shadowCount){
+   const glass=document.createElement('div');glass.style.cssText='display:flex;align-items:center;justify-content:space-around;gap:10px;min-height:160px;padding:18px;margin:15px 0;background:linear-gradient(130deg,#2b2c30,#45454b 48%,#1a1b20);border:8px ridge #4a444a;box-shadow:inset 0 0 40px #000';
+   for(let i=0;i<message.shadowCount;i++){const blob=document.createElement('span');blob.style.cssText='display:block;flex:1;max-width:68px;height:'+(80+i%2*20)+'px;border-radius:43% 57% 62% 38% / 55% 42% 58% 45%;background:#030305;filter:blur(3px);box-shadow:0 0 15px 9px #050507';glass.append(blob);}
+   card.append(glass);
+  }
+  card.append(body);
+  const close=document.createElement('button');close.textContent='현장으로 돌아가기';close.style.cssText='width:100%;margin-top:12px;padding:13px;background:#463345;border:1px solid #957b90;color:white;border-radius:8px';close.onclick=()=>overlay.remove();
+  card.append(close);overlay.append(card);document.body.append(overlay);
+ }
+ document.addEventListener('click',event=>{
+  if(!active||phase!=='separated'||socket?.readyState!==NativeWS.OPEN)return;
+  const target=event.target.closest?.('#mainScene [data-action],#mainScene [data-object],#mainScene [data-ch01]');
+  if(!target)return;
+  const raw=(target.dataset.object||target.dataset.action||target.dataset.ch01||'').toLowerCase();
+  const object=({reception_desk:'desk',reception:'desk',drawer:'desk',desk:'desk',mirror:'mirror',cabinet:'cabinet',ledger:'ledger'})[raw];
+  if(!object)return;
+  event.preventDefault();event.stopImmediatePropagation();
+  if(object==='desk')playReceptionHand();
+  socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));
+ },true);
  // Route the FIRST actual CH01 investigation through the server before legacy
  // V172 scene handlers. The old scene can use data-action while the new panel
  // uses reception_clue; both must initiate the same once-per-room transition.
