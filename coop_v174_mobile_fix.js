@@ -56,18 +56,33 @@
  directObserver.observe(document.documentElement,{childList:true,subtree:true});
  // CH01 desk action is independent of the legacy call-bell and puzzle UI.
  // Keep it visible after separation even when V172 uses a separate scene sheet.
- // Use the original approved CH01 desk drawer hotspot; never overlay a new button.
- function removeDuplicateDeskButton(){const b=$('hmDirectReceptionDesk');if(b)b.remove();}
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',removeDuplicateDeskButton,{once:true});else removeDuplicateDeskButton();
+ function mountReceptionDeskAction(){
+  let b=$('hmDirectReceptionDesk');
+  if(!b){
+   b=document.createElement('button');b.id='hmDirectReceptionDesk';b.type='button';
+   b.textContent='접수대 서랍 조사';
+   b.style.cssText='position:fixed!important;left:50%!important;bottom:92px!important;transform:translateX(-50%)!important;z-index:999990!important;min-width:220px;max-width:90vw;padding:16px 22px;border:2px solid #bba0ad;border-radius:12px;background:#392536;color:#fff;font:700 16px system-ui;box-shadow:0 5px 25px #000b;cursor:pointer';
+   b.addEventListener('click',e=>{
+    e.preventDefault();e.stopImmediatePropagation();
+    if(!active||phase!=='separated'||socket?.readyState!==NativeWS.OPEN)return;
+    socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'desk'}));
+   },true);
+   document.body.append(b);
+  }
+  b.hidden=!(active&&phase==='separated');
+  b.style.display=b.hidden?'none':'block';
+ }
+ document.addEventListener('hm-v175-state',mountReceptionDeskAction);
+ document.addEventListener('hm-v175-started',mountReceptionDeskAction);
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountReceptionDeskAction,{once:true});else mountReceptionDeskAction();
  // The approved V172 scene can be rendered after the server state arrives.
  // Its existing desk hotspots should send the same command, not the bell action.
  document.addEventListener('click',event=>{
   if(!active||phase!=='separated'||socket?.readyState!==NativeWS.OPEN)return;
-  const el=event.target.closest?.('button,[role="button"],[data-object],[data-action],[data-ch01],[aria-label],[title]');
-  if(!el)return;
-  const descriptor=[el.textContent,el.dataset?.object,el.dataset?.action,el.dataset?.ch01,el.getAttribute('aria-label'),el.getAttribute('title')].filter(Boolean).join(' ').trim().toLowerCase();
-  // Only the original drawer hotspot; never the reception ledger or general desk.
-  if(!/접수대\\s*서랍|reception[_ -]?drawer|desk[_ -]?drawer/.test(descriptor))return;
+  const el=event.target.closest?.('[data-object],[data-action],[data-ch01],[aria-label],[title]');
+  if(!el||el.id==='hmDirectReceptionDesk')return;
+  const descriptor=[el.dataset?.object,el.dataset?.action,el.dataset?.ch01,el.getAttribute('aria-label'),el.getAttribute('title')].filter(Boolean).join(' ').toLowerCase();
+  if(!/desk|reception_desk|접수대|서랍/.test(descriptor))return;
   event.preventDefault();event.stopImmediatePropagation();
   socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'desk'}));
  },true);
@@ -172,7 +187,7 @@
   retry.hidden=true;
   const finish=()=>{video.pause();overlay.remove();receptionHandPlaying=false;};
   video.addEventListener('ended',finish,{once:true});
-  video.addEventListener('error',()=>{retry.textContent='영상 로딩 실패 · 다시 시도';retry.hidden=false;video.load();},{once:true});
+  video.addEventListener('error',finish,{once:true}); // Never trap the player if the asset is not deployed.
   retry.onclick=()=>video.play().catch(()=>{retry.hidden=false;});
   overlay.append(video,retry);document.body.append(overlay);
   video.play().catch(()=>{retry.hidden=false;});
