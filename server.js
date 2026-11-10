@@ -599,6 +599,14 @@ wss.on('connection',ws=>{
     broadcast(r,{type:'ch03_event',event:'video',message:'엘리베이터 안에 환자복을 입은 사람이 서 있다.'});
     broadcast(r,state(r));return;
    }
+   if(ch.phase==='ch03'&&m.action==='ch03_fragment'){
+    if(!r.artifactFragments)r.artifactFragments=new Set();
+    if(!r.artifactFragments.has(2)){
+     r.artifactFragments.add(2);
+     broadcast(r,{type:'fragment_result',ok:true,index:2,message:FRAGMENT_DESCRIPTIONS[2]+' (팀 공동 소지품에 등록)'});
+    }else send(ws,{type:'fragment_result',ok:true,index:2,already:true,message:'제0유물 파편은 이미 공동 소지품에 등록되어 있습니다.'});
+    broadcast(r,state(r));return;
+   }
    if(ch.phase==='ch03'&&m.action==='ch03_submit'){
     const c=ch.ch03;
     const answers={2:'15',4:'32',8:'35'};
@@ -607,9 +615,13 @@ wss.on('connection',ws=>{
     if(String(m.answer||'').trim()!==expected){
      c.failed++;broadcast(r,{type:'ch03_event',event:'wrong',message:'잘못된 운행 코드. 엘리베이터가 아래로 급강하했다가 멈춘다.'});broadcast(r,state(r));return;
     }
-    c.solved=true;ch.phase='ch03_cleared';
-    broadcast(r,{type:'ch03_event',event:'cleared',message:'운행 코드가 확인되었다. 그러나 엘리베이터에는 아직 누군가 남아 있다.'});
-    broadcast(r,state(r));persist();return;
+    if(!(r.artifactFragments||new Set()).has(2))return send(ws,{type:'ch03_result',ok:false,message:'정답은 맞지만 거울 가장자리의 제0유물 파편을 먼저 회수해야 합니다.'});
+    c.solved=true;
+    ch.phase='ch04';
+    ch.ch04={inspected:[],witnesses:[],votes:[],failed:0,solved:false};
+    broadcast(r,{type:'ch03_event',event:'cleared',message:'운행 코드 승인. 제0유물 파편을 확보하고 기록보관실로 이동한다.'});
+    broadcast(r,{type:'ch04_event',event:'enter',message:'서류 세 장에 같은 환자의 이름이 적혀 있다. 사망 시각은 모두 다르다. 복도 끝에서 종이가 넘어간다.'});
+    broadcast(r,state(r));chapterVoiceOnce(r,4);persist();return;
    }
    if(m.action==='ch04_enter'&&ch.phase==='ch03_cleared'){
     if(!(r.artifactFragments||new Set()).has(2))return send(ws,{type:'fragment_result',ok:false,message:'이 구역의 균열의 파편을 직접 찾아 공동 소지품에 등록해야 다음 구역으로 이동할 수 있습니다.'});
