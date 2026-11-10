@@ -559,7 +559,7 @@ wss.on('connection',ws=>{
     ch.phase='ch02_cleared';
     if(!r.artifactFragments)r.artifactFragments=new Set();
     r.artifactFragments.add(1);
-    broadcast(r,{type:'ch02_new_result',site:'answer',ok:true,message:'PATIENT STATUS : ALIVE · 302호 봉인 해제. 제0유물 파편이 공동 수집함에 등록되었습니다.'});
+    broadcast(r,{type:'ch02_new_result',site:'answer',ok:true,scene:'death_record_invalidated',artifactFragment:1,message:'PATIENT STATUS : ALIVE · 302호 봉인 해제. 제0유물 파편이 공동 수집함에 등록되었습니다.'});
     broadcast(r,state(r));persist();return;
    }
    if(ch.phase==='ch02'&&String(m.action||'').startsWith('ch02_'))return;
