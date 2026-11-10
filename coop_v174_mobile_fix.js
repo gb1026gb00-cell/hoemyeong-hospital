@@ -169,6 +169,55 @@
 
  // Subsequent chapter story intros: narrative only, never modify cooperative puzzles.
  // CH03 owns a standalone visual layer; the legacy reception must never be visible.
+
+ // CH03 mirror is local-first: no WebSocket round trip to open or rub.
+ const ch03MirrorDigits=[4,1,7,3,8,2,6,5];
+ let ch03MirrorRubCount=0,ch03MirrorRoleKey='';
+ function ch03MirrorIndex(){
+  const roles=ch02RoomRoles;
+  const i=roles.indexOf(ch02AssignedRole);
+  return i>=0?i:-1;
+ }
+ function openCh03Mirror(){
+  document.getElementById('hmCh03MirrorModal')?.remove();
+  const index=ch03MirrorIndex();
+  const capacity=[2,4,8].includes(ch02RoomCapacity)?ch02RoomCapacity:2;
+  const key=String(ch02AssignedRole)+'/'+ch02RoomRoles.join(',')+'/'+capacity;
+  if(ch03MirrorRoleKey!==key){ch03MirrorRoleKey=key;ch03MirrorRubCount=0;}
+  const overlay=document.createElement('div');overlay.id='hmCh03MirrorModal';
+  overlay.style.cssText='position:fixed;inset:0;z-index:2147483600;background:#030405f5;color:#f2eae3;display:flex;align-items:center;justify-content:center;padding:15px;box-sizing:border-box;font:14px system-ui';
+  const card=document.createElement('div');card.style.cssText='width:min(440px,100%);max-height:95dvh;overflow:auto;background:#121516;border:1px solid #575452;border-radius:10px;padding:15px;box-sizing:border-box';
+  const head=document.createElement('div');head.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px';
+  const title=document.createElement('strong');title.textContent='금이 간 거울 · 반사면 조사';
+  const close=document.createElement('button');close.type='button';close.textContent='닫기';close.style.cssText='padding:9px 14px;background:#302d30;color:white;border:1px solid #71656c;border-radius:6px';
+  close.onclick=()=>overlay.remove();head.append(title,close);card.append(head);
+  const mirror=document.createElement('div');
+  mirror.style.cssText='position:relative;width:100%;height:min(53dvh,390px);min-height:220px;overflow:hidden;border:7px ridge #4b4542;border-radius:5px;background:linear-gradient(110deg,#0a1011,#4d5755 33%,#121a1c 62%,#333b39);touch-action:none;user-select:none;cursor:crosshair;box-sizing:border-box';
+  const scratch=document.createElement('div');scratch.style.cssText='position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(123deg,transparent 0 44px,#a8a5a41a 45px,#12141477 48px,transparent 52px),radial-gradient(ellipse at 55% 40%,#9b99938a,#121717d9 78%);transition:opacity .35s';
+  const number=document.createElement('div');number.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 clamp(72px,25vw,145px) Georgia,serif;color:#e6dfd3;text-shadow:0 0 12px #e7ddd5,0 0 30px #a4a8a2;opacity:0;pointer-events:none;transition:opacity .5s';
+  if(index>=0&&index<capacity)number.textContent=String(ch03MirrorDigits[index]);
+  mirror.append(number,scratch);
+  const info=document.createElement('p');info.style.cssText='margin:12px 0;color:#c4b8b7;text-align:center;min-height:40px';
+  const threshold=index+1;
+  function paint(){
+   const revealed=index>=0&&index<capacity&&ch03MirrorRubCount>=threshold;
+   number.style.opacity=revealed?'1':'0';
+   scratch.style.opacity=revealed?'.12':String(Math.max(.3,.94-ch03MirrorRubCount*.1));
+   info.textContent=index<0?'조사원 배정을 확인할 수 없습니다. 팀 연결 상태를 확인하세요.':revealed?'먼지 아래 숫자가 드러났다. 이 숫자를 팀원에게 전달하자.':'거울에 묻은 얼룩을 손가락이나 마우스로 문질러 보자.';
+  }
+  let down=false,distance=0,lastX=0,lastY=0;
+  function rub(){
+   if(index<0||index>=capacity||ch03MirrorRubCount>=threshold)return;
+   ch03MirrorRubCount++;
+   paint();
+  }
+  mirror.addEventListener('pointerdown',e=>{down=true;distance=0;lastX=e.clientX;lastY=e.clientY;mirror.setPointerCapture?.(e.pointerId);});
+  mirror.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;distance+=Math.hypot(dx,dy);lastX=e.clientX;lastY=e.clientY;if(distance>=110){distance=0;rub();}});
+  const end=()=>{down=false;distance=0;};mirror.addEventListener('pointerup',end);mirror.addEventListener('pointercancel',end);
+  card.append(mirror,info);
+  const fallback=document.createElement('button');fallback.type='button';fallback.textContent='거울 문지르기 (접근성 버튼)';fallback.style.cssText='width:100%;padding:12px;background:#2b3031;color:#eae4dc;border:1px solid #5d6666;border-radius:6px';fallback.onclick=rub;card.append(fallback);
+  overlay.append(card);document.body.append(overlay);paint();
+ }
  function mountIndependentCh03(){
   const old=document.getElementById('hmIndependentCh03');
   if(!active||phase!=='ch03'){old?.remove();return;}
@@ -199,7 +248,7 @@
    bottom.append(b);
   }
   control('층수 버튼','ch03_explore',{object:'panel'});
-  control('거울','ch03_explore',{object:'mirror'});
+  const mirrorButton=document.createElement('button');mirrorButton.type='button';mirrorButton.textContent='거울 닦기';mirrorButton.style.cssText='min-height:50px;padding:12px 8px;border:1px solid #766477;border-radius:7px;background:#2a202c;color:#f5edf3;font:600 14px system-ui;cursor:pointer';mirrorButton.onclick=openCh03Mirror;bottom.append(mirrorButton);
   control('스피커','ch03_explore',{object:'speaker'});
   control('운행 일지','ch03_clue',{station:'log'});
   control('반사면 분석','ch03_clue',{station:'reflection'});
