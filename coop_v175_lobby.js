@@ -30,10 +30,8 @@
   const heading=panel?.querySelector('h2');if(heading)heading.textContent=mode==='join'?'조사원 선택 · 대기실':'새로운 조사실 · 대기실';
   const joinButton=$('hmJoin');if(joinButton)joinButton.textContent=mode==='join'?'조사실 입장':'조사실 만들기';
   const room=$('hmRoom');
-  if(room&&mode==='create'&&!room.value.trim()){
-   room.value='HM'+Math.random().toString(36).slice(2,8).toUpperCase();
-   room.dispatchEvent(new Event('input',{bubbles:true}));
-  }
+  if(room&&mode==='create'){room.value='자동 발급 대기';room.readOnly=true;const button=$('hmJoin');if(button){delete button.dataset.issued;button.disabled=false;}const info=$('hmV175RoomInfo');if(info)info.remove();}
+  if(room&&mode==='join')room.readOnly=true;
   if(room&&mode==='join'){room.focus();room.select();}
  }
  function build(){
@@ -56,12 +54,41 @@
   guideButton.onclick=()=>{setGate(false);guide.hidden=false;};
 
   const entry=document.createElement('div');entry.id='hmV176CodeEntry';entry.hidden=true;entry.setAttribute('role','dialog');entry.setAttribute('aria-label','초대 코드 입력');
-  entry.innerHTML='<div class="hm-lobby"><div class="hm-eyebrow">THE EIGHTH DOOR</div><h1 style="font-size:30px">초대 코드로 입장</h1><p class="hm-sub">전달받은 조사실 코드를 입력해 주세요.</p><label for="hmV176CodeInput" style="display:block;text-align:left;font-size:13px;margin-bottom:8px">조사실 코드</label><input id="hmV176CodeInput" maxlength="32" autocomplete="off" autocapitalize="characters" placeholder="HMXXXXXX" style="width:100%;box-sizing:border-box;padding:15px;border:1px solid #766381;border-radius:10px;background:#241a2f;color:white;font-size:18px;letter-spacing:.1em;text-transform:uppercase"><p id="hmV176CodeError" role="alert" style="color:#f4b4ba;font-size:12px"></p><button type="button" id="hmV176CodeContinue">계속하기</button><button type="button" id="hmV176CodeBack" style="background:transparent">메인 로비로 돌아가기</button><small>코드 확인 후 조사원을 선택하고 입장합니다.</small></div>';
+  entry.innerHTML='<div class="hm-lobby"><div class="hm-eyebrow">THE EIGHTH DOOR</div><h1 style="font-size:30px">초대 코드로 입장</h1><p class="hm-sub">전달받은 조사실 코드를 입력해 주세요.</p><label for="hmV176CodeInput" style="display:block;text-align:left;font-size:13px;margin-bottom:8px">조사실 코드</label><input id="hmV176CodeInput" maxlength="32" autocomplete="off" autocapitalize="characters" placeholder="0001" style="width:100%;box-sizing:border-box;padding:15px;border:1px solid #766381;border-radius:10px;background:#241a2f;color:white;font-size:18px;letter-spacing:.1em;text-transform:uppercase"><p id="hmV176CodeError" role="alert" style="color:#f4b4ba;font-size:12px"></p><button type="button" id="hmV176CodeContinue">계속하기</button><button type="button" id="hmV176CodeBack" style="background:transparent">메인 로비로 돌아가기</button><small>코드 확인 후 조사원을 선택하고 입장합니다.</small></div>';
   entry.style.cssText='position:fixed;inset:0;z-index:99991;overflow:auto;display:flex;align-items:center;justify-content:center;background:#0b0911f5;color:#eae2ed;font-family:system-ui,sans-serif;padding:20px;box-sizing:border-box';
   document.body.append(entry);
   style.textContent+='#hmV176CodeEntry[hidden]{display:none!important}#hmV176CodeEntry .hm-lobby{width:min(100%,460px);padding:32px 22px;border:1px solid #625269;border-radius:18px;background:#110d19e8;box-shadow:0 16px 65px #000d;text-align:center}#hmV176CodeEntry button{display:block;width:100%;padding:15px;margin:11px 0;border:1px solid #766381;border-radius:10px;background:#291e35;color:#f4ecf8;font-size:15px;font-weight:700;cursor:pointer}#hmV176CodeEntry .hm-eyebrow{font-size:11px;letter-spacing:.3em;color:#b5a6bf}#hmV176CodeEntry .hm-sub{font-size:13px;color:#c3b5cb}#hmV176CodeEntry small{color:#aa9bb5}';
 
   $('hmV175Create').onclick=()=>openRoom('create');
+  const createButton=$('hmJoin');
+  if(createButton){
+   let creating=false;
+   createButton.addEventListener('click',async event=>{
+    const panel=$('hmCoopPanel');
+    if(panel?.dataset.entryMode!=='create'||createButton.dataset.issued==='yes')return;
+    event.preventDefault();event.stopImmediatePropagation();
+    if(creating)return;
+    creating=true;createButton.disabled=true;createButton.textContent='조사실 번호 발급 중…';
+    try{
+     const response=await fetch('/api/rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({capacity:Number($('hmCapacity')?.value||2)})});
+     if(!response.ok)throw Error('번호 발급 실패');
+     const result=await response.json();
+     if(!/^[0-9]{4,}$/.test(result.code))throw Error('발급된 코드가 올바르지 않습니다.');
+     const room=$('hmRoom');room.value=result.code;room.readOnly=true;
+     room.dispatchEvent(new Event('input',{bubbles:true}));
+     createButton.dataset.issued='yes';createButton.disabled=false;
+     createButton.textContent='발급된 '+result.code+'번 조사실 입장';
+     const info=$('hmV175RoomInfo')||document.createElement('p');info.id='hmV175RoomInfo';
+     info.style.cssText='padding:10px;border:1px solid #8b738f;border-radius:8px;color:#fff;font-size:13px;line-height:1.7';
+     info.textContent='조사실 코드: '+result.code+' · 친구에게 이 코드를 알려주세요. 코드는 변경할 수 없습니다.';
+     createButton.before(info);
+     createButton.click();
+    }catch(e){
+     createButton.disabled=false;createButton.textContent='다시 방 만들기';
+     const status=$('hmCoopStatus');if(status)status.textContent='조사실 발급 오류: '+e.message;
+    }finally{creating=false;}
+   },true);
+  }
   $('hmV175Join').onclick=()=>{
    setGate(false);
    const entry=$('hmV176CodeEntry');entry.hidden=false;
@@ -70,7 +97,7 @@
   $('hmV176CodeBack').onclick=()=>{$('hmV176CodeEntry').hidden=true;setGate(true);};
   $('hmV176CodeContinue').onclick=()=>{
    const code=$('hmV176CodeInput').value.trim().toUpperCase();
-   if(!/^[A-Z0-9_-]{3,32}$/.test(code)){$('hmV176CodeError').textContent='초대 코드를 확인해 주세요.';return;}
+   if(!/^[0-9]{4,}$/.test(code)){$('hmV176CodeError').textContent='초대 코드를 확인해 주세요.';return;}
    const room=$('hmRoom');if(!room){$('hmV176CodeError').textContent='방 입장 화면을 불러올 수 없습니다.';return;}
    room.value=code;room.dispatchEvent(new Event('input',{bubbles:true}));room.dispatchEvent(new Event('change',{bubbles:true}));
    $('hmV176CodeEntry').hidden=true;
