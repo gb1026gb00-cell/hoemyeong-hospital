@@ -649,14 +649,14 @@
    const page=document.createElement('div');page.style.cssText='position:relative;margin:0 0 18px;padding:13px 12px 18px;border:1px solid #7c6c57;background:#e3d7bc66';
    const top=document.createElement('div');top.textContent='회명병원 의무기록부   HM-302 / '+record.id;top.style.cssText='font:11px system-ui;border-bottom:1px solid #8b7b64;padding-bottom:9px;margin-bottom:11px';
    page.append(top);
-   const rows=[['환자 성명',record.patient],['사망 일시','1988. 11. 26. '+record.time],['직접 사인',record.cause],['담당 의사','[서명 번짐]']];
+   const rows=[['환자 성명',record.patient],['사망 일시','1988. 11. 26. '+record.time],['기재 사인',record.cause],['담당 의사','[서명 번짐]'],['수정 흔적',record.revision||'판독 불가']];
    for(const [label,value] of rows){
     const row=document.createElement('div');row.style.cssText='display:grid;grid-template-columns:88px 1fr;border-bottom:1px solid #9b8a734d;min-height:41px;align-items:center;gap:8px';
     const l=document.createElement('span');l.textContent=label;l.style.cssText='font-size:12px;color:#5d5040';
     const v=document.createElement('span');v.textContent=value;row.append(l,v);page.append(row);
    }
    const stamp=document.createElement('div');stamp.textContent=record.stamp;stamp.style.cssText='margin:12px 0 0 auto;width:max-content;padding:5px 12px;border:2px solid #833e3b;color:#833e3b;transform:rotate(-9deg);font-weight:bold;opacity:.8';
-   const trace=document.createElement('p');trace.textContent='기록 이상: '+record.trace;trace.style.cssText='margin:22px 0 0;padding:10px;border-top:1px dashed #85735e;font-size:13px';
+   const trace=document.createElement('p');trace.textContent='기록 대조 메모: '+record.trace;trace.style.cssText='margin:22px 0 0;padding:10px;border-top:1px dashed #85735e;font-size:13px';
    page.append(stamp,trace);paper.append(page);
   }
   const footer=document.createElement('p');footer.textContent='※ 서로 다른 조사원이 확인한 문서를 대조하십시오.';footer.style.cssText='font-size:12px;margin-top:18px';paper.append(footer);
