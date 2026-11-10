@@ -60,6 +60,10 @@ function makeReceptionPuzzle(room){
 }
 const server=http.createServer((req,res)=>{
  const pathname=new URL(req.url||'/', 'http://localhost').pathname;
+ if((req.method==='GET'||req.method==='HEAD')&&pathname==='/build-info'){
+  res.writeHead(200,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});
+  return res.end(req.method==='HEAD'?'':JSON.stringify({build:'hm-ch03-direct-20261111-guide-v2',branch:'dev/coop-v172-preserve-approved-ui',ch03Direct:true,guide:'2-4-8-horror'}));
+ }
  if(req.method==='POST'&&pathname==='/api/rooms'){
   let raw='';req.on('data',chunk=>{raw+=chunk;if(raw.length>1024)req.destroy();});
   req.on('end',()=>{
