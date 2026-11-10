@@ -4,6 +4,7 @@
  const $=id=>document.getElementById(id);
  let active=false,phase='reception',socket=null;
  let startedOnce=false;
+ let ch02IsHost=false;
  let receptionAnswerLength=4;
  const NativeWS=window.WebSocket;
  function hideLobby(){const p=$('hmCoopPanel');if(p)p.hidden=true;}
@@ -15,6 +16,19 @@
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
     if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity)))receptionAnswerLength=Number(m.capacity)/2+3;active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
+    if(m.type==='joined'&&typeof m.isHost==='boolean')ch02IsHost=m.isHost;
+    if(m.type==='ch03_result'&&m.ok===false&&phase==='ch02_cleared'){
+     const status=document.getElementById('hmCh02TransitionStatus');
+     if(status)status.textContent=m.message||'엘리베이터 호출을 완료하지 못했습니다.';
+    }
+    if(m.type==='fragment_result'&&m.ok===false&&phase==='ch02_cleared'){
+     const status=document.getElementById('hmCh02TransitionStatus');
+     if(status)status.textContent=m.message||'파편 수집 상태를 확인해 주세요.';
+    }
+    if(m.type==='ch03_event'&&m.event==='enter'){
+     document.getElementById('hmCh02ClearScene')?.remove();
+     ch02ClearShown=false;
+    }
     if(m.type==='reception_clue'&&m.object!=='desk')showSceneClue(m);
     if(m.type==='reception_result')showReceptionAnswerResult(m);
     if(m.type==='ch02_certificate'&&phase==='ch02')showCh02Certificate(m);
@@ -741,7 +755,21 @@
   const aTitle=document.createElement('div');aTitle.textContent='제0유물 · 균열의 파편';aTitle.style.cssText='font-size:17px;color:#d9b8d9;font-weight:bold';artifact.append(aTitle);
   const aBody=document.createElement('p');aBody.textContent='302호의 봉인이 해제되었습니다. 파편이 공동 수집함에 등록되었습니다.';aBody.style.cssText='font-size:13px;margin:8px 0 0';artifact.append(aBody);panel.append(artifact);
   const next=document.createElement('button');next.type='button';next.textContent='병실로 돌아가기';next.style.cssText='display:block;width:100%;margin-top:22px;padding:13px;background:#382b37;border:1px solid #776073;color:#fff;font:15px system-ui';
-  next.onclick=()=>overlay.remove();panel.append(next);overlay.append(panel);document.body.append(overlay);
+  next.onclick=()=>overlay.remove();panel.append(next);
+  const transition=document.createElement('div');transition.style.cssText='border-top:1px solid #4c4446;margin-top:22px;padding-top:19px';
+  const prompt=document.createElement('p');prompt.textContent='병실의 봉인이 풀렸다. 복도 끝에서 엘리베이터가 한 번 울린다. 다음 구역으로 향할 준비가 되었는가?';prompt.style.cssText='font-size:14px;line-height:1.8';transition.append(prompt);
+  const call=document.createElement('button');call.type='button';call.textContent=ch02IsHost?'03. 엘리베이터 호출':'03. 방장의 엘리베이터 호출 대기';call.disabled=!ch02IsHost;
+  call.style.cssText='display:block;width:100%;padding:13px;background:#4a3340;color:#fff;border:1px solid #97758b;font:15px system-ui;'+(!ch02IsHost?'opacity:.55;cursor:not-allowed':'');
+  const transitionStatus=document.createElement('p');transitionStatus.id='hmCh02TransitionStatus';transitionStatus.style.cssText='min-height:18px;color:#c9aeb8;font:12px/1.6 system-ui;margin-top:10px';
+  if(!ch02IsHost)transitionStatus.textContent='협동 조사는 유지됩니다. 방장이 호출하면 모든 조사원이 함께 이동합니다.';
+  call.onclick=()=>{
+   if(!active||phase!=='ch02_cleared'||!ch02IsHost)return;
+   if(!socket||socket.readyState!==NativeWS.OPEN){transitionStatus.textContent='서버 연결을 확인한 뒤 다시 시도하세요.';return;}
+   transitionStatus.textContent='엘리베이터 호출 중…';
+   ch02Send('ch03_enter');
+  };
+  transition.append(call,transitionStatus);panel.append(transition);
+  overlay.append(panel);document.body.append(overlay);
  }
  function showCh02Answer(){
   ch02Dialog('02. 사망 판정의 오류',
@@ -836,7 +864,7 @@
   if(!el||el.closest('#hmCh02NewLayer,#hmCh02NewDialog,#hmV174Chat'))return;
   if(el.closest('#mainScene,#ch02PuzzlePanel')||el.dataset.ch02||el.dataset.site==='bed_under'){e.preventDefault();e.stopImmediatePropagation();}
  },true);
- document.addEventListener('hm-v175-state',()=>{if(phase!=='ch02'){ch02HandPending=false;document.getElementById('hmCh02NewDialog')?.remove();if(phase!=='ch02_cleared'){document.getElementById('hmCh02ClearScene')?.remove();ch02ClearShown=false;}}});
+ document.addEventListener('hm-v175-state',()=>{if(phase!=='ch02'){ch02HandPending=false;document.getElementById('hmCh02NewDialog')?.remove();if(phase==='ch03'){document.getElementById('hmCh02ClearScene')?.remove();ch02ClearShown=false;}else if(phase!=='ch02_cleared'){document.getElementById('hmCh02ClearScene')?.remove();ch02ClearShown=false;}}});
  // CH02 clean-up: remove legacy narrative clutter only in the active CH02 scene.
  // Never remove the approved photorealistic background or mutate other chapters.
  function updateCh02SceneCleanup(){
