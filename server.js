@@ -238,7 +238,7 @@ wss.on('connection',ws=>{
   }
   if(m.type==='set_capacity'){if(r.started||r.host!==player)return send(ws,{type:'error',message:'방장만 게임 시작 전에 인원을 변경할 수 있습니다.'});if(![2,4,6,8].includes(m.capacity))return send(ws,{type:'error',message:'2·4·6·8인 중 선택할 수 있습니다.'});if(r.clients.size>m.capacity)return send(ws,{type:'error',message:'현재 참가자보다 적은 인원으로 변경할 수 없습니다.'});r.capacity=m.capacity;broadcast(r,state(r));return}
   if(m.type==='ready'){if(r.started)return;player.ready=!!m.ready;broadcast(r,state(r));return}
-  if(m.type==='start'){if(r.host!==player)return send(ws,{type:'error',message:'방장만 시작할 수 있습니다.'});if(r.clients.size<2)return send(ws,{type:'error',message:'게임 시작에는 최소 2명의 조사원이 필요합니다.'});if([...r.clients].some(x=>!x.ws||x.ws.readyState!==WebSocket.OPEN))return send(ws,{type:'error',message:'모든 조사원이 연결된 상태여야 시작할 수 있습니다.'});if([...r.clients].some(x=>!x.ready))return send(ws,{type:'error',message:'모든 조사원이 준비해야 합니다.'});r.senseRoles=[...r.clients].map(x=>x.role).sort((a,b)=>a-b);r.started=true;r.lastActiveAt=Date.now();r.chapter={phase:'reception',solved:[],bellBy:null,inspected:{},sensoryDone:[],ecgSolved:false,evidenceFound:[],evidenceSolved:false,sensoryDigits:Array.from({length:8},()=>require('crypto').randomInt(1,10)),crossKeys:Array.from({length:8},()=>String(require('crypto').randomInt(10,100))),codes:Object.fromEntries([...r.clients].map(x=>[x.role,String(10+require('crypto').randomInt(90))]))};broadcast(r,{type:'started'});for(const member of r.clients)send(member.ws,{type:'sense_assignment',senses:assignedSenses(r,member.role).map(x=>x.sense)});broadcast(r,state(r));chapterVoiceOnce(r,1);return}
+  if(m.type==='start'){if(r.host!==player)return send(ws,{type:'error',message:'방장만 시작할 수 있습니다.'});if(r.clients.size<2)return send(ws,{type:'error',message:'게임 시작에는 최소 2명의 조사원이 필요합니다.'});if([...r.clients].some(x=>!x.ws||x.ws.readyState!==WebSocket.OPEN))return send(ws,{type:'error',message:'모든 조사원이 연결된 상태여야 시작할 수 있습니다.'});if([...r.clients].some(x=>!x.ready))return send(ws,{type:'error',message:'모든 조사원이 준비해야 합니다.'});r.senseRoles=[...r.clients].map(x=>x.role).sort((a,b)=>a-b);r.started=true;r.lastActiveAt=Date.now();r.chapter={phase:'reception',solved:[],bellBy:null,inspected:{},sensoryDone:[],ecgSolved:false,evidenceFound:[],evidenceSolved:false,sensoryDigits:Array.from({length:8},()=>require('crypto').randomInt(1,10)),crossKeys:Array.from({length:8},()=>String(require('crypto').randomInt(10,100))),codes:Object.fromEntries([...r.clients].map(x=>[x.role,String(10+require('crypto').randomInt(90))]))};broadcast(r,{type:'started'});broadcast(r,{type:'horror_video',id:'G01',scope:'all'});for(const member of r.clients)send(member.ws,{type:'sense_assignment',senses:assignedSenses(r,member.role).map(x=>x.sense)});broadcast(r,state(r));chapterVoiceOnce(r,1);return}
   
   if(m.type==='chapter'){
    if(!r.started)return;
@@ -275,7 +275,7 @@ wss.on('connection',ws=>{
     const objects=['desk','cabinet','mirror','intercom'];
     if(!objects.includes(m.object))return;
     const found=ch.inspected[player.role]||(ch.inspected[player.role]=[]);
-    const secondDeskLook=m.object==='desk'; // G01 fires on first actual reception-desk investigation after separation
+    const secondDeskLook=false; // G01 is the shared opening cinematic, never replayed on desk inspection
     if(secondDeskLook){
      const witnessed=ch.receptionCoop?.g01Witnessed||(ch.g01Witnessed||(ch.g01Witnessed=[]));
      if(!witnessed.includes(player.role)){
@@ -626,6 +626,17 @@ wss.on('connection',ws=>{
    }
    // Cooperative reception ledger: three two-digit entries, distributed across
    // all investigators; the six-digit solution is server-validated.
+   // First investigation, not a call bell, triggers the one-time team split.
+   if(ch.phase==='reception'&&['reception_clue','inspect'].includes(m.action)){
+    const object=String(m.object||'');
+    if(['desk','mirror','cabinet','ledger','intercom'].includes(object)){
+     ch.phase='separated';ch.bellBy=player.role;
+     ch.receptionCoop={answer:'273476',confirmed:[],g01Witnessed:[]};
+     broadcast(r,{type:'chapter_event',event:'blackout',by:player.role});
+     broadcast(r,{type:'horror_video',id:'G08',scope:'all'});
+     broadcast(r,state(r));return;
+    }
+   }
    // Fixed, object-led cooperative CH01: every investigator sees only one half
    // of each clue. No random room codes or sensory-key input.
    if(m.action==='reception_clue'&&ch.phase==='separated'){
@@ -657,8 +668,7 @@ wss.on('connection',ws=>{
     const lines=clues[object][side];
     send(ws,{type:'reception_clue',object,label:{desk:'접수대',mirror:'거울',cabinet:'캐비닛',ledger:'접수명부'}[object],lines,shadowCount:object==='mirror'?(side===0?4:6):null});
     if(object==='desk'){
-     if(!Array.isArray(p.g01Witnessed))p.g01Witnessed=[];
-     if(!p.g01Witnessed.includes(player.role)){p.g01Witnessed.push(player.role);send(ws,{type:'horror_video',id:'G01',scope:'self'});}
+
     }
     return;
    }
@@ -676,11 +686,6 @@ wss.on('connection',ws=>{
      broadcast(r,{type:'reception_result',ok:true,complete:true,message:'접수대 봉인이 풀렸다. 서류함에서 제0유물 파편을 찾아 다음 구역으로 이동하세요.'});
     }
     broadcast(r,state(r));persist();return;
-   }
-   if(m.action==='bell'&&ch.phase==='reception'){
-    ch.phase='separated';ch.bellBy=player.role;
-    ch.receptionCoop={answer:'273476',confirmed:[],g01Witnessed:[]};
-    broadcast(r,{type:'chapter_event',event:'blackout',by:player.role});broadcast(r,{type:'horror_video',id:'G08',scope:'all'});broadcast(r,state(r));return;
    }
    if(m.action==='solve'&&ch.phase==='separated'){
     if(ch.solved.includes(player.role))return;
