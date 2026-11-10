@@ -70,6 +70,7 @@
   const label=[el.textContent,el.getAttribute('aria-label'),el.getAttribute('title'),el.dataset?.action,el.dataset?.object].filter(Boolean).join(' ').trim();
   if(!/(?:^|\\s)접수대(?:\\s*서랍)?(?:$|\\s)|reception[_ -]?drawer|desk[_ -]?drawer/i.test(label))return;
   if(/접수명부|접수 기록|접수번호|접수 인원|조사 시작|강제 분리/.test(label))return;
+  playReceptionHand(); // Start inside the user's click gesture for desktop autoplay.
   socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'desk'}));
  },false);
  // Keep cinematic overlays as non-interactive layers. The source video
@@ -175,7 +176,8 @@
   video.addEventListener('ended',finish,{once:true});
   video.addEventListener('error',()=>{retry.textContent='영상 로딩 오류 · 다시 재생';retry.hidden=false;},{once:true});
   retry.onclick=()=>{video.muted=false;video.play().catch(()=>{retry.hidden=false;retry.textContent='영상 재생하기';});};
-  overlay.append(video,retry);document.body.append(overlay);
+  const exit=document.createElement('button');exit.type='button';exit.textContent='영상 닫기';exit.style.cssText='position:absolute;right:16px;top:16px;z-index:2;padding:9px 14px;background:#241a22;color:#fff;border:1px solid #806777;border-radius:8px';exit.onclick=finish;
+  overlay.append(video,retry,exit);document.body.append(overlay);
   video.play().catch(()=>{retry.hidden=false;});
  }
  // G08 is owned by the transition above; all other approved horror videos
@@ -335,7 +337,7 @@
   for(const [object,label] of [['desk','📖 접수대'],['mirror','◈ 거울'],['cabinet','▤ 캐비닛'],['ledger','📋 접수명부']]){
    const b=document.createElement('button');b.type='button';b.textContent=label;
    b.style.cssText='min-height:55px;padding:10px;border:1px solid #805c72;border-radius:9px;background:#382531;color:#fff';
-   b.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN)return;socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));};
+   b.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN)return;if(object==='desk')playReceptionHand();socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));};
    objects.append(b);
   }
   const output=document.createElement('pre');output.id='hmReceptionOutput';output.textContent='접수대, 거울, 캐비닛, 접수명부를 조사하세요.';output.style.cssText='white-space:pre-wrap;line-height:1.7;padding:12px;background:#110e15;border:1px solid #5d4759;border-radius:8px;min-height:80px;font:13px/1.7 system-ui';
@@ -373,7 +375,7 @@
   }
   if(guide){guide.hidden=true;guide.style.display='none';}
   const desk=document.querySelector('#mainScene [data-action="desk"]');
-  if(desk){desk.addEventListener('click',()=>{if(active&&phase==='separated'&&socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'desk'}));});}
+  if(desk){desk.addEventListener('click',()=>{if(active&&phase==='separated'&&socket?.readyState===NativeWS.OPEN){playReceptionHand();socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'desk'}));}});}
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installReceptionCoop,{once:true});else installReceptionCoop();
  document.addEventListener('hm-v175-started',installReceptionCoop);
