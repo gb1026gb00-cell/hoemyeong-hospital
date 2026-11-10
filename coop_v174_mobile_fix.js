@@ -19,6 +19,7 @@
     if(m.type==='reception_result')showReceptionAnswerResult(m);
     if(m.type==='ch02_certificate'&&phase==='ch02')showCh02Certificate(m);
     if(m.type==='ch02_ecg_archive'&&phase==='ch02')showCh02ECG(m);
+    if(m.type==='ch02_bed_tags'&&phase==='ch02')showCh02BedTags(m);
     if(m.type==='ch02_new_result'&&m.site==='answer'){
      const status=document.getElementById('hmCh02NewStatus');if(status)status.textContent=m.message||'';
      if(m.ok)ch02Dialog('봉인 해제',m.message||'PATIENT STATUS : ALIVE');
@@ -632,6 +633,29 @@
  function ch02Send(action,extra={}){
   if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action,...extra}));
  }
+ function showCh02BedTags(message){
+  document.getElementById('hmCh02NewDialog')?.remove();
+  const wrap=document.createElement('div');wrap.id='hmCh02NewDialog';wrap.setAttribute('role','dialog');wrap.setAttribute('aria-modal','true');
+  wrap.style.cssText='position:fixed;inset:0;z-index:999999;background:#070608ed;display:grid;place-items:center;padding:15px;overflow:auto';
+  const paper=document.createElement('section');paper.style.cssText='width:min(530px,100%);max-height:90dvh;overflow:auto;padding:22px 19px 27px;border:2px solid #776a56;background:linear-gradient(155deg,#c8bda7,#968a77);color:#29251f;box-shadow:0 20px 65px #000;font:15px/1.7 serif';
+  const close=document.createElement('button');close.type='button';close.textContent='닫기 ×';close.style.cssText='float:right;background:#2f2925;color:#fff;border:0;padding:8px 12px';close.onclick=()=>wrap.remove();paper.append(close);
+  const h=document.createElement('h2');h.textContent='回明病院 · 8번 병상';h.style.cssText='clear:both;font-size:23px;margin:15px 0 6px';paper.append(h);
+  const sub=document.createElement('p');sub.textContent='병상 표지 뒷면 / 환자 인식표 · 장비 배정표';sub.style.cssText='border-bottom:2px solid #635846;padding-bottom:13px;font-size:13px';paper.append(sub);
+  if(message.locked){
+   const p=document.createElement('p');p.textContent='표지 뒷면의 인식표는 대조 기록 담당 조사원에게 배정되었습니다. 팀원의 조사 결과를 공유하세요.';paper.append(p);
+  }else{
+   const note=document.createElement('p');note.textContent='조사원 '+(message.role+1)+' · 확인 가능한 인식표 '+message.records.length+'개';note.style.cssText='font-size:12px';paper.append(note);
+   for(const record of message.records){
+    const tag=document.createElement('div');tag.style.cssText='margin:13px 0;padding:13px 15px;border:1px solid #5d5648;background:#e1d7c5a8;box-shadow:inset 0 0 16px #897b6360';
+    const id=document.createElement('div');id.textContent='PATIENT ID : '+record.patient;id.style.cssText='font:600 13px monospace';tag.append(id);
+    const dev=document.createElement('div');dev.textContent='MONITOR : '+record.device;dev.style.cssText='font:13px monospace;margin-top:5px';tag.append(dev);
+    const letter=document.createElement('div');letter.textContent=record.letter;letter.style.cssText='font:bold 32px serif;text-align:right;color:#733b35;border-top:1px dashed #7c6d58;margin-top:10px';tag.append(letter);
+    paper.append(tag);
+   }
+  }
+  const rule=document.createElement('p');rule.textContent='희미한 손글씨: “'+message.rule+'”';rule.style.cssText='margin-top:22px;border-top:1px solid #6b5e4c;padding-top:14px;font-style:italic;font-size:14px';paper.append(rule);
+  wrap.append(paper);document.body.append(wrap);
+ }
  function showCh02ECG(message){
   document.getElementById('hmCh02NewDialog')?.remove();
   const wrap=document.createElement('div');wrap.id='hmCh02NewDialog';wrap.setAttribute('role','dialog');wrap.setAttribute('aria-modal','true');
@@ -725,7 +749,7 @@
      ch02Send('ch02_new_inspect',{site});
      if(site==='certificate'){document.getElementById('hmCh02NewDialog')?.remove();ch02Dialog('기록 조회 중','사망진단서 원본을 확인하고 있습니다. 잠시만 기다려 주세요.');}
      if(site==='ecg')ch02Dialog('심전도 복구 중','저장된 ECG 장비 기록을 불러오고 있습니다.');
-     if(site==='eight')ch02Dialog('침대 끝 · 8번 표지','지워진 표식 아래 작은 문구가 남아 있다.\n「사망을 기록한 네 글자를 읽어라.」');
+     if(site==='eight')ch02Dialog('인식표 확인 중','8번 병상에 숨겨진 인식표와 장비 배정 기록을 확인하고 있습니다.');
      if(site==='underbed')ch02HandPending=true;
     },true);
     layer.append(btn);
