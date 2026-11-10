@@ -6,7 +6,7 @@
  let startedOnce=false;
  let ch02IsHost=false;
  let receptionAnswerLength=4;
- let ch02AssignedRole=0,ch02RoomCapacity=2;
+ let ch02AssignedRole=null,ch02RoomCapacity=2;
  const NativeWS=window.WebSocket;
  function hideLobby(){const p=$('hmCoopPanel');if(p)p.hidden=true;}
  function showConnectionStatus(message){let el=$('hmV174ConnectionStatus');if(!el){el=document.createElement('div');el.id='hmV174ConnectionStatus';el.setAttribute('role','alert');el.style.cssText='position:fixed;top:12px;left:12px;right:12px;z-index:99980;padding:13px 16px;border:1px solid #d1a2a2;border-radius:10px;background:#29151df2;color:#fff;font:14px system-ui;text-align:center;pointer-events:none';document.body.append(el);}el.textContent=message;el.hidden=!message;}
@@ -18,7 +18,7 @@
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
     if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity))){receptionAnswerLength=Number(m.capacity)/2+3;ch02RoomCapacity=Number(m.capacity);}active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='joined'&&typeof m.isHost==='boolean')ch02IsHost=m.isHost;
-    if(m.type==='joined'&&m.yourRole!==undefined&&m.yourRole!==null&&Number.isInteger(Number(m.yourRole)))ch02AssignedRole=Number(m.yourRole);
+    if((m.type==='joined'||m.type==='state')&&m.yourRole!==undefined&&m.yourRole!==null&&Number.isInteger(Number(m.yourRole)))ch02AssignedRole=Number(m.yourRole);
     if(m.type==='ch02_certificate'&&Number.isInteger(Number(m.role)))ch02AssignedRole=Number(m.role);
     if(m.type==='ch02_ecg_archive'&&Number.isInteger(Number(m.role)))ch02AssignedRole=Number(m.role);
     if(m.type==='ch02_bed_tags'&&Number.isInteger(Number(m.role)))ch02AssignedRole=Number(m.role);
@@ -871,6 +871,7 @@
  }
  // Local CH02 document data mirrors server allocation; no wait for network response.
  function openLocalCh02Clue(site){
+  if(!Number.isInteger(ch02AssignedRole)){ch02Dialog('조사원 정보 확인 중','서버에서 담당 조사원 번호를 아직 받지 못했습니다. 잠시 후 다시 조사해 주세요.');return;}
   const count=[2,4,8].includes(ch02RoomCapacity)?ch02RoomCapacity:2;
   const role=((ch02AssignedRole%count)+count)%count;
   if(site==='ecg'){
@@ -895,6 +896,7 @@
   if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'ch02_new_inspect',site}));
  }
  function openLocalCh02Certificate(){
+  if(!Number.isInteger(ch02AssignedRole)){ch02Dialog('조사원 정보 확인 중','서버에서 담당 조사원 번호를 아직 받지 못했습니다. 잠시 후 다시 조사해 주세요.');return;}
   const records=[
    {id:'A-01',patient:'성명 불명 / 302-A',time:'02:41',cause:'심정지',stamp:'사망 확인',trace:'사망 판정 후 심전도 자료가 삭제 처리됨',revision:'원본 판정란 위에 재기입 흔적'},
    {id:'B-02',patient:'성명 불명 / 302-B',time:'02:38',cause:'호흡 정지',stamp:'사망 확인',trace:'의사 서명 시각이 원본과 일치하지 않음',revision:'의사 서명란 잉크 색상 불일치'},
