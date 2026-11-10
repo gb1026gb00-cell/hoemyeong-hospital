@@ -109,6 +109,47 @@
   const caption=document.createElement('div');caption.style.cssText='font-size:12px;color:#cbbbd4;margin:5px 0 10px';caption.textContent='감각 번호: 청각 0 · 촉각 1 · 시각 2 · 기록 3 · 시간 4 · 전파 5 · 관찰 6 · 기억 7';index.closest('label')?.append(caption);
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhanceCh01,{once:true});else enhanceCh01();
+
+ // Object-first investigation UI: keep original buttons, event handlers and server rules.
+ function enhanceChapterInteractions(){
+  const chapters=[
+   ['ch01PuzzlePanel','접수실','명부와 사물을 조사하고 팀원과 단서를 비교하세요.','data-ch01'],
+   ['ch02PuzzlePanel','208호 병실','침대·서랍·모니터에서 흔적을 찾고 두 사람이 안전장치를 조작하세요.','data-ch02'],
+   ['ch03PuzzlePanel','엘리베이터','층수 패널·거울·스피커를 조사하고 비상 패널을 복원하세요.','data-ch03'],
+   ['ch04PuzzlePanel','기록보관실','퇴실 대장과 CCTV, 내선 기록을 비교해 사건을 재구성하세요.','data-ch04'],
+   ['ch05PuzzlePanel','격리실','압력 기록과 관찰창을 비교한 뒤 밸브를 번갈아 조작하세요.','data-ch05'],
+   ['ch06PuzzlePanel','여덟 번째 문','기록과 거울의 차이를 확인하고 다섯 파편을 판독해 복원하세요.','data-ch06']
+  ];
+  const investigative=/inspect|explore|clue|witness|sample|record|corridor|room302|wheelchair|surgery|fragment_search|horror_inspect|artifact_inspect/;
+  for(const [id,title,description,attr] of chapters){
+   const panel=$(id);if(!panel||panel.querySelector('.hm-object-guide'))continue;
+   const guide=document.createElement('div');guide.className='hm-object-guide';
+   guide.style.cssText='margin:10px 0;padding:12px 13px;border:1px solid #65536d;border-radius:10px;background:#18111fe8;color:#eee4f4;line-height:1.65';
+   const heading=document.createElement('strong');heading.textContent='현장 조사 · '+title;
+   const body=document.createElement('p');body.textContent=description;body.style.cssText='margin:5px 0 8px;font-size:12px;color:#cbbcd4';
+   const status=document.createElement('div');status.textContent='조사할 물건을 터치하세요. 단서는 아래 조사 기록에 표시됩니다.';status.style.cssText='font-size:12px;color:#d7bddc';
+   guide.append(heading,body,status);
+   const first=panel.querySelector('strong');first?.after(guide);
+   const buttons=[...panel.querySelectorAll('button['+attr+']')];
+   for(const button of buttons){
+    const action=button.getAttribute(attr)||'';
+    button.style.cssText+=';min-height:44px;border-radius:9px;touch-action:manipulation;';
+    if(investigative.test(action)){
+     button.style.cssText+=';background:linear-gradient(145deg,#3a293b,#211925);border:1px solid #806b81;';
+     button.addEventListener('click',()=>{status.textContent='조사 중: '+button.textContent.trim()+' · 결과를 확인하고 팀원에게 공유하세요.';},{passive:true});
+    }
+   }
+   const result=panel.querySelector('[id$="Result"]');
+   if(result){result.style.cssText+=';padding:10px;border-left:3px solid #8e657d;background:#130f19;border-radius:5px;';result.setAttribute('aria-live','polite');}
+  }
+  // CH01: use the existing real desk hotspot and the existing server inspect action.
+  // No invented puzzle, extra item or automatic answer.
+  const desk=document.querySelector('#mainScene [data-action="desk"]');
+  if(desk){desk.textContent='접수대 · 명부 조사';desk.title='강제 분리 후 접수대 기록을 조사합니다';}
+  const revisit=document.querySelector('#ch01PuzzlePanel [data-ch01="inspect"][data-object="desk"]');
+  if(revisit)revisit.textContent='접수대 명부 다시 조사';
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhanceChapterInteractions,{once:true});else enhanceChapterInteractions();
  window.WebSocket=CoopSocket;
  // Only the approved 2/4/6/8-person capacities are selectable.
  function normalizeCapacityControls(){
