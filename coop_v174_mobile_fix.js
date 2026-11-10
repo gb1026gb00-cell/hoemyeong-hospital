@@ -22,7 +22,7 @@
     if(m.type==='ch02_bed_tags'&&phase==='ch02')showCh02BedTags(m);
     if(m.type==='ch02_new_result'&&m.site==='answer'){
      const status=document.getElementById('hmCh02NewStatus');if(status)status.textContent=m.message||'';
-     if(m.ok)ch02Dialog('봉인 해제',m.message||'PATIENT STATUS : ALIVE');
+     if(m.ok&&m.scene==='death_record_invalidated')showCh02Clear();
     }
     if(m.type==='ch02_new_result'&&m.site==='underbed'&&phase==='ch02'&&!m.videoPending){
      ch02HandPending=false;
@@ -721,6 +721,28 @@
   const footer=document.createElement('p');footer.textContent='※ 서로 다른 조사원이 확인한 문서를 대조하십시오.';footer.style.cssText='font-size:12px;margin-top:18px';paper.append(footer);
   wrap.append(paper);document.body.append(wrap);
  }
+ let ch02ClearShown=false;
+ function showCh02Clear(){
+  if(ch02ClearShown&&document.getElementById('hmCh02ClearScene'))return;
+  ch02ClearShown=true;
+  document.getElementById('hmCh02NewDialog')?.remove();
+  document.getElementById('hmCh02ClearScene')?.remove();
+  const overlay=document.createElement('div');overlay.id='hmCh02ClearScene';
+  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+  overlay.style.cssText='position:fixed;inset:0;z-index:1000002;background:#020204f5;color:#ded5c5;display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto;font-family:serif';
+  const panel=document.createElement('section');panel.style.cssText='width:min(530px,100%);max-height:92dvh;overflow:auto;border:1px solid #66544c;padding:28px 22px 24px;background:linear-gradient(145deg,#141315,#070809);box-shadow:0 0 70px #000';
+  const label=document.createElement('div');label.textContent='回明病院 / 302호 / 의무기록 정정';label.style.cssText='font:12px system-ui;letter-spacing:2px;color:#8b7b73;margin-bottom:18px';panel.append(label);
+  const title=document.createElement('h2');title.textContent='02. 사망 판정의 오류';title.style.cssText='font-size:24px;margin:0 0 18px';panel.append(title);
+  const original=document.createElement('div');original.textContent='DEATH CERTIFICATE : VALID';original.style.cssText='font:14px monospace;letter-spacing:1px;color:#a57676;text-decoration:line-through;margin-bottom:13px';panel.append(original);
+  const invalid=document.createElement('div');invalid.textContent='DEATH CERTIFICATE : INVALID';invalid.style.cssText='font:600 15px monospace;letter-spacing:1px;color:#e3a6a2;margin-bottom:17px';panel.append(invalid);
+  const status=document.createElement('div');status.textContent='PATIENT STATUS : ALIVE';status.style.cssText='font:600 19px monospace;color:#9ed4b0;border-top:1px solid #5c5551;border-bottom:1px solid #5c5551;padding:18px 0;margin-bottom:20px';panel.append(status);
+  const story=document.createElement('p');story.textContent='네 장의 사망진단서에서 환자명이 하나씩 지워진다.\n마지막 문서의 빈칸에는, 이 방을 조사한 사람의 이름이 번져 나타난다.\n\n병실 문 안쪽에서 잠금장치가 풀리는 소리가 들린다.';story.style.cssText='white-space:pre-line;line-height:1.9;font-size:15px';panel.append(story);
+  const artifact=document.createElement('div');artifact.style.cssText='margin:23px 0;padding:15px;border:1px solid #584756;background:#221b26';
+  const aTitle=document.createElement('div');aTitle.textContent='제0유물 · 균열의 파편 Ⅱ';aTitle.style.cssText='font-size:17px;color:#d9b8d9;font-weight:bold';artifact.append(aTitle);
+  const aBody=document.createElement('p');aBody.textContent='302호의 봉인이 해제되었습니다. 파편이 공동 수집함에 등록되었습니다.';aBody.style.cssText='font-size:13px;margin:8px 0 0';artifact.append(aBody);panel.append(artifact);
+  const next=document.createElement('button');next.type='button';next.textContent='병실로 돌아가기';next.style.cssText='display:block;width:100%;margin-top:22px;padding:13px;background:#382b37;border:1px solid #776073;color:#fff;font:15px system-ui';
+  next.onclick=()=>overlay.remove();panel.append(next);overlay.append(panel);document.body.append(overlay);
+ }
  function showCh02Answer(){
   ch02Dialog('02. 사망 판정의 오류',
    '죽은 자의 기록은 남아 있으나, 죽음의 증거는 남아 있지 않다.\n\n네 장의 사망진단서와 마지막 심장 신호를 대조하라.\n\n사망 판정 이후에도 심장이 뛰었던 시간.\n가장 오래 살아 있었던 자부터, 인식표에 남겨진 네 글자를 입력하라.',true);
@@ -814,7 +836,7 @@
   if(!el||el.closest('#hmCh02NewLayer,#hmCh02NewDialog,#hmV174Chat'))return;
   if(el.closest('#mainScene,#ch02PuzzlePanel')||el.dataset.ch02||el.dataset.site==='bed_under'){e.preventDefault();e.stopImmediatePropagation();}
  },true);
- document.addEventListener('hm-v175-state',()=>{if(phase!=='ch02'){ch02HandPending=false;document.getElementById('hmCh02NewDialog')?.remove();}});
+ document.addEventListener('hm-v175-state',()=>{if(phase!=='ch02'){ch02HandPending=false;document.getElementById('hmCh02NewDialog')?.remove();if(phase!=='ch02_cleared'){document.getElementById('hmCh02ClearScene')?.remove();ch02ClearShown=false;}}});
  // CH02 clean-up: remove legacy narrative clutter only in the active CH02 scene.
  // Never remove the approved photorealistic background or mutate other chapters.
  function updateCh02SceneCleanup(){
