@@ -36,7 +36,7 @@
     }
     if(m.type==='reception_clue'&&m.object!=='desk')showSceneClue(m);
     if(m.type==='reception_result')showReceptionAnswerResult(m);
-    if(m.type==='ch02_certificate'&&phase==='ch02')showCh02Certificate(m);
+    if(m.type==='ch02_certificate'&&active)showCh02Certificate(m);
     if(m.type==='ch02_ecg_archive'&&phase==='ch02')showCh02ECG(m);
     if(m.type==='ch02_bed_tags'&&phase==='ch02')showCh02BedTags(m);
     if(m.type==='ch02_new_result'&&m.site==='answer'){
@@ -819,7 +819,7 @@
      e.preventDefault();e.stopImmediatePropagation();
      if(!active||phase!=='ch02')return;
      ch02Send('ch02_new_inspect',{site});
-     if(site==='certificate'){document.getElementById('hmCh02NewDialog')?.remove();ch02Dialog('기록 조회 중','사망진단서 원본을 확인하고 있습니다. 잠시만 기다려 주세요.');}
+     if(site==='certificate'){document.getElementById('hmCh02NewDialog')?.remove();}
      if(site==='ecg')ch02Dialog('심전도 복구 중','저장된 ECG 장비 기록을 불러오고 있습니다.');
      if(site==='eight')ch02Dialog('인식표 확인 중','8번 병상에 숨겨진 인식표와 장비 배정 기록을 확인하고 있습니다.');
      if(site==='underbed')ch02HandPending=true;
@@ -855,7 +855,7 @@
    modal.style.setProperty('display','none','important');
    ch02Send('ch02_new_inspect',{site});
    if(site==='underbed')ch02HandPending=true;
-   else if(site==='certificate')ch02Dialog('기록 조회 중','사망진단서 원본을 확인하고 있습니다.');
+   else if(site==='certificate')document.getElementById('hmCh02NewDialog')?.remove();
    else if(site==='ecg')ch02Dialog('심전도 복구 중','심전도 원본 기록을 확인하고 있습니다.');
    else ch02Dialog('인식표 확인 중','8번 병상 인식표를 확인하고 있습니다.');
    ch02LegacyIntercepting=false;
