@@ -18,6 +18,7 @@
     if(m.type==='reception_clue'&&m.object!=='desk')showSceneClue(m);
     if(m.type==='reception_result')showReceptionAnswerResult(m);
     if(m.type==='ch02_certificate'&&phase==='ch02')showCh02Certificate(m);
+    if(m.type==='ch02_ecg_archive'&&phase==='ch02')showCh02ECG(m);
     if(m.type==='ch02_new_result'&&m.site==='answer'){
      const status=document.getElementById('hmCh02NewStatus');if(status)status.textContent=m.message||'';
      if(m.ok)ch02Dialog('봉인 해제',m.message||'PATIENT STATUS : ALIVE');
@@ -631,6 +632,30 @@
  function ch02Send(action,extra={}){
   if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action,...extra}));
  }
+ function showCh02ECG(message){
+  document.getElementById('hmCh02NewDialog')?.remove();
+  const wrap=document.createElement('div');wrap.id='hmCh02NewDialog';wrap.setAttribute('role','dialog');wrap.setAttribute('aria-modal','true');
+  wrap.style.cssText='position:fixed;inset:0;z-index:999999;background:#030806ef;display:grid;place-items:center;padding:16px;overflow:auto';
+  const panel=document.createElement('section');panel.style.cssText='position:relative;width:min(540px,100%);max-height:90dvh;overflow:auto;border:2px solid #26483a;border-radius:5px;background:linear-gradient(135deg,#0b1b17,#020907);color:#a8e6c4;padding:20px 16px 24px;box-shadow:0 0 50px #05160f;font:14px/1.65 monospace';
+  const close=document.createElement('button');close.textContent='닫기 ×';close.type='button';close.style.cssText='float:right;background:#24392f;color:#e6f9e9;border:1px solid #426b50;padding:8px 12px';close.onclick=()=>wrap.remove();panel.append(close);
+  const h=document.createElement('h2');h.textContent='回明病院 · ECG ARCHIVE';h.style.cssText='clear:both;margin:12px 0 4px;font:600 19px system-ui;color:#c2f9d7';panel.append(h);
+  const sub=document.createElement('p');sub.textContent='302호 / 복구된 심전도 원본 / 1988.11.26';sub.style.cssText='font-size:12px;color:#74a98b;margin:0 0 16px';panel.append(sub);
+  const line=document.createElement('div');line.style.cssText='height:70px;border:1px solid #254333;background:repeating-linear-gradient(0deg,transparent 0 15px,#173524 16px),repeating-linear-gradient(90deg,transparent 0 18px,#173524 19px);margin-bottom:15px;overflow:hidden';
+  line.innerHTML='<svg viewBox="0 0 320 70" preserveAspectRatio="none" width="100%" height="100%" aria-hidden="true"><path d="M0 39H25L31 36L38 39H48L55 51L61 8L69 61L77 39H120L126 36L133 39H143L150 51L156 8L164 61L172 39H220L226 36L233 39H243L250 51L256 8L264 61L272 39H320" fill="none" stroke="#70f0a0" stroke-width="2"/></svg>';panel.append(line);
+  if(message.locked){
+   const p=document.createElement('p');p.textContent='접근 제한: 원본 심전도는 대조 기록 담당 조사원에게 배정되어 있습니다. 팀원과 기록을 공유하세요.';panel.append(p);
+  }else{
+   const note=document.createElement('p');note.textContent='조사원 '+(message.role+1)+' · 복구 장비 기록 '+message.records.length+'건';panel.append(note);
+   for(const record of message.records){
+    const card=document.createElement('div');card.style.cssText='border-top:1px solid #315b42;padding:13px 4px';
+    const title=document.createElement('strong');title.textContent=record.device+'  /  LAST SIGNAL '+record.last;title.style.cssText='display:block;color:#b5f9c9;font-size:15px';
+    const detail=document.createElement('div');detail.textContent=record.signal+' · '+record.flag;detail.style.cssText='color:#81a996;margin-top:5px';
+    card.append(title,detail);panel.append(card);
+   }
+  }
+  const footer=document.createElement('p');footer.textContent='※ 장비번호와 환자번호의 연결 정보는 병상 인식표에 보관되어 있습니다.';footer.style.cssText='border-top:1px dashed #315b42;padding-top:12px;font-size:12px;color:#8baa99';panel.append(footer);
+  wrap.append(panel);document.body.append(wrap);
+ }
  function showCh02Certificate(message){
   document.getElementById('hmCh02NewDialog')?.remove();
   const wrap=document.createElement('div');wrap.id='hmCh02NewDialog';wrap.setAttribute('role','dialog');wrap.setAttribute('aria-modal','true');
@@ -699,7 +724,7 @@
      if(!active||phase!=='ch02')return;
      ch02Send('ch02_new_inspect',{site});
      if(site==='certificate'){document.getElementById('hmCh02NewDialog')?.remove();ch02Dialog('기록 조회 중','사망진단서 원본을 확인하고 있습니다. 잠시만 기다려 주세요.');}
-     if(site==='ecg')ch02Dialog('심전도 기록','전원 공급 장치가 끊겨 있다.\n기록의 마지막 생체 신호는 사망 이후에도 이어진다.\nPATIENT STATUS : ALIVE');
+     if(site==='ecg')ch02Dialog('심전도 복구 중','저장된 ECG 장비 기록을 불러오고 있습니다.');
      if(site==='eight')ch02Dialog('침대 끝 · 8번 표지','지워진 표식 아래 작은 문구가 남아 있다.\n「사망을 기록한 네 글자를 읽어라.」');
      if(site==='underbed')ch02HandPending=true;
     },true);
