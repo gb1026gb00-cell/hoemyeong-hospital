@@ -553,6 +553,37 @@
   const object=String(target.dataset.object||target.dataset.site||target.dataset.station||'').toLowerCase();
   if(action==='ch02_explore'&&['bed','patient_record','chart','record'].includes(object))openCh02CertificatePreview();
  },true);
+ // CH02 H01: the hand-under-bed scare must only be invoked from the foot/under-bed hotspot.
+ // Legacy H01 hotspots are disabled while CH02 is active, preserving all other videos.
+ function mountCh02UnderBed(){
+  const scene=document.getElementById('mainScene');
+  if(!scene)return;
+  let b=document.getElementById('hmCh02UnderBedHotspot');
+  if(!b){
+   b=document.createElement('button');b.type='button';b.id='hmCh02UnderBedHotspot';
+   b.textContent='⌕';b.setAttribute('aria-label','침대 아래 조사');
+   b.style.cssText='position:absolute;left:54%;top:79%;transform:translate(-50%,-50%);z-index:25;width:48px;height:48px;border:1px solid #d5c6d7;border-radius:50%;background:#1d1429c9;color:#fff;font:28px system-ui;display:grid;place-items:center;cursor:pointer';
+   b.addEventListener('click',event=>{
+    event.preventDefault();event.stopImmediatePropagation();
+    if(!active||phase!=='ch02'||socket?.readyState!==NativeWS.OPEN)return;
+    socket.send(JSON.stringify({type:'chapter',action:'horror_inspect',site:'bed_under'}));
+   },true);
+   scene.append(b);
+  }
+  b.hidden=!(active&&phase==='ch02');
+  b.style.display=b.hidden?'none':'grid';
+ }
+ document.addEventListener('hm-v175-state',mountCh02UnderBed);
+ document.addEventListener('hm-v175-started',mountCh02UnderBed);
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountCh02UnderBed,{once:true});else mountCh02UnderBed();
+ document.addEventListener('click',event=>{
+  if(!active||phase!=='ch02')return;
+  const el=event.target instanceof Element?event.target.closest('[data-site="bed_under"]'):null;
+  if(el&&el.id!=='hmCh02UnderBedHotspot'){event.preventDefault();event.stopImmediatePropagation();}
+ },true);
+ const bedStyle=document.createElement('style');
+ bedStyle.textContent='html.hm-ch02-clean [data-site="bed_under"]:not(#hmCh02UnderBedHotspot){display:none!important}';
+ document.head.append(bedStyle);
  // CH02 clean-up: remove legacy narrative clutter only in the active CH02 scene.
  // Never remove the approved photorealistic background or mutate other chapters.
  function updateCh02SceneCleanup(){
