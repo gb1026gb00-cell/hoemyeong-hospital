@@ -305,7 +305,10 @@
  const splitObserver=new MutationObserver(()=>ensureSplitUI());
  splitObserver.observe(document.documentElement,{childList:true,subtree:true});
  function installReceptionCoop(){
-  const panel=$('ch01PuzzlePanel');if(!panel||$('hmReceptionCoop'))return;
+  if(!active||phase!=='separated')return;
+  if($('hmReceptionCoop'))return;
+  const panel=$('ch01PuzzlePanel')||[...document.querySelectorAll('section,article,[role="dialog"]')].find(el=>/접수실|접수대|조사 기록/.test(el.textContent||'')&&el.getClientRects().length);
+  if(!panel)return;
   const section=document.createElement('section');section.id='hmReceptionCoop';
   section.style.cssText='margin:12px 0;padding:14px;border:1px solid #91677c;border-radius:12px;background:linear-gradient(#271820,#100d15);color:#f4e8ee';
   const title=document.createElement('strong');title.textContent='접수명부 · 여섯 자리 봉인';
@@ -335,29 +338,20 @@
   submit.onclick=()=>{if(socket?.readyState!==NativeWS.OPEN)return;socket.send(JSON.stringify({type:'chapter',action:'reception_submit',answer:input.value.trim()}));};
   section.append(title,intro,objects,shadows,output,hint,cells,inputProxy,submit);
   const css=document.createElement('style');css.textContent='#hmReceptionShadows[hidden]{display:none!important}.hmShadowNurse{display:flex;flex-direction:column;align-items:center;width:36px;height:98px;filter:drop-shadow(0 0 5px #08040b)}.hmNurseHead{width:27px;height:30px;background:radial-gradient(ellipse at 50% 38%,#020104 0 57%,#b5a8a8 59% 75%,#24212a 80%);border-radius:47% 47% 43% 43%;border-top:5px solid #c5b6b8}.hmNurseBody{height:63px;width:34px;background:linear-gradient(90deg,#39353d,#c2b8ba 38%,#66606a 68%,#19151d);clip-path:polygon(29% 0,70% 0,100% 100%,0 100%);border-radius:8px}';document.head.append(css);
-  const guide=$('hmCh01Guide');if(guide)guide.before(section);else panel.querySelector('strong')?.after(section);
-  // Hide only the obsolete CH01 numeric form, retaining its DOM and all server
-  // handlers for backward compatibility. Other chapters and artifacts untouched.
-  // Retire the old CH01 sense / cross-key form from the player UI.
-  const senseForm=$('senseIndex')?.closest('div');
-  if(senseForm){senseForm.hidden=true;senseForm.style.display='none';}
-  const old=panel.querySelector('#senseIndex')?.closest('div');
-  if(old){old.hidden=true;old.style.display='none';}
-  const oldControls=panel.querySelector('[data-ch01="inspect"]')?.parentElement;
-  if(oldControls){
-   // Keep the approved artifact collection and chapter transition functional.
-   for(const action of ['fragment_search','ch02_enter']){
-    const original=oldControls.querySelector('[data-ch01="'+action+'"]');
-    if(original){original.style.cssText+=';width:100%;min-height:46px;margin-top:9px;border-radius:9px;';section.append(original);}
-   }
-   oldControls.hidden=true;oldControls.style.display='none';
-  }
-  if(guide){guide.hidden=true;guide.style.display='none';}
-  const desk=document.querySelector('#mainScene [data-action="desk"]');
-  if(desk){desk.addEventListener('click',()=>{if(active&&phase==='separated'&&socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'desk'}));});}
+  const guide=$('hmCh01Guide');
+  // Keep the replacement puzzle inside the actual investigation sheet.
+  // Never move legacy artifact controls or hide navigation buttons.
+  if(guide&&guide.parentElement===panel)guide.before(section);
+  else panel.append(section);
+  // The old investigation navigation and artifact controls stay intact.
+  // The new six-digit cooperative puzzle is additive, not a replacement for
+  // scene navigation, the five fragment pickups or doll assembly.
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installReceptionCoop,{once:true});else installReceptionCoop();
  document.addEventListener('hm-v175-started',installReceptionCoop);
+ document.addEventListener('hm-v175-state',installReceptionCoop);
+ const receptionPuzzleObserver=new MutationObserver(()=>{if(active&&phase==='separated'&&!$('hmReceptionCoop'))installReceptionCoop();});
+ receptionPuzzleObserver.observe(document.documentElement,{childList:true,subtree:true});
 
  // Route the FIRST actual CH01 investigation through the server before legacy
  // V172 scene handlers. The old scene can use data-action while the new panel
