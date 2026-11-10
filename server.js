@@ -43,6 +43,20 @@ function allocateRoom(capacity){
  persist(); // Save newly allocated but not-yet-joined rooms before sharing invites.
  return code;
 }
+
+// CH01 cooperative clues: stable within a room, unique per connected investigator.
+function makeReceptionPuzzle(room){
+ const roles=[...room.clients].map(c=>c.role).sort((a,b)=>a-b);
+ const shadows=roles.map((_,i)=>1+(i*3+room.capacity)%4);
+ const sum=shadows.reduce((a,b)=>a+b,0);
+ const cabinet=roles.map((_,i)=>(i*2+3)%10);
+ const cabinetDigit=cabinet.reduce((a,b)=>a+b,0)%10;
+ const ledgerCount=6-(String(sum).length+1);
+ const dates=roles.map((_,i)=>({date:9+i,people:2+(i*3)%7}));
+ const ledgerValue=dates.reduce((a,d)=>a+d.people,0);
+ const ledgerDigits=String(ledgerValue).padStart(ledgerCount,'0').slice(-ledgerCount);
+ return {roles,shadows,cabinet,dates,answer:String(sum)+String(cabinetDigit)+ledgerDigits,ledgerCount};
+}
 const server=http.createServer((req,res)=>{
  const pathname=new URL(req.url||'/', 'http://localhost').pathname;
  if(req.method==='POST'&&pathname==='/api/rooms'){
@@ -288,7 +302,7 @@ wss.on('connection',ws=>{
    // CH01 direct entry: no legacy call-bell, sensory-key, or UI gate.
    if(ch.phase==='reception'&&m.action==='start_investigation'){
     ch.phase='separated';ch.bellBy=player.role;
-    ch.receptionCoop={answer:'273476',confirmed:[],g01Witnessed:[]};
+    ch.receptionCoop={...makeReceptionPuzzle(r),confirmed:[],g01Witnessed:[]};
     ch.inspected=ch.inspected||{};
     broadcast(r,{type:'chapter_event',event:'blackout',by:player.role});
     broadcast(r,{type:'horror_video',id:'G08',scope:'all'});
@@ -684,7 +698,7 @@ wss.on('connection',ws=>{
     const object=String(m.object||'');
     if(['desk','mirror','cabinet','ledger','intercom'].includes(object)){
      ch.phase='separated';ch.bellBy=player.role;
-     ch.receptionCoop={answer:'273476',confirmed:[],g01Witnessed:[]};
+     ch.receptionCoop={...makeReceptionPuzzle(r),confirmed:[],g01Witnessed:[]};
      broadcast(r,{type:'chapter_event',event:'blackout',by:player.role});
      broadcast(r,{type:'horror_video',id:'G08',scope:'all'});
      broadcast(r,state(r));return;
@@ -696,30 +710,20 @@ wss.on('connection',ws=>{
     const p=ch.receptionCoop;if(!p)return;
     const object=String(m.object||'');
     if(!['desk','mirror','cabinet','ledger'].includes(object))return;
-    const roles=[...r.clients].map(c=>c.role).sort((a,b)=>a-b);
-    const position=roles.indexOf(player.role);
+    const position=p.roles.indexOf(player.role);
     if(position<0)return;
-    const side=position%2;
-    const clues={
-     mirror:[
-      ['거울 가장자리의 습기를 닦자 오래된 손자국 네 개가 드러난다.','유리 아래에는 「손자국과 서명의 개수 차이를 먼저 적으라」고 새겨져 있다.'],
-      ['거울 뒤쪽에 끼워진 근무 기록에는 지워진 서명 여섯 개가 남아 있다.','기록 끝에는 「두 흔적의 개수를 합한 뒤 3을 빼라」고 적혀 있다.']
-     ],
-     desk:[
-      ['접수대 날짜 도장: 11월 9일. 해당 날짜의 접수 인원을 명부에서 찾아라.','그 아래에 붉은 표식 「두 번째 숫자」가 찍혀 있다.'],
-      ['접수대의 낡은 출입 대장: 11월 9일 입실 7명, 11월 10일 입실 5명.','접수 인원은 명부의 날짜와 대조해야 한다.']
-     ],
-     cabinet:[
-      ['캐비닛 왼쪽 선반: 봉인된 약병 3개, 빈 약병 2개.','「세 번째 숫자는 봉인된 약병 수」'],
-      ['캐비닛 오른쪽 선반: 파손된 열쇠 6개, 멀쩡한 열쇠 1개.','「여섯 번째 숫자는 파손된 열쇠 수」']
-     ],
-     ledger:[
-      ['접수명부의 찢어진 첫 장: 「네 번째 숫자는 야간 근무자 수」','야간 근무표의 이름 네 개가 적혀 있다.'],
-      ['접수명부 마지막 장: 「거울의 차이 → 접수 인원 → 봉인 약병 → 야간 근무자 → 거울의 합에서 3을 뺀 수 → 파손 열쇠」','모든 숫자는 한 자리씩, 왼쪽부터 입력한다.']
-     ]
-    };
-    const lines=clues[object][side];
-    send(ws,{type:'reception_clue',object,label:{desk:'접수대',mirror:'거울',cabinet:'캐비닛',ledger:'접수명부'}[object],lines,shadowCount:object==='mirror'?(side===0?4:6):null});
+    if(object==='desk'){
+      send(ws,{type:'reception_clue',object,label:'접수대 서랍',lines:['서랍 안은 텅 비어 있다.','안쪽에서 손이 뻗어 나온다.']});
+    }else if(object==='mirror'){
+      send(ws,{type:'reception_clue',object,label:'거울 · 검은 얼룩',shadowCount:p.shadows[position],lines:['거울 표면에 검은 그림자 덩어리 '+p.shadows[position]+'개가 맺혀 있다.','각 조사원이 본 개수를 모두 더하라. 합계가 두 자리라면 앞의 두 칸을 채운다.']});
+    }else if(object==='cabinet'){
+      const hidden=p.cabinet[position];
+      const sequence=p.cabinet.map((digit,i)=>i===position?'○':String(digit)).join('  ');
+      send(ws,{type:'reception_clue',object,label:'캐비닛 · 분리 기록',popup:true,lines:['분리된 조사원 '+(position+1)+'번의 캐비닛 기록: '+sequence,'가려진 ○의 값은 '+hidden+'이다.','다른 조사원들의 ○ 숫자를 모두 합한 뒤 일의 자리를 봉인 번호에 입력하라.']});
+    }else if(object==='ledger'){
+      const entry=p.dates[position];
+      send(ws,{type:'reception_clue',object,label:'접수 명부',lines:['11월 '+entry.date+'일 입실 '+entry.people+'명.','전원의 날짜별 입실 인원을 합하라. 합계의 마지막 '+p.ledgerCount+'자리가 봉인의 마지막 칸들이다.','봉인 순서: 거울 합계 → 캐비닛 합계의 일의 자리 → 명부 합계.']});
+    }
     if(object==='desk'){
      // Do not suppress the scare if the browser failed to load it previously.
      send(ws,{type:'horror_video',id:'RECEPTION_HAND',scope:'self'});
@@ -730,7 +734,7 @@ wss.on('connection',ws=>{
     const p=ch.receptionCoop;if(!p)return;
     const attempt=String(m.answer||'').trim();
     if(!/^[0-9]{6}$/.test(attempt))return send(ws,{type:'reception_result',ok:false,message:'각 단서에서 구한 숫자를 한 칸씩, 총 여섯 칸에 입력하세요.'});
-    if(attempt!==p.answer)return send(ws,{type:'reception_result',ok:false,message:'틀린 칸이 있습니다. 거울·접수대·캐비닛·명부를 팀원과 다시 대조하세요.'});
+    if(attempt!==p.answer)return send(ws,{type:'reception_result',ok:false,message:'틀린 칸이 있습니다. 거울·캐비닛·명부를 팀원과 다시 대조하세요.'});
     if(!p.confirmed.includes(player.role))p.confirmed.push(player.role);
     broadcast(r,{type:'reception_result',ok:true,message:'접수번호 대조 성공. '+p.confirmed.length+'명의 조사원이 확인했습니다.'});
     const online=[...r.clients].filter(c=>c.ws?.readyState===WebSocket.OPEN);
