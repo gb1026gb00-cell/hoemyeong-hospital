@@ -831,26 +831,28 @@
  let ch02LegacyIntercepting=false;
  function interceptLegacyCh02Certificate(){
   if(!active||phase!=='ch02'||ch02LegacyIntercepting)return;
-  const markers=['HM-302-□□□□','문서 번호 : HM-302-','다음 단계에서 단서가 복원됩니다'];
-  const nodes=document.querySelectorAll('body *');
-  for(const node of nodes){
-   if(node.children.length>4||node.dataset.hmLegacyHandled==='1'||node.id==='hmCh02NewDialog'||node.closest('#hmCh02NewDialog'))continue;
-   const t=node.textContent||'';
-   if(t.length>450||!markers.some(x=>t.includes(x)))continue;
-   let card=node;
-   for(let i=0;i<6&&card.parentElement;i++){
-    if(card.querySelector('button')&&card.textContent?.includes('사망진단서'))break;
-    card=card.parentElement;
-   }
-   // Only suppress a modal, never the approved hospital scene.
-   const modal=card.closest('[role="dialog"],.modal,.overlay')||card;
+  // V172 uses a separate popup above the approved scene. Redirect each obsolete
+  // placeholder to its corresponding real cooperative server investigation.
+  const nodes=document.querySelectorAll('[role="dialog"],.modal,.overlay,body > div');
+  for(const modal of nodes){
+   if(modal.id==='hmCh02NewDialog'||modal.id==='hmCh02ClearScene'||modal.closest('#hmCh02NewDialog')||modal.dataset.hmLegacyHandled==='1')continue;
    if(modal===document.body||modal.id==='mainScene'||modal.contains(document.getElementById('mainScene')))continue;
+   const t=modal.textContent||'';
+   if(t.length>650||!modal.querySelector('button'))continue;
+   let site=null;
+   if(t.includes('전기코드')&&t.includes('다음 단계에서 연결'))site='ecg';
+   else if(t.includes('8번 표지')&&t.includes('다음 단계에서 연결'))site='eight';
+   else if(t.includes('침대 아래')&&t.includes('다음 단계에서 연결'))site='underbed';
+   else if(t.includes('사망진단서')&&(t.includes('HM-302-')||t.includes('다음 단계에서 단서가 복원')))site='certificate';
+   if(!site)continue;
    ch02LegacyIntercepting=true;
-   node.dataset.hmLegacyHandled='1';
    modal.dataset.hmLegacyHandled='1';
    modal.style.setProperty('display','none','important');
-   ch02Send('ch02_new_inspect',{site:'certificate'});
-   ch02Dialog('기록 조회 중','조사원에게 배정된 사망진단서를 불러오고 있습니다.');
+   ch02Send('ch02_new_inspect',{site});
+   if(site==='underbed')ch02HandPending=true;
+   else if(site==='certificate')ch02Dialog('기록 조회 중','사망진단서 원본을 확인하고 있습니다.');
+   else if(site==='ecg')ch02Dialog('심전도 복구 중','심전도 원본 기록을 확인하고 있습니다.');
+   else ch02Dialog('인식표 확인 중','8번 병상 인식표를 확인하고 있습니다.');
    ch02LegacyIntercepting=false;
    break;
   }
