@@ -4,6 +4,7 @@
  const $=id=>document.getElementById(id);
  let active=false,phase='reception',socket=null;
  let startedOnce=false;
+ let receptionAnswerLength=4;
  const NativeWS=window.WebSocket;
  function hideLobby(){const p=$('hmCoopPanel');if(p)p.hidden=true;}
  function showConnectionStatus(message){let el=$('hmV174ConnectionStatus');if(!el){el=document.createElement('div');el.id='hmV174ConnectionStatus';el.setAttribute('role','alert');el.style.cssText='position:fixed;top:12px;left:12px;right:12px;z-index:99980;padding:13px 16px;border:1px solid #d1a2a2;border-radius:10px;background:#29151df2;color:#fff;font:14px system-ui;text-align:center;pointer-events:none';document.body.append(el);}el.textContent=message;el.hidden=!message;}
@@ -13,7 +14,7 @@
   constructor(...args){super(...args);socket=this;
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
-    if(m.type==='state'||m.type==='joined'){active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
+    if(m.type==='state'||m.type==='joined'){if([2,4,6,8].includes(Number(m.capacity)))receptionAnswerLength=Number(m.capacity)/2+3;active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='reception_clue'&&m.object!=='desk')showSceneClue(m);
     if(m.type==='reception_result')showReceptionAnswerResult(m);
     if((m.type==='chapter_event'&&m.event==='escape')||((m.type==='state'||m.type==='joined')&&m.chapter&&['escaped','ch02','ch03','ch04','ch05','ch06','finished'].includes(m.chapter.phase))){$('hmReceptionCodeModal')?.remove();$('hmCh01InspectionScreen')?.remove();}
@@ -183,9 +184,9 @@
   const regulation=document.createElement('div');
   regulation.style.cssText='margin:18px 0 16px;padding:18px 10px;border-top:1px solid #78666d;border-bottom:1px solid #78666d;text-align:center;color:#f0e4e6;font:15px/2.1 serif;white-space:pre-line';
   regulation.textContent='回明病院 · 접수 기록 보안 지침\\n\\n제01조 · 봉인 해제 절차\\n\\n비친 것을 먼저 헤아리고,\\n\\n잠긴 것의 빈자리를 채운 뒤,\\n\\n마지막으로 남겨진 기록을 대조하라.\\n\\n※ 순서를 어길 경우 봉인은 해제되지 않습니다.';
-  const guide=document.createElement('p');guide.textContent='거울의 얼룩, 캐비닛의 빈자리, 접수명부의 인원을 팀원들과 대조해 여섯 칸을 채우세요.';guide.style.cssText='font:13px/1.8 system-ui;color:#c4b8be';
-  const inputs=[],cells=document.createElement('div');cells.style.cssText='display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:20px 0 13px';
-  for(let i=0;i<6;i++){
+  const guide=document.createElement('p');guide.textContent='거울의 얼룩, 캐비닛의 빈자리, 접수명부의 인원을 팀원들과 대조해 봉인 번호를 채우세요.';guide.style.cssText='font:13px/1.8 system-ui;color:#c4b8be';
+  const inputs=[],cells=document.createElement('div');cells.style.cssText='display:grid;grid-template-columns:repeat('+receptionAnswerLength+',minmax(0,1fr));gap:6px;margin:20px 0 13px';
+  for(let i=0;i<receptionAnswerLength;i++){
    const field=document.createElement('input');field.type='text';field.inputMode='numeric';field.autocomplete='off';field.maxLength=1;field.setAttribute('aria-label',(i+1)+'번째 봉인 숫자');
    field.style.cssText='width:100%;min-width:0;height:54px;text-align:center;font:700 23px monospace;color:#f4e8e7;background:#0a0a0b;border:1px solid #80747c;border-radius:4px';
    field.oninput=()=>{field.value=field.value.replace(/\D/g,'').slice(0,1);if(field.value&&inputs[i+1])inputs[i+1].focus();};
@@ -198,7 +199,7 @@
    if(socket?.readyState!==NativeWS.OPEN){status.textContent='협동 서버 연결을 먼저 확인하세요.';return;}
    if(phase!=='separated'){status.textContent='강제 분리 조사가 끝난 뒤 봉인을 입력하세요.';return;}
    const answer=inputs.map(i=>i.value).join('');
-   if(answer.length!==6){status.textContent='여섯 칸의 숫자를 모두 입력하세요.';return;}
+   if(answer.length!==receptionAnswerLength){status.textContent=receptionAnswerLength+'자리 숫자를 모두 입력하세요.';return;}
    socket.send(JSON.stringify({type:'chapter',action:'reception_submit',answer}));status.textContent='봉인 번호를 대조하고 있습니다…';
   };
   const back=document.createElement('button');back.type='button';back.textContent='← 접수실로 돌아가기';back.style.cssText='display:block;margin:0 0 16px;padding:9px 0;border:0;background:transparent;color:#d8c5ce;font:13px system-ui';
