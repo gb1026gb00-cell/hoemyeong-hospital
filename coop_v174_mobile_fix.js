@@ -17,6 +17,7 @@
     if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity)))receptionAnswerLength=Number(m.capacity)/2+3;active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='reception_clue'&&m.object!=='desk')showSceneClue(m);
     if(m.type==='reception_result')showReceptionAnswerResult(m);
+    if(m.type==='ch02_certificate'&&phase==='ch02')showCh02Certificate(m);
     if(m.type==='ch02_new_result'&&m.site==='answer'){
      const status=document.getElementById('hmCh02NewStatus');if(status)status.textContent=m.message||'';
      if(m.ok)ch02Dialog('봉인 해제',m.message||'PATIENT STATUS : ALIVE');
@@ -630,6 +631,37 @@
  function ch02Send(action,extra={}){
   if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action,...extra}));
  }
+ function showCh02Certificate(message){
+  document.getElementById('hmCh02NewDialog')?.remove();
+  const wrap=document.createElement('div');wrap.id='hmCh02NewDialog';wrap.setAttribute('role','dialog');wrap.setAttribute('aria-modal','true');
+  wrap.style.cssText='position:fixed;inset:0;z-index:999999;background:#050507f0;display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto';
+  const paper=document.createElement('section');
+  paper.style.cssText='position:relative;width:min(560px,100%);max-height:90dvh;overflow:auto;padding:26px clamp(17px,4vw,35px) 32px;color:#28231d;background:repeating-linear-gradient(174deg,#c7bba2 0px,#c7bba2 24px,#bfb399 25px,#c5b99f 27px);border:2px solid #796b55;box-shadow:0 20px 65px #000, inset 0 0 35px #77634d65;font:15px/1.65 serif';
+  const close=document.createElement('button');close.type='button';close.textContent='닫기 ×';close.style.cssText='float:right;border:1px solid #55483d;background:#2e2520;color:#fff;padding:7px 12px;font:15px system-ui';
+  close.onclick=()=>wrap.remove();paper.append(close);
+  const header=document.createElement('div');header.style.cssText='clear:both;text-align:center;padding:14px 0 19px;border-bottom:3px double #4b3d32;margin-bottom:20px';
+  const name=document.createElement('div');name.textContent='回明病院';name.style.cssText='font-size:17px;letter-spacing:5px';
+  const title=document.createElement('h2');title.textContent='사 망 진 단 서';title.style.cssText='font-size:clamp(23px,5vw,30px);margin:9px 0 2px;letter-spacing:3px';
+  const sub=document.createElement('div');sub.textContent='DEATH CERTIFICATE · 1988';sub.style.cssText='font:10px system-ui;letter-spacing:2px';
+  header.append(name,title,sub);paper.append(header);
+  const note=document.createElement('p');note.textContent='조사원 '+(message.role+1)+' · 배정된 문서 '+message.records.length+'건 / '+message.capacity+'인 협동 조사';note.style.cssText='font:12px system-ui;margin:0 0 18px;color:#564638';paper.append(note);
+  for(const record of message.records){
+   const page=document.createElement('div');page.style.cssText='position:relative;margin:0 0 18px;padding:13px 12px 18px;border:1px solid #7c6c57;background:#e3d7bc66';
+   const top=document.createElement('div');top.textContent='회명병원 의무기록부   HM-302 / '+record.id;top.style.cssText='font:11px system-ui;border-bottom:1px solid #8b7b64;padding-bottom:9px;margin-bottom:11px';
+   page.append(top);
+   const rows=[['환자 성명',record.patient],['사망 일시','1988. 11. 26. '+record.time],['직접 사인',record.cause],['담당 의사','[서명 번짐]']];
+   for(const [label,value] of rows){
+    const row=document.createElement('div');row.style.cssText='display:grid;grid-template-columns:88px 1fr;border-bottom:1px solid #9b8a734d;min-height:41px;align-items:center;gap:8px';
+    const l=document.createElement('span');l.textContent=label;l.style.cssText='font-size:12px;color:#5d5040';
+    const v=document.createElement('span');v.textContent=value;row.append(l,v);page.append(row);
+   }
+   const stamp=document.createElement('div');stamp.textContent=record.stamp;stamp.style.cssText='margin:12px 0 0 auto;width:max-content;padding:5px 12px;border:2px solid #833e3b;color:#833e3b;transform:rotate(-9deg);font-weight:bold;opacity:.8';
+   const trace=document.createElement('p');trace.textContent='기록 이상: '+record.trace;trace.style.cssText='margin:22px 0 0;padding:10px;border-top:1px dashed #85735e;font-size:13px';
+   page.append(stamp,trace);paper.append(page);
+  }
+  const footer=document.createElement('p');footer.textContent='※ 서로 다른 조사원이 확인한 문서를 대조하십시오.';footer.style.cssText='font-size:12px;margin-top:18px';paper.append(footer);
+  wrap.append(paper);document.body.append(wrap);
+ }
  function ch02Dialog(title,body,code=false){
   document.getElementById('hmCh02NewDialog')?.remove();
   const wrap=document.createElement('div');wrap.id='hmCh02NewDialog';
@@ -666,7 +698,7 @@
      e.preventDefault();e.stopImmediatePropagation();
      if(!active||phase!=='ch02')return;
      ch02Send('ch02_new_inspect',{site});
-     if(site==='certificate')ch02Dialog('回明病院 · 사망진단서','문서 번호 : HM-302-□□□□\n환자명 : [훼손]\n사망 일시 : [판독 불가]\n사망 원인 : [판독 불가]\n담당 의사 : [서명 훼손]');
+     if(site==='certificate')ch02Dialog('의무기록 확인 중','조사원에게 배정된 사망진단서를 불러오고 있습니다.');
      if(site==='ecg')ch02Dialog('심전도 기록','전원 공급 장치가 끊겨 있다.\n기록의 마지막 생체 신호는 사망 이후에도 이어진다.\nPATIENT STATUS : ALIVE');
      if(site==='eight')ch02Dialog('침대 끝 · 8번 표지','지워진 표식 아래 작은 문구가 남아 있다.\n「사망을 기록한 네 글자를 읽어라.」');
      if(site==='underbed')ch02HandPending=true;
