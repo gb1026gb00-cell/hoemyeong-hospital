@@ -62,20 +62,8 @@
  // The approved scene already has its own drawer hotspot; no duplicate button.
  function removeDuplicateDeskButton(){const el=$('hmDirectReceptionDesk');if(el)el.remove();}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',removeDuplicateDeskButton,{once:true});else removeDuplicateDeskButton();
- // The approved V172 scene can be rendered after the server state arrives.
- // Its existing desk hotspots should send the same command, not the bell action.
- // Observe only the existing drawer hotspot. Never cancel navigation or
- // investigation-room entry; the original click handler remains untouched.
- document.addEventListener('click',event=>{
-  if(!active||phase!=='separated'||socket?.readyState!==NativeWS.OPEN)return;
-  const el=event.target.closest?.('button,[role="button"],[data-action],[data-object],[aria-label],[title]');
-  if(!el)return;
-  const label=[el.textContent,el.getAttribute('aria-label'),el.getAttribute('title'),el.dataset?.action,el.dataset?.object].filter(Boolean).join(' ').trim();
-  if(!/(?:^|\\s)접수대(?:\\s*서랍)?(?:$|\\s)|reception[_ -]?drawer|desk[_ -]?drawer/i.test(label))return;
-  if(/접수명부|접수 기록|접수번호|접수 인원|조사 시작|강제 분리/.test(label))return;
-  playReceptionHand(); // Start inside the user's click gesture for desktop autoplay.
-  socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'desk'}));
- },false);
+ // CH01 input is handled by the single strict scene click router below.
+ // Do not infer 'desk' from parent text: ledger labels contain reception words.
  // Keep cinematic overlays as non-interactive layers. The source video
  // stays unchanged; native controls, fullscreen affordances and pinch zoom
  // are suppressed on all injected scare players.
@@ -285,10 +273,7 @@
   }
   // CH01: use the existing real desk hotspot and the existing server inspect action.
   // No invented puzzle, extra item or automatic answer.
-  const desk=document.querySelector('#mainScene [data-action="desk"]');
-  if(desk){desk.textContent='접수대 · 명부 조사';desk.title='강제 분리 후 접수대 기록을 조사합니다';}
-  const revisit=document.querySelector('#ch01PuzzlePanel [data-ch01="inspect"][data-object="desk"]');
-  if(revisit)revisit.textContent='접수대 명부 다시 조사';
+
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhanceChapterInteractions,{once:true});else enhanceChapterInteractions();
 
@@ -470,32 +455,28 @@
   const close=document.createElement('button');close.textContent='현장으로 돌아가기';close.style.cssText='width:100%;margin-top:14px;padding:13px;background:#463345;border:1px solid #957b90;color:white;border-radius:8px';close.onclick=()=>overlay.remove();
   card.append(close);overlay.append(card);document.body.append(overlay);
  }
+ // One and only one scene hotspot router for both reception and split.
+ // Use the clicked control's own label/data, never a parent container's text.
  document.addEventListener('click',event=>{
-  if(!active||phase!=='separated'||socket?.readyState!==NativeWS.OPEN)return;
-  const target=event.target.closest?.('#mainScene [data-action],#mainScene [data-object],#mainScene [data-ch01]');
-  if(!target)return;
-  const raw=(target.dataset.object||target.dataset.action||target.dataset.ch01||'').toLowerCase();
-  const object=({reception_desk:'desk',reception:'desk',drawer:'desk',desk:'desk',mirror:'mirror',cabinet:'cabinet',ledger:'ledger'})[raw];
+  if(!active||socket?.readyState!==NativeWS.OPEN||!['reception','separated'].includes(phase))return;
+  const target=event.target.closest?.('button,[role="button"],[data-action],[data-object],[data-ch01]');
+  if(!target||target.closest('#hmReceptionCodeModal,#hmSceneClueOverlay,#hmReceptionCoop,#hmForcedSeparation,#hmReceptionHandScare'))return;
+  const own=[target.dataset.object,target.dataset.action,target.dataset.ch01,target.getAttribute('aria-label'),target.getAttribute('title'),target.textContent].filter(Boolean);
+  const label=own.join(' ').trim();
+  const code=(target.dataset.object||target.dataset.action||target.dataset.ch01||'').toLowerCase();
+  let object=({desk:'desk',drawer:'desk',reception_desk:'desk',reception_drawer:'desk',mirror:'mirror',cabinet:'cabinet',ledger:'ledger'})[code];
+  if(!object){
+   if(/접수명부|접수 명부|명부|ledger/i.test(label))object='ledger';
+   else if(/캐비닛|cabinet/i.test(label))object='cabinet';
+   else if(/거울|mirror/i.test(label))object='mirror';
+   else if(/접수대\\s*서랍|서랍|reception.drawer|desk.drawer/i.test(label))object='desk';
+  }
   if(!object)return;
   event.preventDefault();event.stopImmediatePropagation();
-  if(object==='desk'&&!receptionHandPlaying)playReceptionHand();
-  socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));
- },true);
- // Route the FIRST actual CH01 investigation through the server before legacy
- // V172 scene handlers. The old scene can use data-action while the new panel
- // uses reception_clue; both must initiate the same once-per-room transition.
- document.addEventListener('click',event=>{
-  if(!active||phase!=='reception'||socket?.readyState!==NativeWS.OPEN)return;
-  const target=event.target.closest?.('[data-action],[data-ch01],[data-object],#ch01PuzzlePanel button,#hmReceptionCoop button');
-  if(!target)return;
-  const raw=(target.getAttribute('data-object')||target.getAttribute('data-action')||'').toLowerCase();
-  const map={desk:'desk',reception:'desk',reception_desk:'desk',mirror:'mirror',cabinet:'cabinet',ledger:'ledger',intercom:'intercom'};
-  let object=map[raw];
-  // Approved V172 has generic investigation buttons without data-action.
-  // Treat the first actual CH01 inspection as the required separation trigger.
-  if(!object&&target.closest('#ch01PuzzlePanel')&&/조사|확인|단서|접수|거울|캐비닛|명부/.test(target.textContent||''))object='desk';
-  if(!object)return;
-  event.preventDefault();event.stopImmediatePropagation();
+  if(phase==='reception'){
+   socket.send(JSON.stringify({type:'chapter',action:'start_investigation'}));return;
+  }
+  if(object==='desk')playReceptionHand();
   socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));
  },true);
  // The new CH01 investigation controls remain usable after the split.
