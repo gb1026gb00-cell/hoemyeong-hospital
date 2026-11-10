@@ -40,6 +40,7 @@ function allocateRoom(capacity){
  }
  const room={code,clients:new Set(),pieces:new Set(),chat:[],host:null,started:false,capacity:([2,4,6,8].includes(capacity)?capacity:2),devSolo:false,allocated:true};
  rooms.set(code,room);
+ persist(); // Save newly allocated but not-yet-joined rooms before sharing invites.
  return code;
 }
 const server=http.createServer((req,res)=>{
@@ -249,6 +250,15 @@ wss.on('connection',ws=>{
     if(old.ws&&old.ws.readyState===WebSocket.OPEN)return send(ws,{type:'error',message:'이미 접속 중인 참가자입니다.'});
     old.ws=ws;old.offlineAt=0;c.room=null;ws.player=old;
     send(ws,{...state(r),type:'joined',token:old.token,resumed:true,yourRole:old.role,isHost:old===r.host,senses:assignedSenses(r,old.role).map(x=>x.sense)});updateSenseAssignments(r);broadcast(r,state(r));return;
+   }
+   // Recover a recent numeric invitation if an ephemeral server restarted.
+   // This does not restore already-started games or replace persistent storage.
+   if(!r&&/^[0-9]{12}$/.test(m.room)){
+    const issued=Math.floor(Number(m.room)/100)*1000;
+    if(Number.isSafeInteger(issued)&&issued<=Date.now()+60000&&issued>=Date.now()-24*60*60*1000){
+     r={code:m.room,clients:new Set(),pieces:new Set(),chat:[],host:null,started:false,capacity:2,devSolo:false,allocated:true};
+     rooms.set(m.room,r);persist();
+    }
    }
    if(!r)return send(ws,{type:'error',message:'존재하지 않는 조사실 코드입니다. 방장에게 코드를 확인하세요.'});
    if(r.clients.size>=r.capacity||[...r.clients].some(x=>x.role===m.role||x.character===character))return send(ws,{type:'error',message:'이미 선택된 캐릭터/역할이거나 방이 가득 찼습니다.'});
