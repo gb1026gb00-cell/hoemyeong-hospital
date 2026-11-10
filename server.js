@@ -51,11 +51,12 @@ function makeReceptionPuzzle(room){
  const sum=shadows.reduce((a,b)=>a+b,0);
  const cabinet=roles.map((_,i)=>(i*2+3)%10);
  const cabinetDigit=cabinet.reduce((a,b)=>a+b,0)%10;
- const ledgerCount=6-(String(sum).length+1);
+ const answerLength=({2:4,4:5,6:6,8:7})[room.capacity]||4;
+ const ledgerCount=answerLength-(String(sum).length+1);
  const dates=roles.map((_,i)=>({date:9+i,people:2+(i*3)%7}));
  const ledgerValue=dates.reduce((a,d)=>a+d.people,0);
  const ledgerDigits=String(ledgerValue).padStart(ledgerCount,'0').slice(-ledgerCount);
- return {roles,shadows,cabinet,dates,answer:String(sum)+String(cabinetDigit)+ledgerDigits,ledgerCount};
+ return {roles,shadows,cabinet,dates,answer:String(sum)+String(cabinetDigit)+ledgerDigits,ledgerCount,answerLength};
 }
 const server=http.createServer((req,res)=>{
  const pathname=new URL(req.url||'/', 'http://localhost').pathname;
@@ -766,7 +767,7 @@ wss.on('connection',ws=>{
    if(m.action==='reception_submit'&&ch.phase==='separated'){
     const p=ch.receptionCoop;if(!p)return;
     const attempt=String(m.answer||'').trim();
-    if(!/^[0-9]{6}$/.test(attempt))return send(ws,{type:'reception_result',ok:false,message:'각 단서에서 구한 숫자를 한 칸씩, 총 여섯 칸에 입력하세요.'});
+    if(!/^[0-9]+$/.test(attempt)||attempt.length!==(p.answerLength||p.answer.length))return send(ws,{type:'reception_result',ok:false,message:'봉인 번호 '+(p.answerLength||p.answer.length)+'자리를 입력하세요.'});
     if(attempt!==p.answer)return send(ws,{type:'reception_result',ok:false,message:'틀린 칸이 있습니다. 거울·캐비닛·명부를 팀원과 다시 대조하세요.'});
     if(!p.confirmed.includes(player.role))p.confirmed.push(player.role);
     broadcast(r,{type:'reception_result',ok:true,message:'봉인 번호 일치. 조사원 한 명의 확인으로 공동 봉인을 해제합니다.'});
