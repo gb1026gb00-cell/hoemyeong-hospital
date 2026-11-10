@@ -14,7 +14,7 @@
   constructor(...args){super(...args);socket=this;
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
-    if(m.type==='state'||m.type==='joined'){if([2,4,6,8].includes(Number(m.capacity)))receptionAnswerLength=Number(m.capacity)/2+3;active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
+    if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity)))receptionAnswerLength=Number(m.capacity)/2+3;active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='reception_clue'&&m.object!=='desk')showSceneClue(m);
     if(m.type==='reception_result')showReceptionAnswerResult(m);
     if((m.type==='chapter_event'&&m.event==='escape')||((m.type==='state'||m.type==='joined')&&m.chapter&&['escaped','ch02','ch03','ch04','ch05','ch06','finished'].includes(m.chapter.phase))){$('hmReceptionCodeModal')?.remove();$('hmCh01InspectionScreen')?.remove();}
@@ -535,18 +535,18 @@
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installHospitalSoundEffects,{once:true});else installHospitalSoundEffects();
  window.WebSocket=CoopSocket;
- // Only the approved 2/4/6/8-person capacities are selectable.
+ // Only the approved 2/4/8-person capacities are selectable.
  function normalizeCapacityControls(){
   document.querySelectorAll('select').forEach(select=>{
    const options=[...select.options];
    const values=options.map(o=>Number(o.value));
-   if(values.filter(n=>Number.isInteger(n)&&n>=2&&n<=8).length<4)return;
+   if(values.filter(n=>Number.isInteger(n)&&n>=2&&n<=8).length<3)return;
    if(!values.includes(2)||!values.includes(8))return;
-   for(const option of options){const n=Number(option.value);if([3,5,7].includes(n))option.remove();}
-   if([3,5,7].includes(Number(select.value))){select.value='2';select.dispatchEvent(new Event('change',{bubbles:true}));}
+   for(const option of options){const n=Number(option.value);if(![2,4,8].includes(n))option.remove();}
+   if(![2,4,8].includes(Number(select.value))){select.value='2';select.dispatchEvent(new Event('change',{bubbles:true}));}
   });
   document.querySelectorAll('input[type="number"]').forEach(input=>{
-   if(Number(input.min)===2&&Number(input.max)===8){input.step='2';input.addEventListener('change',()=>{if([3,5,7].includes(Number(input.value)))input.value=String(Math.max(2,Math.min(8,Number(input.value)-1)));});}
+   if(Number(input.min)===2&&Number(input.max)===8){input.step='1';input.addEventListener('change',()=>{if(![2,4,8].includes(Number(input.value)))input.value='2';});}
   });
  }
  function useSameOriginCoopEndpoint(){
