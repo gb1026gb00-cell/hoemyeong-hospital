@@ -25,6 +25,35 @@
    this.addEventListener('open',()=>{if(socket===this)updateConnectionStatus();});
   }
  }
+ // Independent CH01 entry control: not attached to the legacy puzzle panel.
+ // It is visible whenever the cooperative server is in reception phase.
+ function mountDirectInvestigation(){
+  let b=$('hmDirectCh01Start');
+  if(!b){
+   b=document.createElement('button');b.id='hmDirectCh01Start';b.type='button';
+   b.textContent='접수실 조사 시작 · 강제 분리';
+   b.style.cssText='position:fixed!important;left:50%!important;bottom:92px!important;transform:translateX(-50%)!important;z-index:999990!important;display:block;min-width:240px;max-width:90vw;padding:17px 22px;border:2px solid #c49bad;border-radius:12px;background:#4b263a;color:#fff;font:700 16px system-ui;box-shadow:0 5px 25px #000b;cursor:pointer';
+   b.addEventListener('click',e=>{
+    e.preventDefault();e.stopImmediatePropagation();
+    if(!active||phase!=='reception'||socket?.readyState!==NativeWS.OPEN)return;
+    socket.send(JSON.stringify({type:'chapter',action:'start_investigation'}));
+    b.textContent='강제 분리 신호 전송 중…';
+   },true);
+   document.body.append(b);
+  }
+  b.hidden=!(active&&phase==='reception');
+  b.style.display=b.hidden?'none':'block';
+  if(!b.hidden){
+   document.querySelectorAll('p,span,div').forEach(el=>{
+    if(el.children.length===0&&/호출벨과 협동 절차를 먼저 진행해야 하는 구역/.test(el.textContent||'')){el.hidden=true;el.style.display='none';}
+   });
+  }
+ }
+ document.addEventListener('hm-v175-state',mountDirectInvestigation);
+ document.addEventListener('hm-v175-started',mountDirectInvestigation);
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountDirectInvestigation,{once:true});else mountDirectInvestigation();
+ const directObserver=new MutationObserver(()=>mountDirectInvestigation());
+ directObserver.observe(document.documentElement,{childList:true,subtree:true});
  // Keep cinematic overlays as non-interactive layers. The source video
  // stays unchanged; native controls, fullscreen affordances and pinch zoom
  // are suppressed on all injected scare players.
