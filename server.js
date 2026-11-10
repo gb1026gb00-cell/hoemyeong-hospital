@@ -75,7 +75,7 @@ const server=http.createServer((req,res)=>{
    const range=req.headers.range;
    const headers={'Content-Type':'video/mp4','Accept-Ranges':'bytes','Cache-Control':'public, max-age=3600'};
    if(range){
-    const match=/^bytes=(\\d*)-(\\d*)$/.exec(range);
+    const match=/^bytes=(\d*)-(\d*)$/.exec(range);
     if(!match){res.writeHead(416,{'Content-Range':'bytes */'+stat.size});return res.end();}
     let start=match[1]?Number(match[1]):0,end=match[2]?Number(match[2]):stat.size-1;
     if(!match[1]&&match[2]){start=Math.max(0,stat.size-Number(match[2]));end=stat.size-1;}
