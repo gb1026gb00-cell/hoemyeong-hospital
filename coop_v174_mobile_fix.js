@@ -88,7 +88,7 @@
  function appendCh01StoryChat(){
   if(ch01StoryChatShown)return;
   ch01StoryChatShown=true;
-  const lines=[['우영','너네 어디 갔어?!?!'],['민기','야 나 혼자인데? 장난하지 마'],['윤호','다들 움직이지 말고 지금 보이는 거 말해 봐.'],['홍중','일단 침착해. 서로 단서부터 공유하자.']];
+  const lines=[['우영','형들, 다들 어디 갔어요?!?! 산아, 너도 안 보여!'],['민기','윤호야, 나 혼자야. 이거 장난 아니지?'],['종호','홍중이 형, 제 쪽 문이 잠겼어요.'],['여상','성화 형, 목소리는 들리세요? 서로 위치부터 확인해요.'],['윤호','다들 움직이지 마세요. 지금 보이는 것부터 채팅에 적어요.'],['성화','종호야, 괜찮아? 문은 억지로 열지 마.'],['산','우영아, 나 여기 있어. 근데 너한테 갈 수가 없어.'],['홍중','일단 침착해요. 각자 찾은 단서를 여기 공유해 주세요.']];
   const write=()=>{
    const log=$('hmV174ChatLog');if(!log)return false;
    for(const [name,message] of lines){const item=document.createElement('div');item.textContent=name+': '+message;item.dataset.hmStory='ch01';log.append(item);}
@@ -106,7 +106,7 @@
   const phone=document.createElement('section');phone.style.cssText='width:min(500px,100%);height:min(720px,92dvh);display:flex;flex-direction:column;background:#101010;border:1px solid #343434;border-radius:15px;overflow:hidden;box-shadow:0 16px 50px #000';
   const head=document.createElement('header');head.textContent='회명병원 · 단체 대화 (8)';head.style.cssText='padding:17px 19px;border-bottom:1px solid #303030;font-weight:700;text-align:center';phone.append(head);
   const thread=document.createElement('div');thread.style.cssText='flex:1;overflow:auto;padding:17px 15px;display:flex;flex-direction:column;gap:11px';
-  const dialogue=[['홍중','다들 도착했어?'],['성화','여기 정말 폐병원 맞아? 불은 켜져 있는데.'],['윤호','일단 같이 움직이자. 흩어지지 말고.'],['민기','아까 복도에서 발소리 들은 사람?'],['여상','우리 말고 누가 더 있는 것 같은데.'],['종호','출입문이 안 열려요.'],['우영','야 최산. 너 아까 문 잠갔냐?'],['산','안 잠갔어. 근데 접수대에 뭐가 있어.']];
+  const dialogue=[['홍중','다들 도착했어요? 아직 안 온 사람 있어요?'],['성화','여기 정말 폐병원 맞아요? 불은 켜져 있네요.'],['윤호','홍중이 형, 저희 다 들어왔어요. 일단 같이 움직일게요.'],['민기','성화 형, 아까 복도에서 발소리 못 들으셨어요?'],['여상','저도 들었어요. 저희 말고 누가 더 있는 것 같아요.'],['종호','형들, 출입문이 안 열려요.'],['우영','산아, 너 아까 문 잠갔어?'],['산','아니, 안 잠갔어. 홍중이 형, 접수대에 뭔가 있어요.']];
   for(const [name,message] of dialogue){const row=document.createElement('div');row.style.cssText='display:flex;flex-direction:column;align-items:flex-start;gap:4px';const label=document.createElement('span');label.textContent=name;label.style.cssText='font-size:12px;color:#bcbcbc';const bubble=document.createElement('div');bubble.textContent=message;bubble.style.cssText='max-width:90%;background:#292929;border-radius:4px 13px 13px 13px;padding:10px 13px;color:#f5f5f5;white-space:pre-wrap';row.append(label,bubble);thread.append(row);}
   phone.append(thread);
   const footer=document.createElement('div');footer.style.cssText='padding:14px;border-top:1px solid #303030;background:#101010';
