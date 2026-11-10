@@ -330,7 +330,7 @@
   const heading=document.createElement('h2');heading.textContent=message.label||'현장 조사';heading.style.cssText='margin:0;font:600 21px serif;letter-spacing:.07em;color:#ded6ce';
   const clue=document.createElement('p');clue.style.cssText='font:13px/1.7 serif;letter-spacing:.03em;color:#bbb2af;margin:0';
   if(message.object==='mirror'){
-   clue.textContent='유리 표면에 묻은 검은 흔적이 희미하게 흔들린다. 이 거울에 보이는 것만 기억하라.';
+   clue.textContent='각 조사원이 발견한 검은 얼룩의 개수를 모두 합산하라.';
    const frame=document.createElement('div');frame.setAttribute('aria-label','검은 얼룩이 묻은 거울');
    frame.style.cssText='position:relative;isolation:isolate;min-height:300px;height:min(56dvh,480px);overflow:hidden;border:14px ridge #343135;box-shadow:inset 0 0 60px 27px #07080aaa,0 0 0 2px #0b0a0b,0 24px 60px #000;background:radial-gradient(ellipse at 40% 48%,#5b62637c 0%,#33383b 36%,#121417 82%),linear-gradient(112deg,#161719,#383b40 40%,#101113 73%)';
    const dust=document.createElement('div');dust.style.cssText='position:absolute;inset:0;pointer-events:none;opacity:.37;background:repeating-linear-gradient(109deg,transparent 0 22px,#adb2b208 23px 25px,transparent 26px 68px),radial-gradient(ellipse at 8% 83%,#070808ad,transparent 30%),radial-gradient(ellipse at 90% 12%,#0809099e,transparent 35%);mix-blend-mode:multiply';frame.append(dust);
@@ -346,7 +346,7 @@
    }
    const glint=document.createElement('div');glint.style.cssText='position:absolute;inset:0;pointer-events:none;background:linear-gradient(107deg,transparent 17%,#efffff14 24%,transparent 29% 66%,#d9e5eb0b 72%,transparent 78%);mix-blend-mode:screen';frame.append(glint);card.append(frame);
   }else if(message.object==='cabinet'){
-   clue.textContent='가려진 칸은 조사원마다 다르다. 다른 조사원의 보관함 기록과 비교하라.';
+   clue.textContent='각 조사원의 기록에서 가려진 ○의 숫자를 찾아 모두 더하라. 합계의 일의 자리만 사용하라.';
    const steel=document.createElement('div');steel.style.cssText='padding:24px 12px;min-height:250px;display:flex;flex-direction:column;justify-content:center;background:repeating-linear-gradient(99deg,#333436 0 2px,#27282a 4px 13px,#38393a 15px);border:13px ridge #555558;box-shadow:inset 0 0 45px #000,0 13px 32px #000';
    const stamp=document.createElement('div');stamp.textContent='回明病院   /   RECORD STORAGE';stamp.style.cssText='text-align:center;font:11px monospace;letter-spacing:.12em;color:#a2a2a5;margin-bottom:24px';steel.append(stamp);
    const row=document.createElement('div');row.style.cssText='display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:nowrap';
@@ -356,7 +356,7 @@
    }
    steel.append(row);card.append(steel);
   }else if(message.object==='ledger'){
-   clue.textContent='찢긴 접수명부의 한 장만 남아 있다. 다른 조사원이 가진 날짜와 비교하라.';
+   clue.textContent='각 입원일에 기록된 입실 인원을 모두 합산하라. 날짜는 계산에 포함하지 않는다.';
    const paper=document.createElement('div');paper.style.cssText='min-height:320px;padding:28px 20px;background:repeating-linear-gradient(#c8bfa8 0 33px,#a99c89 34px,#c8bfa8 35px);border:9px solid #45382e;box-shadow:inset 0 0 55px #62534675,0 16px 42px #000;color:#30291f;transform:rotate(-.6deg)';
    const stamp=document.createElement('div');stamp.textContent='回明病院 · 접수 명부';stamp.style.cssText='font:700 22px serif;letter-spacing:.06em;border-bottom:2px solid #5e5343;padding:0 0 15px';paper.append(stamp);
    const detail=document.createElement('div');detail.textContent='11월 '+String(message.date||'')+'일   /   입실 '+String(message.people??'')+'명';detail.style.cssText='padding:55px 0 30px;font:700 clamp(21px,6vw,32px) serif;text-align:center';paper.append(detail);
