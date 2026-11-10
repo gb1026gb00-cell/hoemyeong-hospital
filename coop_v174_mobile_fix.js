@@ -263,6 +263,21 @@
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installReceptionCoop,{once:true});else installReceptionCoop();
 
+ // Route the FIRST actual CH01 investigation through the server before legacy
+ // V172 scene handlers. The old scene can use data-action while the new panel
+ // uses reception_clue; both must initiate the same once-per-room transition.
+ document.addEventListener('click',event=>{
+  if(!active||phase!=='reception'||socket?.readyState!==NativeWS.OPEN)return;
+  const target=event.target.closest?.('[data-action],[data-ch01],[data-object]');
+  if(!target)return;
+  const raw=(target.getAttribute('data-object')||target.getAttribute('data-action')||'').toLowerCase();
+  const map={desk:'desk',reception:'desk',reception_desk:'desk',mirror:'mirror',cabinet:'cabinet',ledger:'ledger',intercom:'intercom'};
+  const object=map[raw];
+  if(!object)return;
+  event.preventDefault();event.stopImmediatePropagation();
+  socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object}));
+ },true);
+ // The new CH01 investigation controls remain usable after the split.
  // Original uploaded audio files. This bridge never alters the approved videos,
  // chapter voices, artifact inventory or doll assembly.
  const hmSoundRoot='https://gb1026gb00-cell.github.io/hoemyeong-hospital/audio/';
