@@ -531,6 +531,20 @@ wss.on('connection',ws=>{
      const assigned=count===2?archive.slice(role*2,role*2+2):count===4?[archive[role]]:role>=4?[archive[role-4]]:[];
      send(ws,{type:'ch02_ecg_archive',role,capacity:count,records:assigned,locked:count===8&&role<4});
     }
+    if(site==='eight'){
+     // Final puzzle: patients A/B/C/D -> ECG-04/01/02/03.
+     // Survival durations 33/31/15/25 min; descending order A,B,D,C = DEAD.
+     const tags=[
+      {patient:'302-A',device:'ECG-04',letter:'D',tag:'08-A'},
+      {patient:'302-B',device:'ECG-01',letter:'E',tag:'08-B'},
+      {patient:'302-C',device:'ECG-02',letter:'D',tag:'08-C'},
+      {patient:'302-D',device:'ECG-03',letter:'A',tag:'08-D'}
+     ];
+     const count=[2,4,8].includes(r.capacity)?r.capacity:2;
+     const role=player.role%count;
+     const assigned=count===2?tags.slice(role*2,role*2+2):count===4?[tags[role]]:role<4?[]:[tags[role-4]];
+     send(ws,{type:'ch02_bed_tags',role,capacity:count,records:assigned,locked:count===8&&role<4,rule:'사망 판정 이후에도 심장 신호가 남은 시간. 가장 오래 지속된 기록부터 읽어라.'});
+    }
     send(ws,{type:'ch02_new_result',site,ok:true,role:player.role,message:site==='certificate'?'사망진단서의 발급 기록이 발견되었다.':site==='ecg'?'심전도 기록에 생존 신호가 남아 있다.':site==='eight'?'침대 끝의 8번 표식 아래 문서 배열 단서가 있다.':'침대 아래의 검은 손자국이 움직인다.'});
     if(site==='underbed'&&!ch.ch02.newScareRoles?.includes(player.role)){
      ch.ch02.newScareRoles=ch.ch02.newScareRoles||[];ch.ch02.newScareRoles.push(player.role);
