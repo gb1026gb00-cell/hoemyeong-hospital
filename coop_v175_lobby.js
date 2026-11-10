@@ -80,7 +80,11 @@
      createButton.textContent='발급된 '+result.code+'번 조사실 입장';
      const info=$('hmV175RoomInfo')||document.createElement('p');info.id='hmV175RoomInfo';
      info.style.cssText='padding:10px;border:1px solid #8b738f;border-radius:8px;color:#fff;font-size:13px;line-height:1.7';
-     info.textContent='조사실 코드: '+result.code+' · 친구에게 이 코드를 알려주세요. 코드는 변경할 수 없습니다.';
+     const invite=new URL('/play',location.origin);invite.searchParams.set('room',result.code);
+     info.textContent='조사실 코드: '+result.code+' · 친구에게 코드를 알려주거나 아래 초대 링크를 공유하세요.';
+     const share=document.createElement('button');share.type='button';share.textContent='초대 링크 복사';share.style.cssText='min-height:42px;margin-top:8px;border:1px solid #81678d;border-radius:8px;background:#33243c;color:white';
+     share.onclick=()=>navigator.clipboard?.writeText(invite.href).then(()=>{share.textContent='초대 링크 복사 완료';}).catch(()=>{share.textContent=invite.href;});
+     info.append(document.createElement('br'),share);
      createButton.before(info);
      createButton.click();
     }catch(e){
@@ -104,6 +108,16 @@
    openRoom('join');
   };
   $('hmV176CodeInput').onkeydown=e=>{if(e.key==='Enter')$('hmV176CodeContinue').click();};
+  const invitedCode=new URLSearchParams(location.search).get('room');
+  if(invitedCode&&/^[0-9]{4,}$/.test(invitedCode)){
+   $('hmV176CodeInput').value=invitedCode;
+   // The intro remains intact. After the intro, the join gate can use this
+   // server-generated code; the URL itself cannot create or rename a room.
+   const inviteEntry=()=>{if(started)return;setGate(false);$('hmV176CodeEntry').hidden=false;$('hmV176CodeInput').value=invitedCode;};
+   const originalLobby=lobby;
+   // Entry is offered after the cinematic via the existing lobby gate.
+   $('hmV175Join').addEventListener('click',()=>{$('hmV176CodeInput').value=invitedCode;});
+  }
 
   const close=$('hmCoopClose');
   if(close)close.addEventListener('click',()=>{if(!started&&enteredLobby)queueMicrotask(()=>{waitingRoom=false;setGate(true);});});
