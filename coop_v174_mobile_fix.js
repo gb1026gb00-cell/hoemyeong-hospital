@@ -73,7 +73,7 @@
     if(m.type==='ch02_new_result'&&m.site==='answer'){
      const status=document.getElementById('hmCh02NewStatus');
      if(status)status.textContent=m.message||'';
-     if(m.ok&&m.scene==='death_record_invalidated')showCh02Clear();
+     if(m.ok&&m.scene==='death_record_invalidated'){const status=document.getElementById('hmCh02NewStatus');if(status)status.textContent='정답 확인 · 모든 조사원의 영상 시청이 끝나면 CH.03으로 자동 이동합니다.';}
      else if(!m.ok)ch02Dialog('기록 정정 실패',m.message||'조사 기록이 부족합니다. 네 조사 지점을 다시 확인해 주세요.');
     }
     if(m.type==='ch02_new_result'&&m.site==='underbed'&&phase==='ch02'&&!m.videoPending){
@@ -111,7 +111,7 @@
     if(m.type==='mandatory_video')showMandatoryVideo(m.id,m.video);
     if(m.type==='mandatory_video_progress'&&m.id===mandatoryGateId){const status=document.getElementById('hmMandatoryVideoStatus');if(status)status.textContent='영상 시청 완료 '+m.done.length+' / '+m.online.length+'명 · 나머지 조사원 대기';}
     if(m.type==='ch03_event'&&m.event==='video'){ch03VideoSeen=true;const form=document.getElementById('hmCh03CodeForm');if(form){form.hidden=false;form.style.display='flex';}}
-    if((m.type==='state'||m.type==='joined')&&m.chapter?.videoGate){const gate=m.chapter.videoGate;const done=gate.done||[];if(done.includes(ch02AssignedRole)){if(mandatoryGateId!==gate.id||!document.getElementById('hmMandatoryVideo'))showMandatoryVideo(gate.id,gate.video);const video=document.querySelector('#hmMandatoryVideo video');if(video){video.pause();video.hidden=true;video.removeAttribute('src');}const retry=document.querySelector('#hmMandatoryVideo button');if(retry)retry.hidden=true;const status=document.getElementById('hmMandatoryVideoStatus');if(status)status.textContent='이미 시청 완료 · 다른 조사원을 기다리는 중…';}else showMandatoryVideo(gate.id,gate.video);}
+    if((m.type==='state'||m.type==='joined')&&m.chapter?.videoGate){document.getElementById('hmCh02ClearScene')?.remove();const gate=m.chapter.videoGate;const done=gate.done||[];if(done.includes(ch02AssignedRole)){if(mandatoryGateId!==gate.id||!document.getElementById('hmMandatoryVideo'))showMandatoryVideo(gate.id,gate.video);const video=document.querySelector('#hmMandatoryVideo video');if(video){video.pause();video.hidden=true;video.removeAttribute('src');}const retry=document.querySelector('#hmMandatoryVideo button');if(retry)retry.hidden=true;const status=document.getElementById('hmMandatoryVideoStatus');if(status)status.textContent='이미 시청 완료 · 다른 조사원을 기다리는 중…';}else showMandatoryVideo(gate.id,gate.video);}
     if((m.type==='state'||m.type==='joined')&&!m.chapter?.videoGate&&mandatoryGateId)clearMandatoryVideo();
     if(m.type==='ch03_event'&&m.event==='cleared'){phase='ch03_video_wait';}
     if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2){ch03FragmentCollected=true;const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent='제0유물 파편이 공동 소지품에 등록되었습니다.';}
