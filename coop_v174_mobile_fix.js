@@ -39,7 +39,8 @@
      if(status)status.textContent=m.message||'파편 수집 상태를 확인해 주세요.';
     }
     if((m.type==='state'||m.type==='joined')&&m.chapter?.phase==='ch02_cleared'&&!document.getElementById('hmCh02ClearScene'))showCh02Clear();
-    if(m.type==='ch04_event'&&m.event==='enter'){document.getElementById('hmCh03ToCh04Video')?.remove();ch03ToCh04Playing=false;}
+    if(m.type==='ch04_event'&&m.event==='enter'){document.getElementById('hmCh03ToCh04Video')?.remove();ch03ToCh04Playing=false;appendCh04StoryChat();}
+    if((m.type==='state'||m.type==='joined')&&m.chapter?.phase==='ch04')appendCh04StoryChat();
     if(m.type==='ch03_event'&&m.event==='enter'){
      phase='ch03';
      const image=document.getElementById('sceneImage');
@@ -127,6 +128,28 @@
   }
  }
  // Eight-member fan-story intro; game capacity and cooperative roles remain unchanged.
+ // G02 has ended for the room before CH04 is entered; add story to the existing team chat.
+ let ch04StoryChatShown=false;
+ function appendCh04StoryChat(){
+  if(ch04StoryChatShown)return;
+  const lines=[
+   ['우영','방금 봤어? 뭐야, 니네도 봤어????'],
+   ['민기','나 너무 무서워 진짜... 엘리베이터 안에 사람 있었잖아'],
+   ['윤호','봤어. 나도 봤어. 다들 괜찮아?'],
+   ['종호','그 사람... 우리 쪽 보고 있었어.'],
+   ['성화','잠깐만. 우리 전부 같은 걸 본 거 맞지?'],
+   ['여상','응. 영상 끝나고 문 열리는 소리까지 들었어.'],
+   ['산','우영아, 나 여기 있어. 일단 화면에서 눈 떼지 마.'],
+   ['홍중','다들 진정하고 지금 보이는 것부터 확인하자. 혼자 움직이지 말고.']
+  ];
+  const write=()=>{
+   const log=$('hmV174ChatLog');if(!log)return false;
+   if(log.querySelector('[data-hm-story="ch04"]')){ch04StoryChatShown=true;return true;}
+   for(const [name,message] of lines){const item=document.createElement('div');item.textContent=name+': '+message;item.dataset.hmStory='ch04';log.append(item);}
+   log.scrollTop=log.scrollHeight;ch04StoryChatShown=true;return true;
+  };
+  if(!write()){let tries=0;const retry=setInterval(()=>{if(write()||++tries>=20)clearInterval(retry);},250);}
+ }
  let ch01StoryChatShown=false;
  function appendCh01StoryChat(){
   if(ch01StoryChatShown)return;
