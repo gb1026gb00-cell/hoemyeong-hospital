@@ -16,7 +16,7 @@
   constructor(...args){super(...args);socket=this;
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
-    if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity))){receptionAnswerLength=Number(m.capacity)/2+3;ch02RoomCapacity=Number(m.capacity);}if(Array.isArray(m.roles))ch02RoomRoles=m.roles.filter(Number.isInteger).slice().sort((a,b)=>a-b);active=!!m.started;phase=m.chapter?.phase||phase;if(Array.isArray(m.artifactFragments))ch03FragmentCollected=m.artifactFragments.includes(2);updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
+    if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity))){receptionAnswerLength=Number(m.capacity)/2+3;ch02RoomCapacity=Number(m.capacity);}if(Array.isArray(m.roles))ch02RoomRoles=m.roles.filter(Number.isInteger).slice().sort((a,b)=>a-b);if(Number.isInteger(Number(m.yourRole)))ch02AssignedRole=Number(m.yourRole);if(m.chapter?.phase==='ch03'&&m.chapter.ch03?.videoTriggered)ch03VideoSeen=true;active=!!m.started;phase=m.chapter?.phase||phase;if(Array.isArray(m.artifactFragments))ch03FragmentCollected=m.artifactFragments.includes(2);updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='joined'&&typeof m.isHost==='boolean')ch02IsHost=m.isHost;
     if((m.type==='joined'||m.type==='state')&&m.yourRole!==undefined&&m.yourRole!==null&&Number.isInteger(Number(m.yourRole)))ch02AssignedRole=Number(m.yourRole);
     if(m.type==='ch02_certificate'&&Number.isInteger(Number(m.role)))ch02AssignedRole=Number(m.role);
@@ -111,7 +111,7 @@
     if(m.type==='mandatory_video')showMandatoryVideo(m.id,m.video);
     if(m.type==='mandatory_video_progress'&&m.id===mandatoryGateId){const status=document.getElementById('hmMandatoryVideoStatus');if(status)status.textContent='영상 시청 완료 '+m.done.length+' / '+m.online.length+'명 · 나머지 조사원 대기';}
     if(m.type==='ch03_event'&&m.event==='video'){ch03VideoSeen=true;const form=document.getElementById('hmCh03CodeForm');if(form){form.hidden=false;form.style.display='flex';}}
-    if((m.type==='state'||m.type==='joined')&&m.chapter?.videoGate){const gate=m.chapter.videoGate;const done=gate.done||[];if(done.includes(ch02AssignedRole)){mandatoryGateId=gate.id;const existing=document.getElementById('hmMandatoryVideo');if(!existing)showMandatoryVideo(gate.id,gate.video);const video=document.querySelector('#hmMandatoryVideo video');if(video)video.pause();const status=document.getElementById('hmMandatoryVideoStatus');if(status)status.textContent='이미 시청 완료 · 다른 조사원을 기다리는 중…';}else showMandatoryVideo(gate.id,gate.video);}
+    if((m.type==='state'||m.type==='joined')&&m.chapter?.videoGate){const gate=m.chapter.videoGate;const done=gate.done||[];if(done.includes(ch02AssignedRole)){showMandatoryVideo(gate.id,gate.video);const video=document.querySelector('#hmMandatoryVideo video');if(video){video.pause();video.removeAttribute('src');video.load();}const status=document.getElementById('hmMandatoryVideoStatus');if(status)status.textContent='이미 시청 완료 · 다른 조사원을 기다리는 중…';}else showMandatoryVideo(gate.id,gate.video);}
     if((m.type==='state'||m.type==='joined')&&!m.chapter?.videoGate&&mandatoryGateId)clearMandatoryVideo();
     if(m.type==='ch03_event'&&m.event==='cleared'){phase='ch03_video_wait';}
     if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2){ch03FragmentCollected=true;const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent='제0유물 파편이 공동 소지품에 등록되었습니다.';}
@@ -338,7 +338,7 @@
    if(acknowledged)return;acknowledged=true;
    status.textContent='영상 시청 완료 · 다른 조사원을 기다리는 중…';
    retry.hidden=true;video.controls=false;
-   if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'mandatory_video_done',id}));
+   if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'mandatory_video_done',id}));else status.textContent='영상 시청 완료 · 연결 복구 후 확인됩니다.';
   };
   video.addEventListener('ended',completed);
   video.addEventListener('error',()=>{status.textContent='영상을 불러오지 못했습니다. 다시 재생을 눌러주세요.';retry.hidden=false;});
