@@ -738,7 +738,7 @@
   const status=document.createElement('div');status.textContent='PATIENT STATUS : ALIVE';status.style.cssText='font:600 19px monospace;color:#9ed4b0;border-top:1px solid #5c5551;border-bottom:1px solid #5c5551;padding:18px 0;margin-bottom:20px';panel.append(status);
   const story=document.createElement('p');story.textContent='네 장의 사망진단서에서 환자명이 하나씩 지워진다.\n마지막 문서의 빈칸에는, 이 방을 조사한 사람의 이름이 번져 나타난다.\n\n병실 문 안쪽에서 잠금장치가 풀리는 소리가 들린다.';story.style.cssText='white-space:pre-line;line-height:1.9;font-size:15px';panel.append(story);
   const artifact=document.createElement('div');artifact.style.cssText='margin:23px 0;padding:15px;border:1px solid #584756;background:#221b26';
-  const aTitle=document.createElement('div');aTitle.textContent='제0유물 · 균열의 파편 Ⅱ';aTitle.style.cssText='font-size:17px;color:#d9b8d9;font-weight:bold';artifact.append(aTitle);
+  const aTitle=document.createElement('div');aTitle.textContent='제0유물 · 균열의 파편';aTitle.style.cssText='font-size:17px;color:#d9b8d9;font-weight:bold';artifact.append(aTitle);
   const aBody=document.createElement('p');aBody.textContent='302호의 봉인이 해제되었습니다. 파편이 공동 수집함에 등록되었습니다.';aBody.style.cssText='font-size:13px;margin:8px 0 0';artifact.append(aBody);panel.append(artifact);
   const next=document.createElement('button');next.type='button';next.textContent='병실로 돌아가기';next.style.cssText='display:block;width:100%;margin-top:22px;padding:13px;background:#382b37;border:1px solid #776073;color:#fff;font:15px system-ui';
   next.onclick=()=>overlay.remove();panel.append(next);overlay.append(panel);document.body.append(overlay);
