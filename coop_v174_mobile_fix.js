@@ -738,7 +738,10 @@
  ];
  function mountRebuiltWard(){
   const root=document.getElementById('hmWardScene');
-  if(!root||root.querySelector('.hm-ch02-new-target'))return;
+  if(!root)return;
+  // One investigation layer only: the newer overlay owns all four hit zones.
+  root.querySelectorAll('.hm-ch02-new-target').forEach(el=>el.remove());
+  return;
   for(const [kind,label,coords] of rebuiltTargets){
    const b=document.createElement('button');b.type='button';b.className='hm-ch02-new-target';b.dataset.ch02New=kind;
    b.setAttribute('aria-label',label);b.title=label;b.style.cssText=coords;
@@ -773,7 +776,7 @@
  document.addEventListener('hm-v175-state',guardCh02Horror);
  // CH02 standalone investigation layer; approved scene photo remains untouched.
  const ch02Css=document.createElement('style');
- ch02Css.textContent='html.hm-ch02-clean #ch02PuzzlePanel,html.hm-ch02-clean .hm-object-guide,html.hm-ch02-clean .narrative,html.hm-ch02-clean #sceneNarrative,html.hm-ch02-clean #sceneDescription,html.hm-ch02-clean #sceneText,html.hm-ch02-clean .scene-caption{display:none!important}html.hm-ch02-clean #hmCh02NewLayer:not([hidden]){display:block!important}#hmCh02NewLayer{position:absolute;inset:0;z-index:5000;pointer-events:none}#hmCh02NewLayer button{position:absolute;pointer-events:auto;background:transparent;border:0;color:transparent;font-size:0;touch-action:manipulation}#hmCh02NewLayer button:focus-visible{outline:2px solid #e9c6d7}';
+ ch02Css.textContent='html.hm-ch02-clean #ch02PuzzlePanel,html.hm-ch02-clean .hm-object-guide,html.hm-ch02-clean .narrative,html.hm-ch02-clean #sceneNarrative,html.hm-ch02-clean #sceneDescription,html.hm-ch02-clean #sceneText,html.hm-ch02-clean .scene-caption{display:none!important}html.hm-ch02-clean #hmCh02NewLayer:not([hidden]){display:block!important}#hmCh02NewLayer{position:absolute;inset:0;z-index:5000;pointer-events:none}#hmCh02NewLayer button{position:absolute!important;pointer-events:auto!important;background:transparent!important;border:0!important;box-shadow:none!important;opacity:0!important;color:transparent!important;font-size:0!important;touch-action:manipulation!important}#hmCh02NewLayer button:focus-visible{outline:2px solid #e9c6d7}';
  document.head.append(ch02Css);
  let ch02HandPending=false;
  function ch02Send(action,extra={}){
@@ -938,35 +941,44 @@
   }
   wrap.append(card);document.body.append(wrap);
  }
+ // One transparent CH02 interaction surface, anchored to the visible ward image.
+ // Use direct pointer activation so a legacy click handler cannot swallow mobile taps.
  function mountCh02New(){
-  const scene=document.getElementById('hmWardScene')||document.getElementById('mainScene');if(!scene)return;
+  const ward=document.getElementById('hmWardScene');
+  const scene=ward||document.getElementById('mainScene');
+  if(!scene)return;
   let layer=document.getElementById('hmCh02NewLayer');
   if(!layer){
    layer=document.createElement('div');layer.id='hmCh02NewLayer';
    const spots=[
-    ['certificate','침대 위 사망진단서','17%','30%','67%','31%'],
-    ['underbed','침대 아래 조사','22%','68%','59%','26%'],
-    ['ecg','벽 전기코드','3%','20%','16%','30%'],
-    ['eight','침대 끝 8번 표지','73%','49%','25%','24%']
+    ['certificate','사망진단서 조사','24%','43%','53%','27%'],
+    ['underbed','침대 아래 조사','28%','76%','52%','17%'],
+    ['ecg','심전도 조사','43%','27%','39%','13%'],
+    ['eight','8번 인식표 조사','0%','70%','28%','17%']
    ];
    for(const [site,label,left,top,width,height] of spots){
     const btn=document.createElement('button');btn.type='button';btn.dataset.ch02New=site;btn.setAttribute('aria-label',label);btn.title=label;
-    btn.style.left=left;btn.style.top=top;btn.style.width=width;btn.style.height=height;
-    btn.addEventListener('click',e=>{
-     e.preventDefault();e.stopImmediatePropagation();
+    btn.style.cssText='position:absolute!important;left:'+left+'!important;top:'+top+'!important;width:'+width+'!important;height:'+height+'!important;display:block!important;opacity:0!important;background:transparent!important;background-image:none!important;border:0!important;box-shadow:none!important;outline:0!important;color:transparent!important;pointer-events:auto!important;touch-action:manipulation!important;z-index:1!important';
+    let lastTap=0;
+    const inspect=e=>{
      if(!active||phase!=='ch02')return;
-     ch02Send('ch02_new_inspect',{site});
-     if(site==='certificate'){document.getElementById('hmCh02NewDialog')?.remove();}
-     if(site==='ecg')document.getElementById('hmCh02NewDialog')?.remove();
-     if(site==='eight')document.getElementById('hmCh02NewDialog')?.remove();
+     e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+     if(e.type==='click'&&Date.now()-lastTap<650)return;
+     if(e.type==='pointerup')lastTap=Date.now();
      if(site==='underbed')ch02HandPending=true;
-    },true);
+     ch02Send('ch02_new_inspect',{site});
+    };
+    btn.addEventListener('pointerup',inspect,true);
+    btn.addEventListener('click',inspect,true);
     layer.append(btn);
    }
-   scene.append(layer);
   }
-  layer.hidden=!(active&&phase==='ch02');
-  layer.style.setProperty('display',active&&phase==='ch02'?'block':'none','important');
+  if(layer.parentElement!==scene)scene.append(layer);
+  // Keep the photograph as-is, and avoid a second full-screen hit surface.
+  if(ward&&getComputedStyle(ward).position==='static')ward.style.setProperty('position','relative');
+  const on=active&&phase==='ch02';
+  layer.hidden=!on;
+  layer.style.cssText='position:absolute!important;inset:0!important;z-index:5000!important;display:'+(on?'block':'none')+'!important;background:transparent!important;border:0!important;box-shadow:none!important;pointer-events:none!important';
  }
  // Legacy V172 death-certificate modal can still be opened by its original
  // event handler. Detect that exact obsolete document and replace it with the
