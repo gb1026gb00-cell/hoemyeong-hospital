@@ -762,7 +762,7 @@
  document.addEventListener('hm-v175-state',guardCh02Horror);
  // CH02 standalone investigation layer; approved scene photo remains untouched.
  const ch02Css=document.createElement('style');
- ch02Css.textContent='html.hm-ch02-clean #ch02PuzzlePanel,html.hm-ch02-clean .hm-object-guide,html.hm-ch02-clean .narrative,html.hm-ch02-clean #sceneNarrative,html.hm-ch02-clean #sceneDescription,html.hm-ch02-clean #sceneText,html.hm-ch02-clean .scene-caption{display:none!important}html.hm-ch02-clean #hmCh02NewLayer{display:block!important}#hmCh02NewLayer{position:absolute;inset:0;z-index:5000;pointer-events:none}#hmCh02NewLayer button{position:absolute;pointer-events:auto;background:transparent;border:0;color:transparent;font-size:0;touch-action:manipulation}#hmCh02NewLayer button:focus-visible{outline:2px solid #e9c6d7}';
+ ch02Css.textContent='html.hm-ch02-clean #ch02PuzzlePanel,html.hm-ch02-clean .hm-object-guide,html.hm-ch02-clean .narrative,html.hm-ch02-clean #sceneNarrative,html.hm-ch02-clean #sceneDescription,html.hm-ch02-clean #sceneText,html.hm-ch02-clean .scene-caption{display:none!important}html.hm-ch02-clean #hmCh02NewLayer:not([hidden]){display:block!important}#hmCh02NewLayer{position:absolute;inset:0;z-index:5000;pointer-events:none}#hmCh02NewLayer button{position:absolute;pointer-events:auto;background:transparent;border:0;color:transparent;font-size:0;touch-action:manipulation}#hmCh02NewLayer button:focus-visible{outline:2px solid #e9c6d7}';
  document.head.append(ch02Css);
  let ch02HandPending=false;
  function ch02Send(action,extra={}){
@@ -955,7 +955,7 @@
    scene.append(layer);
   }
   layer.hidden=!(active&&phase==='ch02');
-  if(active&&phase==='ch02')layer.style.setProperty('display','block','important');
+  layer.style.setProperty('display',active&&phase==='ch02'?'block':'none','important');
  }
  // Legacy V172 death-certificate modal can still be opened by its original
  // event handler. Detect that exact obsolete document and replace it with the
