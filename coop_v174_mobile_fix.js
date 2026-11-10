@@ -524,7 +524,36 @@
    if(action==='ch02_explore'&&object==='monitor')return playHospitalSound('heart_monitor.mp3',0.35);
    if(object&&hmSoundFiles[object])playHospitalSound(hmSoundFiles[object],0.35);
   },true);
-  // Rare atmospheric sounds only during active investigation, never while
+  // CH02 2-1: read-only death certificate preview on the existing 302-room bed hotspot.
+ // Do not replace the original puzzle handlers or trigger any horror media here.
+ function openCh02CertificatePreview(){
+  if(document.getElementById('hmCh02CertificatePreview'))return;
+  const overlay=document.createElement('div');
+  overlay.id='hmCh02CertificatePreview';
+  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+  overlay.setAttribute('aria-label','회명병원 사망진단서');
+  overlay.style.cssText='position:fixed;inset:0;z-index:999997;overflow:auto;display:grid;place-items:center;padding:16px;background:#050507ed';
+  const sheet=document.createElement('section');
+  sheet.style.cssText='position:relative;width:min(540px,100%);min-height:430px;padding:clamp(22px,5vw,42px);background:linear-gradient(135deg,#d2c6ad,#a99c86);color:#29251f;border:1px solid #746854;box-shadow:0 18px 75px #000;font-family:serif';
+  const close=document.createElement('button');close.type='button';close.textContent='닫기 ×';close.setAttribute('aria-label','사망진단서 닫기');
+  close.style.cssText='position:absolute;right:14px;top:12px;padding:8px 12px;background:#29211e;color:#f5e9d7;border:1px solid #675b50;cursor:pointer';
+  const title=document.createElement('h2');title.textContent='回明病院 · 사망진단서';title.style.cssText='margin:30px 0 22px;text-align:center;font-size:24px;letter-spacing:.05em;border-bottom:2px solid #51483b;padding-bottom:18px';
+  const content=document.createElement('div');content.style.cssText='line-height:2.4;font-size:15px;white-space:pre-line';
+  content.textContent='문서 번호 : HM-302-□□□□\\n환자 성명 : [기록 훼손]\\n사망 일시 : [판독 불가]\\n사망 원인 : [판독 불가]\\n담당 의사 : [서명 훼손]';
+  const foot=document.createElement('p');foot.textContent='※ 조사 기록 확인용 · 다음 단계에서 단서가 복원됩니다.';foot.style.cssText='margin-top:32px;padding-top:16px;border-top:1px solid #756b5a;font-size:12px';
+  const dismiss=()=>overlay.remove();close.addEventListener('click',dismiss);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)dismiss()});
+  sheet.append(close,title,content,foot);overlay.append(sheet);document.body.append(overlay);
+ }
+ document.addEventListener('click',event=>{
+  if(!active||phase!=='ch02')return;
+  const target=event.target.closest('button,[data-action],[data-ch02],[data-object],[data-site]');
+  if(!target||target.closest('#hmCh02CertificatePreview'))return;
+  const action=String(target.dataset.action||target.dataset.ch02||'').toLowerCase();
+  const object=String(target.dataset.object||target.dataset.site||target.dataset.station||'').toLowerCase();
+  if(action==='ch02_explore'&&['bed','patient_record','chart','record'].includes(object))openCh02CertificatePreview();
+ },true);
+ // Rare atmospheric sounds only during active investigation, never while
   // a cinematic is on screen. Timer is cleared when page is closed.
   const ambient=setInterval(()=>{
    if(!active||document.hidden||$('hmForcedSeparation')||$('hmReceptionScare')||$('hmReceptionHandScare')||($('hmMediaOverlay')&&!$('hmMediaOverlay').hidden))return;
