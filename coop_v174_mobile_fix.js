@@ -620,7 +620,7 @@
  'html.hm-ch02-clean #hmWardScene [data-ward-action]',
  'html.hm-ch02-clean #hmWardScene .ward-top button'
  ].join(',')+'{display:none!important}'+
- '#hmWardScene .hm-ch02-new-target{position:absolute;z-index:55;display:block;border:0;background:transparent;color:transparent;padding:0;border-radius:0;box-shadow:none;cursor:pointer;touch-action:manipulation}'+
+ '#hmWardScene .hm-ch02-new-target{position:absolute;z-index:1005;display:block;border:0;background:transparent;color:transparent;padding:0;border-radius:0;box-shadow:none;cursor:pointer;touch-action:manipulation}'+
  '#hmWardScene .hm-ch02-new-target:focus-visible{outline:2px solid #ddd}'+
  'html:not(.hm-ch02-clean) #hmWardScene .hm-ch02-new-target{display:none!important}';
  document.head.append(rebuildStyle);
@@ -667,7 +667,7 @@
  document.addEventListener('hm-v175-state',guardCh02Horror);
  // CH02 standalone investigation layer; approved scene photo remains untouched.
  const ch02Css=document.createElement('style');
- ch02Css.textContent='html.hm-ch02-clean #ch02PuzzlePanel,html.hm-ch02-clean .hm-object-guide,html.hm-ch02-clean .narrative,html.hm-ch02-clean #sceneNarrative,html.hm-ch02-clean #sceneDescription,html.hm-ch02-clean #sceneText,html.hm-ch02-clean .scene-caption{display:none!important}html.hm-ch02-clean #mainScene>:not(img):not(#hmCh02NewLayer){display:none!important}html.hm-ch02-clean #hmCh02NewLayer{display:none!important}#hmCh02NewLayer{position:absolute;inset:0;z-index:999;pointer-events:none}#hmCh02NewLayer button{position:absolute;pointer-events:auto;background:transparent;border:0;color:transparent;font-size:0;touch-action:manipulation}#hmCh02NewLayer button:focus-visible{outline:2px solid #e9c6d7}';
+ ch02Css.textContent='html.hm-ch02-clean #ch02PuzzlePanel,html.hm-ch02-clean .hm-object-guide,html.hm-ch02-clean .narrative,html.hm-ch02-clean #sceneNarrative,html.hm-ch02-clean #sceneDescription,html.hm-ch02-clean #sceneText,html.hm-ch02-clean .scene-caption{display:none!important}html.hm-ch02-clean #mainScene>:not(img):not(#hmCh02NewLayer):not(#hmWardScene){display:none!important}html.hm-ch02-clean #hmCh02NewLayer{display:none!important}#hmCh02NewLayer{position:absolute;inset:0;z-index:999;pointer-events:none}#hmCh02NewLayer button{position:absolute;pointer-events:auto;background:transparent;border:0;color:transparent;font-size:0;touch-action:manipulation}#hmCh02NewLayer button:focus-visible{outline:2px solid #e9c6d7}';
  document.head.append(ch02Css);
  let ch02HandPending=false;
  function ch02Send(action,extra={}){
@@ -902,7 +902,7 @@
  document.addEventListener('click',e=>{
   if(!active||phase!=='ch02')return;
   const el=e.target instanceof Element?e.target.closest('button,[role="button"],[data-action],[data-site]'):null;
-  if(!el||el.closest('#hmCh02NewLayer,#hmCh02NewDialog,#hmV174Chat'))return;
+  if(!el||el.closest('#hmCh02NewLayer,#hmCh02NewDialog,#hmV174Chat,.hm-ch02-new-target'))return;
   if(el.closest('#mainScene,#ch02PuzzlePanel')||el.dataset.ch02||el.dataset.site==='bed_under'){e.preventDefault();e.stopImmediatePropagation();}
  },true);
  document.addEventListener('hm-v175-state',()=>{if(phase!=='ch02'){ch02HandPending=false;document.getElementById('hmCh02NewDialog')?.remove();if(phase==='ch03'){document.getElementById('hmCh02ClearScene')?.remove();ch02ClearShown=false;}else if(phase!=='ch02_cleared'){document.getElementById('hmCh02ClearScene')?.remove();ch02ClearShown=false;}}});
