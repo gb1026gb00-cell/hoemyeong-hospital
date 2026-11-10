@@ -68,7 +68,8 @@
   const el=event.target.closest?.('button,[role="button"],[data-action],[data-object],[aria-label],[title]');
   if(!el)return;
   const label=[el.textContent,el.getAttribute('aria-label'),el.getAttribute('title'),el.dataset?.action,el.dataset?.object].filter(Boolean).join(' ').trim();
-  if(!/접수대\s*서랍|reception[_ -]?drawer|desk[_ -]?drawer/i.test(label))return;
+  if(!/(?:^|\\s)접수대(?:\\s*서랍)?(?:$|\\s)|reception[_ -]?drawer|desk[_ -]?drawer/i.test(label))return;
+  if(/접수명부|접수 기록|접수번호|접수 인원|조사 시작|강제 분리/.test(label))return;
   socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'desk'}));
  },false);
  // Keep cinematic overlays as non-interactive layers. The source video
