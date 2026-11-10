@@ -75,6 +75,40 @@
   media.__hmG08Routed=true;
  }
  installG08MediaRouting();
+
+ // CH01 guidance is additive: all eight existing server-validated puzzles remain intact.
+ const senses=['청각','촉각','시각','기록','시간','전파','관찰','기억'];
+ const objects=['내선 기록','거울','거울','접수 기록','접수 기록','내선 기록','잠긴 보관함','거울'];
+ const rules=[
+  '짧은 신호는 S, 긴 신호는 L로 적고, 들리는 순서대로 이어 붙이세요.',
+  '첫 번째 돌기 행을 왼쪽부터 읽어 숫자를 이어 붙이세요.',
+  '거울에 비친 숫자를 실제 방향으로 되돌린 뒤, 숫자 두 개를 붙여 쓰세요.',
+  '명부에 등장한 접수 번호를 위에서 아래 순서대로, 구분 기호 없이 이어 붙이세요.',
+  '당직 일지와 멈춘 시계의 시각을 각각 네 자리로 쓰고, 가운데에 -를 넣으세요.',
+  '호출 부호에서 숫자만 순서대로 적으세요. 하이픈은 빼세요.',
+  '감시 영상의 인원과 거울 속 인원을 차례로 쓰고 가운데 -를 넣으세요.',
+  '처음 확인한 네 자리 배열을 순서대로 이어 붙이세요.'
+ ];
+ function enhanceCh01(){
+  const panel=$('ch01PuzzlePanel');if(!panel||$('hmCh01Guide'))return;
+  const index=$('senseIndex');if(!index)return;
+  const guide=document.createElement('section');guide.id='hmCh01Guide';
+  guide.style.cssText='margin:12px 0;padding:13px;border:1px solid #80648e;border-radius:10px;background:#231a2b;color:#eee0f3;font:13px/1.65 system-ui;white-space:normal';
+  index.closest('label')?.before(guide);
+  const sequence=$('senseSequence'),cross=$('senseCrossKey'),digit=$('senseDigit');
+  const update=()=>{
+   const i=Number(index.value),valid=Number.isInteger(i)&&i>=0&&i<8;
+   if(!valid){guide.textContent='감각 번호는 0~7 중 하나를 선택하세요.';return;}
+   const next=(i+1)%8;
+   guide.innerHTML='<b>선택한 감각: '+senses[i]+' (번호 '+i+')</b><div>① 현장에서 <b>'+objects[i]+'</b>을 먼저 조사하세요.</div><div>② 장치 조작 순서: '+rules[i]+'</div><div>③ 장치 조작 버튼을 누른 뒤, 문제의 답을 해독 답 칸에 입력하세요.</div><div>④ <b>'+senses[next]+' 감각 담당자</b>에게 교차 열쇠를 받아 입력하세요. 내 화면의 공유 열쇠는 그 담당자에게 전달하는 값이지, 내 입력값이 아닙니다.</div><div>⑤ 해독 성공 메시지에 나온 숫자를 아래 숫자 조각 칸에 옮기고 등록하세요.</div>';
+   if(sequence)sequence.placeholder=rules[i];
+   if(cross)cross.placeholder=senses[next]+' 담당자에게 받은 교차 열쇠';
+   if(digit)digit.placeholder='해독 성공 메시지의 숫자';
+  };
+  index.addEventListener('input',update);index.addEventListener('change',update);update();
+  const caption=document.createElement('div');caption.style.cssText='font-size:12px;color:#cbbbd4;margin:5px 0 10px';caption.textContent='감각 번호: 청각 0 · 촉각 1 · 시각 2 · 기록 3 · 시간 4 · 전파 5 · 관찰 6 · 기억 7';index.closest('label')?.append(caption);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enhanceCh01,{once:true});else enhanceCh01();
  window.WebSocket=CoopSocket;
  // Only the approved 2/4/6/8-person capacities are selectable.
  function normalizeCapacityControls(){
