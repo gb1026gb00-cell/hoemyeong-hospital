@@ -111,6 +111,8 @@
     if(m.type==='horror_video'&&m.id==='G06'&&phase==='ch03')playCh03ElevatorVideo();
     if(m.type==='ch03_event'&&m.event==='cleared'){phase='ch03_cleared';showCh03Cleared();}
     if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2){ch03FragmentCollected=true;const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent='제0유물 파편이 공동 소지품에 등록되었습니다.';}
+    if(m.type==='ch03_result'&&m.ok===false&&phase==='ch03'){const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent=m.message||'조사 요청을 완료하지 못했습니다.';}
+    if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2&&phase==='ch03'){const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent='제0유물 파편이 공동 소지품에 등록되었습니다. 이제 운행 코드를 입력할 수 있습니다.';}
     if(m.type==='ch04_result'&&m.ok===false&&phase==='ch03_cleared'){const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent=m.message||'다음 구역으로 이동할 수 없습니다.';}
     if(m.type==='fragment_result'&&m.ok===false&&phase==='ch03_cleared'){const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent=m.message||'파편을 회수하지 못했습니다.';}
 
@@ -159,7 +161,7 @@
   if(ch02IntroSeen||$('hmCh02GroupIntro'))return;
   ch02IntroSeen=true;
   const overlay=document.createElement('div');overlay.id='hmCh02GroupIntro';
-  overlay.style.cssText='position:fixed;inset:0;z-index:999995;background:#050505;color:#f5f5f5;display:flex;justify-content:center;align-items:center;padding:14px;box-sizing:border-box;font:14px/1.5 system-ui';
+  overlay.style.cssText='position:fixed;inset:0;z-index:2147483500;background:#050505;color:#f5f5f5;display:flex;justify-content:center;align-items:center;padding:14px;box-sizing:border-box;font:14px/1.5 system-ui';
   const phone=document.createElement('section');phone.style.cssText='width:min(500px,100%);height:min(720px,92dvh);display:flex;flex-direction:column;background:#101010;border:1px solid #343434;border-radius:15px;overflow:hidden;box-shadow:0 16px 50px #000';
   const head=document.createElement('header');head.textContent='회명병원 · 단체 대화 (9)';head.style.cssText='padding:17px 19px;border-bottom:1px solid #303030;font-weight:700;text-align:center';phone.append(head);
   const thread=document.createElement('div');thread.style.cssText='flex:1;overflow:auto;padding:17px 15px;display:flex;flex-direction:column;gap:11px';
@@ -167,7 +169,7 @@
   for(const [name,message] of dialogue){const row=document.createElement('div');row.style.cssText='display:flex;flex-direction:column;align-items:flex-start;gap:4px';const label=document.createElement('span');label.textContent=name;label.style.cssText='font-size:12px;color:#bcbcbc';const bubble=document.createElement('div');bubble.textContent=message;bubble.style.cssText='max-width:90%;background:#292929;border-radius:4px 13px 13px 13px;padding:10px 13px;color:#f5f5f5;white-space:pre-wrap';row.append(label,bubble);thread.append(row);}
   phone.append(thread);
   const footer=document.createElement('div');footer.style.cssText='padding:14px;border-top:1px solid #303030;background:#101010';
-  const start=document.createElement('button');start.type='button';start.textContent='조사 시작하기';start.style.cssText='width:100%;padding:15px;border:1px solid #777;border-radius:9px;background:#272727;color:#fff;font:700 16px system-ui;cursor:pointer;touch-action:manipulation';start.addEventListener('click',()=>overlay.remove());
+  const start=document.createElement('button');start.type='button';start.textContent='대화 확인 · 조사 시작';start.style.cssText='width:100%;padding:15px;border:1px solid #777;border-radius:9px;background:#272727;color:#fff;font:700 16px system-ui;cursor:pointer;touch-action:manipulation';start.addEventListener('click',()=>overlay.remove());
   footer.append(start);phone.append(footer);overlay.append(phone);document.body.append(overlay);
  }
  document.addEventListener('hm-v175-state',mountCh02GroupIntro);
@@ -375,7 +377,7 @@
   grime.style.cssText='position:absolute;left:76%;top:10%;width:17%;height:76%;pointer-events:none;opacity:.9;mix-blend-mode:multiply;background:radial-gradient(ellipse at 23% 15%,#070a09 0%,#161e1a 18%,transparent 46%),radial-gradient(ellipse at 78% 43%,#080b09 0%,#161d18 23%,transparent 53%),radial-gradient(ellipse at 42% 73%,#060807 0%,#18211c 27%,transparent 60%),linear-gradient(102deg,transparent 5%,#101411a8 39%,transparent 72%);filter:blur(2px)';scene.append(grime);
   root.append(scene);
   const bottom=document.createElement('div');bottom.style.cssText='flex:none;padding:13px 16px 24px;background:#100d12;border-top:1px solid #494149;display:grid;grid-template-columns:1fr 1fr;gap:10px';
-  const note=document.createElement('div');note.id='hmIndependentCh03Note';note.textContent='사진 속 거울·안내문·계산판·엘리베이터 버튼을 직접 눌러 조사하세요.';note.style.cssText='grid-column:1/-1;min-height:52px;white-space:pre-wrap;color:#d9c9d5;padding:10px;background:#1e1721;border:1px solid #4b394d;border-radius:6px';bottom.append(note);
+  const note=document.createElement('div');note.id='hmIndependentCh03Note';note.textContent='거울을 닦고 가장자리의 틈도 살펴보세요. 안내문·계산판·엘리베이터 버튼을 직접 눌러 조사할 수 있습니다.';note.style.cssText='grid-column:1/-1;min-height:52px;white-space:pre-wrap;color:#d9c9d5;padding:10px;background:#1e1721;border:1px solid #4b394d;border-radius:6px';bottom.append(note);
   function sendInvestigation(action,extra,label){
    note.textContent=label+' 조사 요청 중…';
    if(socket?.readyState===NativeWS.OPEN){socket.send(JSON.stringify({type:'chapter',action,...extra}));}
@@ -398,6 +400,7 @@
    scene.append(button);return button;
   }
   hotspot('거울 문지르기',6,12,30,58,openCh03Mirror);
+  const fragmentHotspot=hotspot('거울 가장자리 틈 · 제0유물 조사',32,19,5,48,()=>sendInvestigation('ch03_fragment',{},'거울 가장자리'));fragmentHotspot.style.zIndex='3';
   hotspot('거울 아래 층별 안내문',7,71,33,24,openCh03FloorDirectory);
   hotspot('우측 아래 기호 계산판',71,67,25,29,openCh03SymbolCalculator);
   hotspot('엘리베이터 운행 버튼',76,14,20,46,()=>sendInvestigation('ch03_video',{},'엘리베이터'));
