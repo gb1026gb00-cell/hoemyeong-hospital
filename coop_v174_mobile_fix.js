@@ -386,6 +386,36 @@
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installReceptionCoop,{once:true});else installReceptionCoop();
  document.addEventListener('hm-v175-started',installReceptionCoop);
+ // The approved V172 CH01 investigation opens a separate investigation-record
+ // window, not #ch01PuzzlePanel. Move the new cooperative board into that
+ // visible window whenever it opens, without destroying legacy puzzle handlers.
+ function mountReceptionInInvestigation(){
+  if(!active||phase!=='separated')return;
+  let board=$('hmReceptionCoop');
+  if(!board){installReceptionCoop();board=$('hmReceptionCoop');}
+  if(!board)return;
+  const headings=[...document.querySelectorAll('button')].filter(el=>/^(조사 기록|공동 수사판|심전도 복원|내 제어판)$/.test(el.textContent.trim()));
+  const tabs=headings.find(el=>el.textContent.trim()==='조사 기록');
+  if(!tabs)return;
+  let host=tabs.parentElement;
+  for(let i=0;i<5&&host;i++,host=host.parentElement){
+   if(host.querySelectorAll('button').length>=4&&host.scrollHeight>350)break;
+  }
+  if(!host)return;
+  const scroll=host.querySelector('[style*="overflow"]')||host;
+  if(board.parentElement!==scroll){
+   scroll.insertBefore(board,scroll.firstChild);
+  }
+  // Keep the legacy investigation controls available in other tabs;
+  // the new CH01 board is the first section of the investigation record.
+  board.hidden=false;board.style.display='block';
+ }
+ const scheduleReceptionMount=()=>requestAnimationFrame(mountReceptionInInvestigation);
+ document.addEventListener('hm-v175-state',scheduleReceptionMount);
+ document.addEventListener('click',scheduleReceptionMount);
+ const receptionMountObserver=new MutationObserver(()=>{if(active&&phase==='separated')scheduleReceptionMount();});
+ receptionMountObserver.observe(document.body||document.documentElement,{childList:true,subtree:true});
+
 
  // Route the FIRST actual CH01 investigation through the server before legacy
  // V172 scene handlers. The old scene can use data-action while the new panel
