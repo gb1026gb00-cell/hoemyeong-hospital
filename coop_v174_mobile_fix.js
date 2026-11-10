@@ -15,6 +15,7 @@
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
     if(m.type==='state'||m.type==='joined'){active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='reception_clue'||m.type==='reception_result')showReceptionResult(m);
+    handleHospitalSoundEvent(m);
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
     if(m.type==='chat'){const box=$('hmV174ChatLog');if(box){const line=document.createElement('div');line.textContent=(Number.isInteger(m.item?.character)&&m.item.character>=0&&m.item.character<8?['홍중','성화','윤호','여상','산','민기','우영','종호'][m.item.character]+': ':(m.item?.role!==undefined?'조사원 '+(m.item.role+1)+': ':''))+(m.item?.text||m.item?.message||'');box.append(line);box.scrollTop=box.scrollHeight;}}
    });
@@ -198,6 +199,77 @@
   if(desk){desk.addEventListener('click',()=>{if(active&&phase==='separated'&&socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'reception_clue',object:'desk'}));});}
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installReceptionCoop,{once:true});else installReceptionCoop();
+
+ // Original uploaded audio files. This bridge never alters the approved videos,
+ // chapter voices, artifact inventory or doll assembly.
+ const hmSoundRoot='https://gb1026gb00-cell.github.io/hoemyeong-hospital/audio/';
+ const hmSoundFiles={
+  desk:'paper_pages.mp3',mirror:'glass_shatter.mp3',cabinet:'metal_scrape.mp3',ledger:'paper_pages.mp3',
+  door:'door_rusty.mp3',drawer:'door_opening.mp3',panel:'electric_buzz.mp3',
+  clock:'clock_ticking.mp3',camera:'electric_buzz.mp3',speaker:'unclear_whisper.mp3',
+  corridor:'running.mp3',wheelchair:'chair.mp3',glass:'knocking.mp3',
+  bell:'metal_hit.mp3',valve:'metal_scrape.mp3',
+  doll:'laugh_doll.mp3',fragment:'low_drone.mp3'
+ };
+ let hmAudioUnlocked=false,hmSoundLast=0;
+ const hmSoundActive=new Set();
+ function playHospitalSound(file,volumeFactor=0.48){
+  if(!hmAudioUnlocked||!file||!Object.values(hmSoundFiles).includes(file)&&![
+   'hallway_steps.wav','door_slam.mp3','laugh_woman.mp3','behind_you_breath.wav',
+   'floor_steps.mp3','heart_monitor.mp3','distant_thunder.wav','crying.mp3',
+   'elevator_ding.mp3','scare_stinger.wav','heartbeat.mp3','door_scratching.mp3',
+   'fluorescent_fault_new.mp3','scream.mp3'
+  ].includes(file))return;
+  const now=Date.now();if(now-hmSoundLast<350)return;hmSoundLast=now;
+  if(hmSoundActive.size>=2)return;
+  const v=soundVolume();if(v<=0)return;
+  const a=new Audio(hmSoundRoot+file);a.preload='auto';a.volume=Math.min(1,v*volumeFactor);
+  hmSoundActive.add(a);
+  const clean=()=>{hmSoundActive.delete(a);a.removeAttribute('src');};
+  a.addEventListener('ended',clean,{once:true});a.addEventListener('error',clean,{once:true});
+  a.play().catch(clean);
+ }
+ function handleHospitalSoundEvent(m){
+  if(m.type==='doll_event'&&m.event==='complete')playHospitalSound('laugh_doll.mp3',0.65);
+  if(m.type==='fragment_result'&&m.ok&&!m.already)playHospitalSound('low_drone.mp3',0.3);
+  if(m.type==='reception_clue'&&m.object==='desk')playHospitalSound('paper_pages.mp3',0.4);
+  if(m.type==='chapter_event'&&m.event==='escape')playHospitalSound('door_slam.mp3',0.55);
+  if(m.type==='ch02_event'&&m.event==='cleared')playHospitalSound('door_rusty.mp3',0.5);
+  if(m.type==='ch03_event'&&m.event==='enter')playHospitalSound('elevator_ding.mp3',0.55);
+  if(m.type==='ch04_event'&&m.event==='enter')playHospitalSound('paper_pages.mp3',0.4);
+  if(m.type==='ch05_event'&&m.event==='enter')playHospitalSound('door_slam.mp3',0.6);
+  if(m.type==='ch06_event'&&m.event==='enter')playHospitalSound('heartbeat.mp3',0.35);
+ }
+ function installHospitalSoundEffects(){
+  document.addEventListener('pointerdown',()=>{hmAudioUnlocked=true;},{capture:true,passive:true});
+  document.addEventListener('keydown',()=>{hmAudioUnlocked=true;},{capture:true,passive:true});
+  document.addEventListener('click',event=>{
+   if(!active)return;
+   const b=event.target.closest('button');if(!b)return;
+   const object=b.dataset.object||b.dataset.site||b.dataset.station||'';
+   const action=b.dataset.action||b.dataset.ch01||b.dataset.ch02||b.dataset.ch03||b.dataset.ch04||b.dataset.ch05||b.dataset.ch06||'';
+   if(action==='bell')return; // G08 video and original voice own the transition.
+   if(action==='fragment_search'||action==='artifact_inspect')return;
+   if(action==='ch02_corridor')return playHospitalSound('running.mp3',0.4);
+   if(action==='ch02_wheelchair')return playHospitalSound('chair.mp3',0.5);
+   if(action==='ch02_room302')return playHospitalSound('door_scratching.mp3',0.5);
+   if(action==='ch03_enter'||action==='ch04_enter'||action==='ch05_enter'||action==='ch06_enter')return playHospitalSound('door_rusty.mp3',0.45);
+   if(action==='ch02_pressure'||action==='ch05_valve')return playHospitalSound('metal_scrape.mp3',0.45);
+   if(action==='ch06_switch'||action==='ch02_switch')return playHospitalSound('metal_hit.mp3',0.45);
+   if(action==='ch02_explore'&&object==='bed')return playHospitalSound('breathing.mp3',0.35);
+   if(action==='ch02_explore'&&object==='monitor')return playHospitalSound('heart_monitor.mp3',0.35);
+   if(object&&hmSoundFiles[object])playHospitalSound(hmSoundFiles[object],0.35);
+  },true);
+  // Rare atmospheric sounds only during active investigation, never while
+  // a cinematic is on screen. Timer is cleared when page is closed.
+  const ambient=setInterval(()=>{
+   if(!active||document.hidden||$('hmForcedSeparation')||!$('hmMediaOverlay')?.hidden)return;
+   if(Math.random()<0.32)playHospitalSound(
+    ['hallway_steps.wav','behind_you_breath.wav','laugh_woman.mp3','distant_thunder.wav','fluorescent_fault_new.mp3'][Math.floor(Math.random()*5)],0.2);
+  },45000);
+  window.addEventListener('pagehide',()=>clearInterval(ambient),{once:true});
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installHospitalSoundEffects,{once:true});else installHospitalSoundEffects();
  window.WebSocket=CoopSocket;
  // Only the approved 2/4/6/8-person capacities are selectable.
  function normalizeCapacityControls(){
