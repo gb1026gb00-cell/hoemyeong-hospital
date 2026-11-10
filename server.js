@@ -487,91 +487,33 @@ wss.on('connection',ws=>{
     if(!(r.artifactFragments||new Set()).has(0))return send(ws,{type:'fragment_result',ok:false,message:'이 구역의 균열의 파편을 직접 찾아 공동 소지품에 등록해야 다음 구역으로 이동할 수 있습니다.'});
     if(player!==r.host)return send(ws,{type:'ch02_result',ok:false,message:'방장만 다음 구역으로 이동할 수 있습니다.'});
     if(!ch.evidenceSolved||!ch.ecgSolved)return send(ws,{type:'ch02_result',ok:false,message:'접수실의 증거와 심전도 복원을 먼저 마쳐야 합니다.'});
-    ch.phase='ch02';ch.ch02={found:[],switches:[],unlocked:false,explored:[],alarm:false,pressure:[],pressureSolved:false,pressureLastRole:null};
+    ch.phase='ch02';ch.ch02={newVisited:{},newScareRoles:[]};
     broadcast(r,{type:'ch02_event',event:'enter',message:'208호. 비어 있다는 병실에서 호출벨이 울린다. 문틈으로 낡은 환자 차트가 밀려 나온다. 차트 상단에는 「회명병원 / 개원 1988년 / 환자번호 0208」이라고 인쇄되어 있다.'});broadcast(r,state(r));chapterVoiceOnce(r,2);return;
    }
-   if(ch.phase==='ch02'&&m.action==='ch02_corridor'){
-    const ward=ch.ch02;
-    if(!Array.isArray(ward.corridorWitnessed))ward.corridorWitnessed=[];
-    if(!ward.corridorWitnessed.includes(player.role)){
-     ward.corridorWitnessed.push(player.role);
-     send(ws,{type:'ch02_result',ok:true,station:'corridor',message:'복도 끝의 비상등이 꺼졌다. 바닥에서 무언가 끌리는 소리가 들린다.'});
-     send(ws,{type:'horror_video',id:'G02',scope:'self'});
-     persist();
-    }else send(ws,{type:'ch02_result',ok:true,station:'corridor',message:'복도 끝에는 아무것도 없다. 바닥의 긁힌 자국만 조금 더 가까워졌다.'});
-    return;
-   }
-   if(ch.phase==='ch02'&&m.action==='ch02_room302'){
-    const ward=ch.ch02;
-    if(!ward.room302Looks)ward.room302Looks={};
-    const key=String(player.role);
-    const count=ward.room302Looks[key]||0;
-    ward.room302Looks[key]=Math.min(count+1,2);
-    if(count===0){
-     send(ws,{type:'ch02_result',ok:true,station:'room302',message:'302호 문은 잠겨 있다. 문틈에서 희미한 숨소리가 들린다. 안쪽에 누군가 서 있는 것 같다.'});
-    }else if(count===1){
-     send(ws,{type:'ch02_result',ok:true,station:'room302',message:'다시 문틈을 들여다본다. 이번에는 문 너머에서 누군가 먼저 당신을 보고 있다.'});
-     send(ws,{type:'horror_video',id:'G05',scope:'self'});
-    }else{
-     send(ws,{type:'ch02_result',ok:true,station:'room302',message:'302호 문틈은 텅 비었다. 눈을 마주쳤던 높이에 손자국 하나만 남아 있다.'});
+   // CH02 rebuilt: no legacy corridor, elevator, valve or 0241 puzzle routes.
+   if(ch.phase==='ch02'&&m.action==='ch02_new_inspect'){
+    const site=String(m.site||'');
+    if(!['certificate','ecg','eight','underbed'].includes(site))return;
+    if(!ch.ch02.newVisited)ch.ch02.newVisited={};
+    if(!ch.ch02.newVisited[player.role])ch.ch02.newVisited[player.role]=[];
+    if(!ch.ch02.newVisited[player.role].includes(site))ch.ch02.newVisited[player.role].push(site);
+    send(ws,{type:'ch02_new_result',site,ok:true,role:player.role,message:site==='certificate'?'사망진단서의 발급 기록이 발견되었다.':site==='ecg'?'심전도 기록에 생존 신호가 남아 있다.':site==='eight'?'침대 끝의 8번 표식 아래 문서 배열 단서가 있다.':'침대 아래의 검은 손자국이 움직인다.'});
+    if(site==='underbed'&&!ch.ch02.newScareRoles?.includes(player.role)){
+     ch.ch02.newScareRoles=ch.ch02.newScareRoles||[];ch.ch02.newScareRoles.push(player.role);
+     send(ws,{type:'horror_video',id:'H01',scope:'self'});
     }
-    persist();return;
+    broadcast(r,state(r));persist();return;
    }
-   if(ch.phase==='ch02'&&m.action==='ch02_wheelchair'){
-    const ward=ch.ch02;
-    if(!Array.isArray(ward.wheelchairWitnesses))ward.wheelchairWitnesses=[];
-    const key=String(player.role);
-    const first=!ward.wheelchairWitnesses.includes(key);
-    if(first){ward.wheelchairWitnesses.push(key);
-      send(ws,{type:'ch02_result',ok:true,station:'wheelchair',message:'소아병동 끝에 놓인 빈 휠체어. 바퀴 자국은 여기까지 이어지지만, 누가 밀었는지는 보이지 않는다.'});
-      send(ws,{type:'horror_video',id:'G11',scope:'self'});
-    }else send(ws,{type:'ch02_result',ok:true,station:'wheelchair',message:'휠체어는 다시 제자리에 있다. 바퀴는 아직 조금씩 흔들린다.'});
-    persist();return;
+   if(ch.phase==='ch02'&&m.action==='ch02_new_solve'){
+    if(String(m.answer||'').trim().toUpperCase()!=='DEAD')return send(ws,{type:'ch02_new_result',site:'answer',ok:false,message:'사망진단서의 기록을 다시 대조하세요.'});
+    if(!ch.ch02.newVisited||!Object.values(ch.ch02.newVisited).some(v=>v.includes('certificate'))||!Object.values(ch.ch02.newVisited).some(v=>v.includes('ecg'))||!Object.values(ch.ch02.newVisited).some(v=>v.includes('eight'))||!Object.values(ch.ch02.newVisited).some(v=>v.includes('underbed')))return send(ws,{type:'ch02_new_result',site:'answer',ok:false,message:'네 조사 지점을 먼저 확인하세요.'});
+    ch.phase='ch02_cleared';
+    if(!r.artifactFragments)r.artifactFragments=new Set();
+    r.artifactFragments.add(1);
+    broadcast(r,{type:'ch02_new_result',site:'answer',ok:true,message:'PATIENT STATUS : ALIVE · 302호 봉인 해제. 제0유물 파편이 공동 수집함에 등록되었습니다.'});
+    broadcast(r,state(r));persist();return;
    }
-   if(ch.phase==='ch02'&&m.action==='ch02_explore'){
-    const object=String(m.object||'');
-    const sites={bed:'침대 머리맡에는 「이거 다 붙이면 집에 갈 수 있어요」라는 어린 글씨가 남아 있다. 침대 아래로 환자복 소매가 삐져나와 있다. 당겨 보니 소매 끝에는 아무것도 없다. 손목띠 208만 천에 걸려 있다. 바로 아래 바닥을 긁는 소리가 세 번 들린다. 첫 번째 밸브는 긁는 횟수다.',drawer:'서랍을 여는 순간 안쪽에서 무언가 문을 붙잡고 있었던 듯 손잡이가 한 번 더 당겨진다. 미완성된 퇴실 동의서가 있다. 여백에는 「퇴원 환자 1명. 잔류 환자 1명.」이라고 덧씌워져 있다. 환자 서명란은 하나뿐인데 깨끗하게 비어 있다. 압력 제어 기록에는 서명란 수가 두 번째 밸브를 가리킨다고 적혀 있다.',monitor:'심박 모니터의 전원선은 뽑혀 있다. 검은 화면에 02:41이 두 번 깜박였다 사라진다. 마지막 밸브는 점멸 횟수로 정하라는 낙서가 있다.'};
-    if(!Object.hasOwn(sites,object))return send(ws,{type:'ch02_result',ok:false,message:'조사할 수 없는 지점입니다.'});
-    if(!ch.ch02.explored.includes(object))ch.ch02.explored.push(object);
-    if(object==='bed'&&!ch.ch02.alarm){ch.ch02.alarm=true;broadcast(r,{type:'ch02_event',event:'alarm',message:'침대 아래에서 손톱 긁는 소리가 세 번 울린다. 조명이 꺼졌다 다시 켜진다.'});}
-    send(ws,{type:'ch02_result',ok:true,station:object,message:sites[object]});broadcast(r,state(r));return;
-   }
-   if(ch.phase==='ch02'&&m.action==='ch02_inspect'){
-    const station=String(m.station||'');
-    const stations={chart:{role:0,text:'환자 기록: 208호 / 02:41 퇴실 처리. 서명은 비어 있다.'},camera:{role:1,text:'CCTV: 02:41에 208호 문이 열렸지만, 퇴실하는 사람은 보이지 않는다.'}};
-    const x=stations[station];if(!x||(!r.devSolo&&player.role!==clueOwners(r)[x.role]))return send(ws,{type:'ch02_result',ok:false,message:'이 조사 기록은 다른 조사원에게 배정되었습니다.'});
-    if(!ch.ch02.found.includes(station))ch.ch02.found.push(station);
-    send(ws,{type:'ch02_result',ok:true,station,message:x.text});broadcast(r,state(r));return;
-   }
-   if(ch.phase==='ch02'&&m.action==='ch02_unlock'){
-    if(ch.ch02.found.length!==2||ch.ch02.explored.length!==3)return send(ws,{type:'ch02_result',ok:false,message:'차트·CCTV 확인과 병실 내 3개 지점 탐색이 모두 필요합니다.'});
-    if(String(m.answer||'').trim()!=='0241')return send(ws,{type:'ch02_result',ok:false,message:'퇴실 처리 시각을 다시 확인하세요.'});
-    ch.ch02.unlocked=true;broadcast(r,{type:'ch02_event',event:'unlocked',message:'208호 안쪽 잠금이 풀렸다. 침대 밑에서 누군가 손톱으로 바닥을 긁는 소리가 들린다.'});broadcast(r,state(r));return;
-   }
-   if(ch.phase==='ch02'&&m.action==='ch02_pressure'){
-    const ward=ch.ch02,sequence=[3,1,2],valve=Number(m.valve);
-    if(!ward.unlocked||ward.explored.length!==3)return send(ws,{type:'ch02_result',ok:false,message:'208호의 기록과 현장 조사를 먼저 마쳐야 합니다.'});
-    if(ward.pressureSolved)return send(ws,{type:'ch02_result',ok:true,message:'압력 조절이 이미 완료되었습니다.'});
-    if(!Number.isInteger(valve)||valve<1||valve>3)return send(ws,{type:'ch02_result',ok:false,message:'유효하지 않은 밸브입니다.'});
-    if(!r.devSolo&&ward.pressureLastRole===player.role)return send(ws,{type:'ch02_result',ok:false,message:'같은 조사원이 연속 조작할 수 없습니다. 다른 조사원에게 맡기세요.'});
-    if(valve!==sequence[ward.pressure.length]){
-     ward.pressure=[];ward.pressureLastRole=null;
-     broadcast(r,{type:'ch02_event',event:'pressure_fail',message:'잘못된 밸브가 열렸다. 병실의 심박 경보가 울리고 압력이 초기화된다.'});broadcast(r,state(r));return;
-    }
-    ward.pressure.push(valve);ward.pressureLastRole=player.role;
-    if(ward.pressure.length===sequence.length){ward.pressureSolved=true;broadcast(r,{type:'ch02_event',event:'pressure_clear',message:'압력 조절 성공. 침대 아래의 긁는 소리가 멈추고 안전장치에 전원이 들어온다.'});}
-    else broadcast(r,{type:'ch02_event',event:'pressure_step',message:'밸브가 돌아갔다. 다음 조작은 다른 조사원이 해야 한다.'});
-    broadcast(r,state(r));return;
-   }
-   if(ch.phase==='ch02'&&m.action==='ch02_switch'){
-    if(!r.devSolo&&[...r.clients].filter(x=>x.ws?.readyState===WebSocket.OPEN).length<2)return send(ws,{type:'ch02_result',ok:false,message:'두 조사원이 온라인이어야 합니다.'});
-    if(!ch.ch02.unlocked||!ch.ch02.alarm||!ch.ch02.pressureSolved)return send(ws,{type:'ch02_result',ok:false,message:'208호 잠금과 압력 밸브 교차 조작을 먼저 완료해야 합니다.'});
-    if(r.devSolo){if(!ch.ch02.switches.includes(player.role))ch.ch02.switches.push(player.role);ch.ch02.switches.push(-1)}else if(!ch.ch02.switches.includes(player.role))ch.ch02.switches.push(player.role);
-    const online=[...r.clients].filter(x=>x.ws&&x.ws.readyState===WebSocket.OPEN);
-    if(ch.ch02.switches.length>=2){ch.phase='ch02_cleared';broadcast(r,{type:'ch02_event',event:'cleared',message:'두 조사원이 동시에 병실의 안전장치를 붙잡자, 벽 너머에서 엘리베이터가 움직이기 시작한다.'});}
-    else broadcast(r,{type:'ch02_event',event:'switch',message:'안전장치 하나가 고정됐다. 다른 조사원의 조작이 필요하다.'});
-    broadcast(r,state(r));return;
-   }
+   if(ch.phase==='ch02'&&String(m.action||'').startsWith('ch02_'))return;
    if(m.action==='ch03_enter'&&ch.phase==='ch02_cleared'){
     if(!(r.artifactFragments||new Set()).has(1))return send(ws,{type:'fragment_result',ok:false,message:'이 구역의 균열의 파편을 직접 찾아 공동 소지품에 등록해야 다음 구역으로 이동할 수 있습니다.'});
     if(player!==r.host)return send(ws,{type:'ch03_result',ok:false,message:'방장만 엘리베이터를 호출할 수 있습니다.'});
