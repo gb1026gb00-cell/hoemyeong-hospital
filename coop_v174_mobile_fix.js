@@ -227,9 +227,8 @@
   const index=ch03MirrorIndex();
   const orderByCapacity={2:[2,1],4:[3,1,4,2],8:[3,1,6,2,8,4,7,5]};
   const order=orderByCapacity[capacity];
-  // For 2/4 players, all private marks are hidden in the forbidden floors.
-  // For 8 players, the eight floor rows each hold one investigator's private mark.
-  const floor=capacity===8?index+1:5+index;
+  // Each capacity reveals exactly its highest N floors as ??? and assigns one fixed private mark per investigator.
+  const floor=9-capacity+index;
   const rank=index>=0&&index<capacity?order[index]:null;
   const overlay=document.createElement('div');overlay.id='hmCh03FloorDirectory';
   overlay.style.cssText='position:fixed;inset:0;z-index:2147483600;background:#030405f5;color:#f2eae3;display:flex;align-items:center;justify-content:center;padding:15px;box-sizing:border-box;font:14px system-ui';
@@ -240,15 +239,15 @@
   header.append(title,close);card.append(header);
   const paper=document.createElement('div');paper.style.cssText='padding:18px 14px;background:radial-gradient(ellipse at 13% 7%,#5e594d70,transparent 38%),radial-gradient(ellipse at 90% 88%,#514a3f91,transparent 48%),repeating-linear-gradient(2deg,#b5a994 0 2px,#b9ad98 3px 7px);border:2px solid #70675b;color:#29231f;box-shadow:inset 0 0 25px #443c36a3;transform:rotate(-.4deg)';
   const heading=document.createElement('div');heading.textContent='回明病院 / 층별 시설 안내';heading.style.cssText='font:bold 19px serif;text-align:center;border-bottom:2px solid #5c5047;padding-bottom:10px;margin-bottom:12px';paper.append(heading);
-  const labels=['접수실','진료실','검사실','기록보관실','???','???','???','???'];
+  const labels=['접수실','진료실','검사실','기록보관실','수술실','입원병동','폐쇄병동','기계실'];
   for(let i=0;i<8;i++){
    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between;min-height:39px;border-bottom:1px dashed #7e7067;padding:3px 8px;gap:10px;'+(i===floor-1?'background:#7c514b28;':'');
-   const name=document.createElement('span');name.textContent=String(i+1).padStart(2,'0')+'F  '+labels[i];name.style.cssText='font:600 16px Georgia,serif;letter-spacing:.4px';
+   const name=document.createElement('span');name.textContent=String(i+1).padStart(2,'0')+'F  '+(i>=8-capacity?'???':labels[i]);name.style.cssText='font:600 16px Georgia,serif;letter-spacing:.4px';
    const stamp=document.createElement('span');stamp.style.cssText='font:bold 23px Georgia,serif;color:#702d2a;min-width:40px;text-align:center;transform:rotate(-8deg)';
    stamp.textContent=i===floor-1&&rank!==null?String(rank):'';
    row.append(name,stamp);paper.append(row);
   }
-  const footer=document.createElement('div');footer.textContent='※ 안내문 임의 수정 금지 / 5층 이상 기록 훼손';footer.style.cssText='font:11px serif;text-align:center;margin-top:14px;color:#514238';paper.append(footer);
+  const footer=document.createElement('div');footer.textContent='※ 안내문 임의 수정 금지 / 일부 층의 기록이 훼손되었습니다.';footer.style.cssText='font:11px serif;text-align:center;margin-top:14px;color:#514238';paper.append(footer);
   card.append(paper);
   const help=document.createElement('p');help.style.cssText='color:#c9b8ae;font-size:13px;line-height:1.6;margin:13px 0 0';
   help.textContent=rank===null?'조사원 배정 정보를 확인할 수 없습니다. 팀 연결 상태를 확인하세요.':'붉은 숫자는 층수가 아니라 배열 순서를 뜻하는 듯하다. 거울에서 발견한 숫자와 함께 팀원에게 전달하자.';
