@@ -17,8 +17,41 @@ if(!ROOM_SAVE_PATH)console.warn('[PERSISTENCE WARNING] ROOM_SAVE_PATH is unset: 
 let rooms=new Map();
 try{rooms=roomStorage.restore(ROOM_SAVE_PATH)}catch(e){console.error('Room restore failed:',e.message);process.exitCode=1;throw e}
 function persist(){if(!ROOM_SAVE_PATH)return;try{roomStorage.save(ROOM_SAVE_PATH,rooms);persistenceWritable=true;persistenceLastError=null}catch(e){persistenceWritable=false;persistenceLastError=e.message;console.error('Room save failed:',e.message)}}
+// Numeric room IDs are allocated only by the server. A durable counter is
+// stored beside room snapshots; this requires ROOM_SAVE_PATH on persistent disk.
+const roomCounterFile=ROOM_SAVE_PATH?ROOM_SAVE_PATH+'.counter':null;
+let roomCounter=0;
+if(roomCounterFile){
+ try{roomCounter=Math.max(0,Number(require('fs').readFileSync(roomCounterFile,'utf8'))||0)}catch(e){if(e.code!=='ENOENT')console.error('Room counter read error',e.message)}
+}
+for(const code of rooms.keys())if(/^[0-9]{4,}$/.test(code))roomCounter=Math.max(roomCounter,Number(code));
+function allocateRoom(capacity){
+ const fs=require('fs'),path=require('path');
+ let code;
+ do{roomCounter++;code=String(roomCounter).padStart(4,'0')}while(rooms.has(code));
+ if(roomCounterFile){
+  fs.mkdirSync(path.dirname(roomCounterFile),{recursive:true});
+  const tmp=roomCounterFile+'.'+process.pid+'.tmp';
+  fs.writeFileSync(tmp,String(roomCounter),{mode:0o600});fs.renameSync(tmp,roomCounterFile);
+ }
+ const room={code,clients:new Set(),pieces:new Set(),chat:[],host:null,started:false,capacity:([2,4,6,8].includes(capacity)?capacity:2),devSolo:false,allocated:true};
+ rooms.set(code,room);
+ return code;
+}
 const server=http.createServer((req,res)=>{
  const pathname=new URL(req.url||'/', 'http://localhost').pathname;
+ if(req.method==='POST'&&pathname==='/api/rooms'){
+  let raw='';req.on('data',chunk=>{raw+=chunk;if(raw.length>1024)req.destroy();});
+  req.on('end',()=>{
+   try{
+    const payload=JSON.parse(raw||'{}');
+    const code=allocateRoom(Number(payload.capacity));
+    res.writeHead(201,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});
+    res.end(JSON.stringify({code}));
+   }catch(e){res.writeHead(503,{'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify({error:'방 번호를 발급하지 못했습니다.'}));}
+  });return;
+ }
+
  if((req.method==='GET'||req.method==='HEAD')&&pathname==='/coop-v175-lobby.js'){
   res.writeHead(200,{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
   if(req.method==='HEAD')return res.end();
@@ -190,7 +223,7 @@ wss.on('connection',ws=>{
     old.ws=ws;old.offlineAt=0;c.room=null;ws.player=old;
     send(ws,{...state(r),type:'joined',token:old.token,resumed:true,yourRole:old.role,isHost:old===r.host,senses:assignedSenses(r,old.role).map(x=>x.sense)});updateSenseAssignments(r);broadcast(r,state(r));return;
    }
-   if(!r){r={code:m.room,clients:new Set(),pieces:new Set(),chat:[],host:null,started:false,capacity:([2,4,6,8].includes(m.capacity)?m.capacity:2),devSolo:false};rooms.set(m.room,r)}
+   if(!r)return send(ws,{type:'error',message:'존재하지 않는 조사실 코드입니다. 방장에게 코드를 확인하세요.'});
    if(r.clients.size>=r.capacity||[...r.clients].some(x=>x.role===m.role||x.character===character))return send(ws,{type:'error',message:'이미 선택된 캐릭터/역할이거나 방이 가득 찼습니다.'});
    c.room=m.room;c.role=m.role;c.character=character;c.ready=false;c.token=randomBytes(24).toString('hex');r.clients.add(c);if(!r.host)r.host=c;
    send(ws,{...state(r),type:'joined',token:c.token,yourRole:c.role,isHost:c===r.host,senses:assignedSenses(r,c.role).map(x=>x.sense)});broadcast(r,state(r));return;
