@@ -2,18 +2,18 @@
 /* V174 additive mobile co-op UI bridge; approved scenes/puzzles untouched. */
 (()=>{
  const $=id=>document.getElementById(id);
- let active=false,phase='reception',socket=null;
+ let active=false,phase='reception',socket=null;\n let startedOnce=false;
  const NativeWS=window.WebSocket;
- function hideLobby(){const p=$('hmCoopPanel');if(p)p.hidden=true;}
+ function hideLobby(){const p=$('hmCoopPanel');if(p)p.hidden=true;}\n function showConnectionStatus(message){let el=$('hmV174ConnectionStatus');if(!el){el=document.createElement('div');el.id='hmV174ConnectionStatus';el.setAttribute('role','alert');el.style.cssText='position:fixed;top:12px;left:12px;right:12px;z-index:99980;padding:13px 16px;border:1px solid #d1a2a2;border-radius:10px;background:#29151df2;color:#fff;font:14px system-ui;text-align:center;pointer-events:none';document.body.append(el);}el.textContent=message;el.hidden=!message;}\n function updateConnectionStatus(){showConnectionStatus(startedOnce&&(!active||!socket||socket.readyState!==NativeWS.OPEN)?'협동 서버 연결이 끊어졌습니다. 팀원과 연결을 복구하기 전에는 진행하지 마세요.':'');}
  function updateBell(){const b=$('hmV174Bell');if(!b)return;b.hidden=!active||phase!=='reception';}
  class CoopSocket extends NativeWS{
   constructor(...args){super(...args);socket=this;
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
-    if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;hideLobby();document.dispatchEvent(new Event('hm-v175-started'));}
-    if(m.type==='state'||m.type==='joined'){active=!!m.started;phase=m.chapter?.phase||phase;updateBell();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
+    if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
+    if(m.type==='state'||m.type==='joined'){active=!!m.started;phase=m.chapter?.phase||phase;updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='chat'){const box=$('hmV174ChatLog');if(box){const line=document.createElement('div');line.textContent=(m.item?.role!==undefined?'조사원 '+(m.item.role+1)+': ':'')+(m.item?.text||m.item?.message||'');box.append(line);box.scrollTop=box.scrollHeight;}}
    });
-   this.addEventListener('close',()=>{if(socket===this){active=false;updateBell();}});
+   this.addEventListener('close',()=>{if(socket===this){active=false;updateBell();updateConnectionStatus();}});\n   this.addEventListener('open',()=>{if(socket===this)updateConnectionStatus();});
   }
  }
  window.WebSocket=CoopSocket;
