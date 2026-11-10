@@ -82,6 +82,15 @@ const server=http.createServer((req,res)=>{
   if(req.method==='HEAD')return res.end();
   return require('fs').createReadStream(require('path').join(__dirname,'coop_v174_mobile_fix.js')).pipe(res);
  }
+ if((req.method==='GET'||req.method==='HEAD')&&pathname==='/CH01_reverse_corrupted.mp3'){
+  const fs=require('fs'),path=require('path'),file=path.join(__dirname,'CH01_reverse_corrupted.mp3');
+  return fs.stat(file,(err,stat)=>{
+   if(err||!stat.isFile()){res.writeHead(404);return res.end();}
+   res.writeHead(200,{'Content-Type':'audio/mpeg','Content-Length':stat.size,'Cache-Control':'public, max-age=3600'});
+   if(req.method==='HEAD')return res.end();
+   fs.createReadStream(file).pipe(res);
+  });
+ }
  if((req.method==='GET'||req.method==='HEAD')&&pathname==='/reception_hand.mp4'){
   const fs=require('fs'),path=require('path');
   const file=path.join(__dirname,'reception_hand.mp4');
