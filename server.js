@@ -924,7 +924,7 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
      }
      broadcast(r,{type:'reception_result',ok:true,complete:true,message:'접수대 봉인 해제. 제0유물 파편을 공동 소지품에 등록했습니다. 208호로 이동합니다.'});
      broadcast(r,{type:'chapter_transition_video',from:1,to:2,video:'H03'});
-     ch.phase='ch02';ch.ch02={found:[],switches:[],unlocked:false,explored:[],alarm:false,pressure:[],pressureSolved:false,pressureLastRole:null};
+     ch.phase='ch02';ch.ch02={newVisited:{},newScareRoles:[]};
      broadcast(r,{type:'ch02_event',event:'enter',message:'208호. 비어 있다는 병실에서 호출벨이 울린다. 문틈으로 낡은 환자 차트가 밀려 나온다. 차트 상단에는 「회명병원 / 개원 1988년 / 환자번호 0208」이라고 인쇄되어 있다.'});
      chapterVoiceOnce(r,2);
     }
