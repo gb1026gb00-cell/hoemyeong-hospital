@@ -225,8 +225,8 @@ function recovery(ch){
   ['escaped','ch02','ch02_cleared','ch03','ch03_cleared','ch04','ch04_cleared','ch05','ch05_cleared','ch06','finished'].includes(ch.phase),
   (ch.ch02?.explored||[]).length===3,(ch.ch02?.found||[]).length===2,!!ch.ch02?.unlocked,!!ch.ch02?.pressureSolved,
   (ch.ch03?.inspected||[]).length===3,(ch.ch03?.clues||[]).length===2,!!ch.ch03?.solved,
-  (ch.ch04?.inspected||[]).length===4,(ch.ch04?.witnesses||[]).length===2,!!ch.ch04?.solved,
-  (ch.ch05?.inspected||[]).length===4,(ch.ch05?.samples||[]).length===2,!!ch.ch05?.solved,
+  (ch.ch04?.decoded||[]).length===4,(ch.ch04?.witnesses||[]).length===2,!!ch.ch04?.solved,
+  (ch.ch04?.decoded||[]).length===4,(ch.ch04?.artifactRecordWitnesses||[]).length>0,!!ch.ch04?.solved,
   !!ch.ch06?.solved
  ];
  const found=flags.filter(Boolean).length,percent=found*5;
@@ -241,7 +241,23 @@ function broadcast(r,o){if(o.type==='state'){
 const CH04_RECORDS={"ledger":"퇴실 대장: 208호 정상 퇴실 0명. 번호/문자: 07/G,18/R,15/O,22/T,12/L,09/N. CCTV 출입 순서로 읽으시오. 1997 회명계획, 2001 제0유물 출현.","camera":"CCTV: 02:41 그림자가 208호에 들어감, 출입번호 07→15→12. 프레임/신호/문자 01/04/D,02/09/X,03/11/E,04/06/A,05/16/N,06/20/V. 복구 02:47.","call":"내선: 208호 02:41 구조 요청, 통화 8초, 수화기 미사용. 정상 신호 04→11→16. 음성 숫자 08/15/21/18.","tag":"보존 봉투: 2003.11.26 제8차 복원 실험 시작 02:41. 기록에 없는 사람을 복원하지 말 것. A=01…Z=26. 순서: 사람 기록→기계 기록→음성 기록→기록되지 않은 시간.","keyA":"환자 대조표: CCTV 출입번호와 퇴실 대장 번호를 대조해 출입 순서대로 읽는다.","keyB":"프레임 판별표: 교환기 정상 신호에 해당하는 CCTV 프레임만 신호 순서대로 읽는다.","keyC":"문자 변환표: 봉투의 A=01~Z=26을 내선의 네 숫자에 적용한다.","keyD":"시간 검증표: 봉투 시작 시각부터 CCTV 복구 시각까지 경과 분을 계산한다."};
 const CH04_KEYS=['ledger','camera','call','tag','keyA','keyB','keyC','keyD'];
 const CH04_ANSWERS={A:'GOL',B:'DEN',C:'HOUR',D:'6'};
-function ch04Owners(r){const roles=[...r.clients].filter(c=>c.ws&&c.ws.readyState===WebSocket.OPEN).map(c=>c.role).sort((a,b)=>a-b);if(r.devSolo&&roles.length===1)return Object.fromEntries(CH04_KEYS.map(k=>[k,roles[0]]));if(roles.length<2)return {};const order=roles.length===2?[0,1,0,1,1,0,1,0]:CH04_KEYS.map((_,i)=>i%roles.length);return Object.fromEntries(CH04_KEYS.map((k,i)=>[k,roles[order[i]]]));}
+function ch04Owners(r){
+ const roles=[...r.clients].filter(c=>c.ws&&c.ws.readyState===WebSocket.OPEN).map(c=>c.role).sort((a,b)=>a-b);
+ if(r.devSolo&&roles.length===1)return Object.fromEntries(CH04_KEYS.map(k=>[k,roles[0]]));
+ if(roles.length<2)return {};
+ const c=r.chapter?.ch04;if(!c)return {};
+ if(!c.owners||typeof c.owners!=='object'){
+  const order=roles.length===2?[0,1,0,1,1,0,1,0]:CH04_KEYS.map((_,i)=>i%roles.length);
+  c.owners=Object.fromEntries(CH04_KEYS.map((key,i)=>[key,roles[order[i]]]));
+ }
+ const counts=Object.fromEntries(roles.map(role=>[role,0]));
+ for(const key of CH04_KEYS)if(roles.includes(c.owners[key]))counts[c.owners[key]]++;
+ for(const key of CH04_KEYS)if(!roles.includes(c.owners[key])){
+  const role=roles.reduce((a,b)=>counts[a]<=counts[b]?a:b);
+  c.owners[key]=role;counts[role]++;
+ }
+ return c.owners;
+}
 const FRAGMENT_PHASES=['escaped','ch02_cleared','ch03_cleared','ch04_cleared','ch05_cleared'];
 const FRAGMENT_SITES=['cabinet','drawer','mirror','ledger','glass'];
 const FRAGMENT_DESCRIPTIONS=[
@@ -498,6 +514,7 @@ wss.on('connection',ws=>{
    }
    if(m.action==='fragment_search'&&ch.phase==='ch04_cleared'&&String(m.site||'')==='glass'){
      if(!(r.artifactFragments||new Set()).has(3))return send(ws,{type:'fragment_result',ok:false,message:'먼저 퇴실 대장의 파편을 회수하세요.'});
+     if(!(ch.ch04?.artifactRecordWitnesses||[]).length)return send(ws,{type:'fragment_result',ok:false,message:'봉인 관찰창의 제0유물 기록을 먼저 조사하세요.'});
      if(!r.artifactFragments)r.artifactFragments=new Set();
      if(r.artifactFragments.has(4))return send(ws,{type:'fragment_result',ok:true,index:4,already:true,message:'마지막 파편은 이미 등록됐습니다.'});
      r.artifactFragments.add(4);
