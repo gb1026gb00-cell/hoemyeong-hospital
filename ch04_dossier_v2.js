@@ -23,9 +23,48 @@
   return docs.filter((d,i)=>a[i]===idx).map(d=>d[0]);
  }
  function btn(text,action){const b=el('button',text);b.type='button';b.onclick=action;return b;}
+ function mountScene(){
+  const scene=$('hmArchiveScene');
+  if(!scene||scene.dataset.dossierConnected==='yes')return;
+  scene.dataset.dossierConnected='yes';
+  const css=el('style');
+  css.textContent='#hmArchiveScene .ar-hot:not(.hmDossierHot){display:none!important}#hmArchiveScene .hmDossierHot{position:absolute;z-index:7;transform:translate(-50%,-50%);min-width:42px;min-height:42px;width:clamp(42px,7vmin,54px);height:clamp(42px,7vmin,54px);padding:0;border-radius:50%;border:1px solid #a78cac;background:#1b1028bd;color:#fff;box-shadow:0 0 0 4px #150d2080,0 0 16px #cda9db77;font:700 18px system-ui;display:grid;place-items:center;touch-action:manipulation}#hmArchiveScene .hmDossierHot:focus-visible{outline:3px solid white}#hmArchiveScene .hmDossierHot[data-zone="E"]{border-color:#e7cdb2;box-shadow:0 0 0 4px #281a1980,0 0 17px #ffe5c099}';
+  document.head.append(css);
+  const placements=[
+   ['A','기록 선반',36.8,24.5],
+   ['B','녹음기',46.9,65.3],
+   ['C','CCTV 옆 자료함',91.9,70.0],
+   ['D','보관 선반',85.6,38.0],
+   ['E','봉인 서류장',18.7,33.6]
+  ];
+  const bottom=scene.querySelector('.ar-bottom');
+  for(const [id,name,left,top] of placements){
+   const b=btn(id,()=>{});
+   b.className='ar-hot hmDossierHot';b.dataset.zone=id;
+   b.title=id+' · '+name;b.setAttribute('aria-label',id+' · '+name+' 조사');
+   b.style.left=left+'%';b.style.top=top+'%';
+   if(bottom)bottom.before(b);else scene.append(b);
+  }
+  // Capture before legacy V172 hotspot handler. Only the five added buttons are intercepted.
+  scene.addEventListener('click',event=>{
+   const hit=event.target.closest?.('button.hmDossierHot');
+   if(!hit||phase!=='ch04')return;
+   event.preventDefault();event.stopImmediatePropagation();
+   tab=hit.dataset.zone;opened='';mount();render();
+   const label=$('hmArchiveLine');
+   if(label)label.textContent=hit.dataset.zone+' · '+hit.title.replace(/^.\s·\s/,'')+' 조사 기록을 확인하세요.';
+   if(window.HMPlayUI?.open)window.HMPlayUI.open();
+   // Keep the newly selected tab visible, even if an existing UI component rerenders.
+   const root=$('hmDossier');if(root)root.scrollIntoView({block:'nearest'});
+  },true);
+  const main=scene.querySelector('#hmArchivePuzzle');
+  if(main)main.textContent='E · 최종 기록 재구성';
+ }
+
  function mount(){
   if(mounted||!$('hmArchive04'))return;
   mounted=true;
+  mountScene();
   const style=el('style');
   style.textContent='#hmDossier{background:#19131e;color:#eae2ef;font:13px/1.7 system-ui;padding:12px}#hmDossier *{box-sizing:border-box}#hmDossier button{color:#f0e5f4;background:#382a42;border:1px solid #846a8d;border-radius:7px;min-height:44px;padding:10px;font:600 13px system-ui;cursor:pointer}#hmDossier button[aria-pressed=true]{background:#624767}#hmDossier button:disabled{opacity:.5}#hmDossier .dTabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin:12px 0}#hmDossier .dCard{border:1px solid #63516c;background:#241d2b;border-radius:9px;padding:12px;margin:10px 0}#hmDossier .dPaper{background:#322d2a;color:#eddfcf;padding:16px;margin:9px 0;white-space:pre-wrap;font:13px/1.85 Georgia,serif;border:1px solid #857563}#hmDossier .dPaper strong{display:block;color:#d7bcab;margin:0 0 12px}#hmDossier .dMark{display:inline-block;padding:5px 9px;border:1px solid #b49e7f;margin:8px 5px 0 0}#hmDossier .dGrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}#hmDossier .dTile{text-align:center;padding:7px 2px;border:1px solid #655570;background:#2d2433}#hmDossier .dTile small{display:block}#hmDossier input{width:100%;background:#100d14;color:white;border:1px solid #907799;padding:13px;min-height:46px}#hmDossier .dStatus{white-space:pre-wrap;background:#100d14;border:1px solid #675373;padding:10px;margin:11px 0}';
   document.head.append(style);
@@ -93,7 +132,7 @@
     if(Number.isInteger(Number(m.yourRole)))role=Number(m.yourRole);
     if(Array.isArray(m.members))roles=m.members.map(x=>x.role).filter(Number.isInteger).sort((a,b)=>a-b);
     else if(Array.isArray(m.roles))roles=m.roles.filter(Number.isInteger).sort((a,b)=>a-b);
-    if(phase==='ch04'){mount();ready=roles.length>=2&&(state.videoDone||[]).length>=roles.length;render();}
+    if(phase==='ch04'){mount();mountScene();ready=roles.length>=2&&(state.videoDone||[]).length>=roles.length;render();}
    }
    if(m.type==='ch04_e_video')playVideo();
    if(m.type==='ch04_e_ready'){ready=true;tab='E';render();msg(m.message||'모든 영상 확인 완료');}
@@ -102,5 +141,5 @@
   });}
  }
  window.WebSocket=DossierSocket;
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{mount();mountScene();});else{mount();mountScene();}
 })();
