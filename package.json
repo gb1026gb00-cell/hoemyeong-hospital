@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "test": "node test_v158_preflight.js && node test_v164_video_release_guard.js && node test_v166_preservation.js",
+    "test": "node test_v158_preflight.js && node test_v164_video_release_guard.js && node test_v166_preservation.js && node test_ch03_ch05_recovery_guard.js",
     "test:network": "node test_multiplayer_v160.js",
     "test:release": "npm test && npm run test:network && node --check server.js && node --check room_storage.js",
     "test:predeploy": "npm run test:release"
