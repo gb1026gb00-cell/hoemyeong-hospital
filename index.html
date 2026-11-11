@@ -488,6 +488,12 @@
             document.getElementById('roleDisplay').textContent = `담당: ${charNames[myRole]||'조사원'}`;
           }
           if(['sense_interaction_result','sense_challenge_result','sense_result','evidence_result','evidence_verdict','ecg_result'].includes(data.type)) ch01Result.textContent=(data.message||'')+(data.digit?'\n획득 숫자: '+data.digit:'')+(data.text?'\n'+data.text:'');
+          if(['ch02_certificate','ch02_ecg_archive','ch02_bed_tags'].includes(data.type)){
+            const headings={ch02_certificate:'사망진단서 · 담당 기록',ch02_ecg_archive:'심전도 원본 · 담당 기록',ch02_bed_tags:'침대 끝 식별표 · 담당 기록'};
+            const rows=(data.records||[]).map(record=>Object.entries(record).map(([key,value])=>key+': '+value).join(' / '));
+            ch02Result.textContent=headings[data.type]+'\\n'+(data.locked?'담당 조사원에게 공유를 요청하세요.':rows.join('\\n')||'현재 배정된 기록이 없습니다.')+(data.rule?'\\n해독 규칙: '+data.rule:'');
+          }
+          if(data.type==='ch02_new_result') ch02Result.textContent=data.message||'조사 기록이 갱신되었습니다.';
           if(data.type === 'ch02_event' || data.type === 'ch02_result') ch02Result.textContent = data.message || '208호 조사 상태가 변경됐습니다.';
           if(data.type === 'ch03_event' || data.type === 'ch03_result') ch03Result.textContent = data.message || '엘리베이터 조사 상태가 변경됐습니다.';
           if(data.type === 'ch04_event' || data.type === 'ch04_result') ch04Result.textContent = data.message || '기록보관실 조사 상태가 변경됐습니다.';
