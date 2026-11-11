@@ -222,7 +222,7 @@
         <button type="button" data-ch04="fragment_search" data-site="ledger">퇴실 대장의 제0유물 파편</button>
         <button type="button" data-ch04="ch04_artifact_record">봉인 관찰창 · 제0유물 기록 (G04)</button>
         <button type="button" data-ch04="fragment_search" data-site="glass">봉인 관찰창 · 마지막 파편</button>
-        <button type="button" data-ch04="ch06_enter">마지막 문으로 이동 (방장)</button>
+        <span style="grid-column:1/-1;color:#d9c4df;font-size:12px">파편 5개를 모두 회수하면 전원이 자동으로 마지막 구역에 진입합니다.</span>
       </div>
     </div>
   </section>
@@ -247,7 +247,7 @@
     </div>
   </section>
   <section id="ch06PuzzlePanel" hidden aria-label="마지막 문과 제0유물" style="max-height:38dvh;overflow:auto;background:#21192c;border:1px solid #675371;border-radius:10px;padding:10px;font-size:13px">
-    <strong>CH.06 · 여덟 번째 문</strong><p id="ch06Result" style="white-space:pre-wrap;line-height:1.5">모든 파편을 판독하고 서로의 기록을 맞추세요.</p>
+    <strong>CH.05 · 제0유물의 제단 (기존 CH.06)</strong><p id="ch06Result" style="white-space:pre-wrap;line-height:1.5">모든 파편을 판독하고 서로의 기록을 맞추세요.</p>
     <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">
       <button type="button" data-ch06="ch06_inspect" data-object="door">여덟 번째 문</button>
       <button type="button" data-ch06="ch06_inspect" data-object="mirror">거울</button>
@@ -488,7 +488,16 @@
           if(data.type === 'ch04_event' || data.type === 'ch04_result') ch04Result.textContent = data.message || '기록보관실 조사 상태가 변경됐습니다.';
            if((data.type==='state'||data.type==='joined')&&data.chapter?.ch04){const p=data.chapter.ch04;const el=document.getElementById('ch04DecodedStatus');if(el)el.textContent='공동 해독: '+(p.decoded||[]).length+' / 4 · 완료 구획: '+(p.decoded||[]).join(', ');}
           if(data.type === 'ch05_event' || data.type === 'ch05_result') ch05Result.textContent = data.message || '격리실 조사 상태가 변경됐습니다.';
-          if(['ch06_event','ch06_result','artifact_result'].includes(data.type))ch06Result.textContent=data.message||'마지막 문 조사 상태가 변경됐습니다.';
+          if(data.type==='ch06_event'&&data.event==='enter'&&Array.isArray(data.dialogue)){
+ let box=document.getElementById('hmAltarDialogue');
+ if(!box){box=document.createElement('section');box.id='hmAltarDialogue';box.setAttribute('role','dialog');box.setAttribute('aria-label','제0유물의 제단 · 단체 대화');box.style.cssText='position:fixed;inset:5dvh 12px;z-index:2147483300;background:#15111bf5;color:#f4ebf7;border:1px solid #715780;border-radius:14px;display:flex;flex-direction:column;padding:14px;box-shadow:0 10px 45px #000e';document.body.appendChild(box);}
+ box.replaceChildren();
+ const title=document.createElement('strong');title.textContent='회명병원 · 제0유물의 제단';box.appendChild(title);
+ const log=document.createElement('div');log.style.cssText='overflow:auto;flex:1;min-height:0;margin:12px 0;display:flex;flex-direction:column;gap:9px';box.appendChild(log);
+ for(const [name,message] of data.dialogue){const item=document.createElement('div');item.style.cssText='background:#322638;border-radius:12px;padding:10px;max-width:92%;align-self:flex-start';const who=document.createElement('strong');who.style.cssText='display:block;color:#c6a9d5;font-size:12px;margin-bottom:4px';who.textContent=name;const line=document.createElement('span');line.textContent=message;item.append(who,line);log.appendChild(item);}
+ const close=document.createElement('button');close.type='button';close.textContent='대화 확인 · 제단 조사하기';close.style.cssText='min-height:46px;background:#493553;color:white;border:1px solid #9879a8;border-radius:9px';close.onclick=()=>box.remove();box.appendChild(close);
+}
+if(['ch06_event','ch06_result','artifact_result'].includes(data.type))ch06Result.textContent=data.message||'마지막 문 조사 상태가 변경됐습니다.';
           if(data.type==='doll_event'){
             document.getElementById('dollStatus').textContent=' 4 / 4 · 조립 완료';
             const target=({ch02:ch02Result,ch03:ch03Result,ch04:ch04Result,ch05:ch05Result,ch06:ch06Result})[currentPhase.replace('_cleared','')]||ch01Result;
