@@ -703,7 +703,7 @@ wss.on('connection',ws=>{
     const answers={2:'15',4:'32',8:'35'};
     const expected=answers[r.capacity]||answers[2];
     if(!c.videoTriggered)return send(ws,{type:'ch03_result',ok:false,message:'엘리베이터 제어판을 먼저 작동하십시오.'});
-    if(!Array.isArray(c.videoCompletedRoles)||!c.videoCompletedRoles.includes(player.role))return send(ws,{type:'ch03_result',ok:false,message:'G06 영상을 끝까지 시청한 조사원만 운행 코드를 입력할 수 있습니다.'});
+    // G06 playback is optional and never blocks puzzle submission.
     if(String(m.answer||'').trim()!==expected){
      c.failed++;broadcast(r,{type:'ch03_event',event:'wrong',message:'잘못된 운행 코드. 엘리베이터가 아래로 급강하했다가 멈춘다.'});broadcast(r,state(r));return;
     }
@@ -713,10 +713,12 @@ wss.on('connection',ws=>{
      r.artifactFragments.add(2);
      broadcast(r,{type:'fragment_result',ok:true,index:2,message:FRAGMENT_DESCRIPTIONS[2]+' (정답 승인으로 팀 공동 소지품에 자동 등록)'});
     }
-    if(c.transitionPending)return send(ws,{type:'ch03_result',ok:true,message:'G02 전환 영상 시청이 진행 중입니다.'});
-    c.transitionPending=true;c.transitionWatchedRoles=[];
-    broadcast(r,{type:'ch03_event',event:'transition_video',video:'G02',message:'운행 코드 승인. 전 조사원이 전환 영상을 시청합니다.'});
-    broadcast(r,state(r));persist();return;
+    c.transitionPending=false;c.solved=true;ch.phase='ch04';
+    ch.ch04={inspected:[],witnesses:[],votes:[],decoded:[],failed:0,solved:false};
+    broadcast(r,{type:'ch03_event',event:'transition_video',video:'G02',message:'운행 코드 승인. 영상 시청 여부와 관계없이 기록보관실로 이동합니다.'});
+    broadcast(r,{type:'ch03_event',event:'cleared',message:'엘리베이터 운행 코드 승인. 기록보관실로 이동한다.'});
+    broadcast(r,{type:'ch04_event',event:'enter',message:'서류 세 장에 같은 환자의 이름이 적혀 있다. 사망 시각은 모두 다르다. 복도 끝에서 종이가 넘어간다.'});
+    broadcast(r,state(r));chapterVoiceOnce(r,4);persist();return;
    }
    if(m.action==='ch04_enter'&&ch.phase==='ch03_cleared'){
     if(!(r.artifactFragments||new Set()).has(2))return send(ws,{type:'fragment_result',ok:false,message:'이 구역의 균열의 파편을 직접 찾아 공동 소지품에 등록해야 다음 구역으로 이동할 수 있습니다.'});
