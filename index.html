@@ -521,6 +521,8 @@ if(['ch06_event','ch06_result','artifact_result'].includes(data.type))ch06Result
             target.textContent=data.message||'조사 결과를 확인했습니다.';
           }
           if(data.type === 'chapter_voice') coopStatus.textContent='CH.'+String(data.chapter).padStart(2,'0')+' 음성 재생 요청';
+          if(data.type==='reception_clue') ch01Result.textContent=(data.label||'접수실 단서')+'\\n'+(data.lines||[]).join('\\n');
+          if(data.type==='reception_result'||data.type==='chapter_notice') ch01Result.textContent=data.message||'';
           if(data.type === 'inspection') { ch01Result.textContent = (data.room?data.room+'\n':'')+(data.description||'')+(data.clue?'\n전달할 암호: '+data.clue.code+' → 조사원 '+data.clue.target:''); }
           if(data.type === 'chapter_result') ch01Result.textContent = data.message || JSON.stringify(data);
           if(data.type === 'fragment_result'){
