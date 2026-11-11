@@ -398,13 +398,26 @@
   video.play().catch(()=>{video.muted=true;video.play().catch(()=>{info.textContent='자동재생이 차단되었습니다. 영상을 눌러 재생하세요.';video.controls=true;});});
  }
  let ch03VideoSeen=false;
+ function openCh03CodeStory(){
+  document.getElementById('hmCh03CodeStory')?.remove();
+  const overlay=document.createElement('div');overlay.id='hmCh03CodeStory';
+  overlay.style.cssText='position:fixed;inset:0;z-index:2147483600;background:#050407f5;color:#e8dfe0;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;font:15px/1.85 Georgia,serif';
+  const card=document.createElement('section');card.style.cssText='width:min(540px,100%);max-height:92dvh;overflow:auto;padding:clamp(20px,5vw,32px);border:1px solid #6a5360;background:linear-gradient(155deg,#211b23,#0b0a0d);box-shadow:0 20px 80px #000;box-sizing:border-box';
+  const label=document.createElement('div');label.textContent='回明病院 / 운행 제어장치 / 접근 기록 불명';label.style.cssText='font:11px system-ui;letter-spacing:1.5px;color:#b49aa5';card.append(label);
+  const title=document.createElement('h2');title.textContent='03. 존재하지 않는 층';title.style.cssText='font:600 27px Georgia,serif;margin:16px 0;color:#f0e6e6';card.append(title);
+  const rule=document.createElement('p');rule.textContent='여덟 개의 층이 기록되어 있다.\\n그러나 이 엘리베이터는 기록되지 않은 곳에도 멈춘다.';rule.style.cssText='white-space:pre-line;border-top:1px solid #5b4650;border-bottom:1px solid #5b4650;padding:17px 0;color:#d5bbc6';card.append(rule);
+  const story=document.createElement('p');story.textContent='거울은 숫자를 기억하고, 훼손된 안내문은 그 순서를 기억한다.\\n\\n서로 다른 눈으로 목격한 것을 하나의 답으로 완성하라.\\n\\n문이 열리기 전에, 올바른 운행 코드를 입력하라.';story.style.cssText='white-space:pre-line;line-height:2;margin:20px 0';card.append(story);
+  const button=document.createElement('button');button.type='button';button.textContent='운행 코드 입력';button.style.cssText='width:100%;padding:15px;background:#49313f;color:#fff;border:1px solid #9c768a;border-radius:5px;font:700 16px system-ui;cursor:pointer';
+  button.onclick=()=>{overlay.remove();const form=document.getElementById('hmCh03CodeForm');if(form){form.hidden=false;form.style.display='flex';form.scrollIntoView({behavior:'smooth',block:'nearest'});form.querySelector('input')?.focus();}};
+  card.append(button);overlay.append(card);document.body.append(overlay);
+ }
  function playCh03ElevatorVideo(){
   if(ch03VideoSeen||document.getElementById('hmCh03G06'))return;
   const overlay=document.createElement('div');overlay.id='hmCh03G06';
   overlay.style.cssText='position:fixed;inset:0;z-index:2147483650;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#e8dfdb;font:14px system-ui';
   const video=document.createElement('video');video.src='/G06.mp4';video.autoplay=true;video.playsInline=true;video.controls=false;video.preload='auto';video.style.cssText='width:100%;max-height:90dvh;object-fit:contain';
   const info=document.createElement('div');info.textContent='엘리베이터 내부 감시 기록 재생 중';info.style.cssText='padding:12px;color:#cbbbc0;text-align:center';
-  const finish=()=>{ch03VideoSeen=true;if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'ch03_video_done'}));overlay.remove();const form=document.getElementById('hmCh03CodeForm');if(form){form.hidden=false;form.style.display='flex';}const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent='환자복의 형체가 사라졌다. 계산한 운행 코드를 입력하십시오.';};
+  const finish=()=>{ch03VideoSeen=true;if(socket?.readyState===NativeWS.OPEN)socket.send(JSON.stringify({type:'chapter',action:'ch03_video_done'}));overlay.remove();const form=document.getElementById('hmCh03CodeForm');if(form){form.hidden=false;form.style.display='flex';}const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent='환자복의 형체가 사라졌다. 중앙 문에서 운행 기록을 확인하라.';openCh03CodeStory();};
   video.addEventListener('ended',finish,{once:true});
   video.addEventListener('error',()=>{info.textContent='G06 영상을 불러오지 못했습니다. 다시 시도해 주세요.';video.controls=true;},{once:true});
   overlay.append(video,info);document.body.append(overlay);
@@ -492,7 +505,7 @@
 
   hotspot('엘리베이터 옆 가려진 층별 안내문',76,10,22,65,openCh03FloorDirectory);
   hotspot('오른쪽 아래 기호 계산판',0,72,25,27,openCh03SymbolCalculator);
-  hotspot('엘리베이터 중앙 문 · 영상 및 운행 코드',37,19,27,55,()=>{if(ch03VideoSeen){const form=document.getElementById('hmCh03CodeForm');if(form){form.hidden=false;form.style.display='flex';form.scrollIntoView({behavior:'smooth',block:'nearest'});form.querySelector('input')?.focus();}}else sendInvestigation('ch03_video',{},'엘리베이터 중앙');});
+  hotspot('엘리베이터 중앙 문 · 영상 및 운행 코드',37,19,27,55,()=>{if(ch03VideoSeen)openCh03CodeStory();else sendInvestigation('ch03_video',{},'엘리베이터 중앙');});
   const inventory=document.createElement('button');inventory.type='button';inventory.id='hmCh03Inventory';inventory.style.cssText='grid-column:1/-1;padding:10px 12px;border:1px solid #766477;border-radius:7px;background:#211b28;color:#f4e8f1;font:600 14px system-ui;text-align:left';
   const updateInventory=()=>{const progress=document.getElementById('artifactProgress')?.textContent||'제0유물 파편 수집함';inventory.textContent='🎒 '+progress+(ch03FragmentCollected?' · CH.03 유물 획득':' · 정답 승인 시 자동 수집');};
   inventory.addEventListener('click',openSharedInventory);
