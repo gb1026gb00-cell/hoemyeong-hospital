@@ -16,6 +16,10 @@
   const panel=$('hmArchive04');
   if(!panel||$('hmGoldenHourTools'))return;
   const section=document.createElement('section');section.id='hmGoldenHourTools';
+  section.dataset.version='GOLDEN-HOUR-REAL-CH04-20261111';
+  const originalTitle=panel.querySelector('strong');if(originalTitle)originalTitle.textContent='CH.04 · 사라진 6분 / GOLDEN HOUR';
+  const legacyIntroduction=panel.querySelector('p.sub');if(legacyIntroduction)legacyIntroduction.textContent='네 종류의 기록과 네 장의 해독표를 서로 대조해 A~D를 복원하세요. 필요한 진행 안내와 답안지는 아래에 표시됩니다.';
+  const legacyProgress=$('hmArchiveProgress');if(legacyProgress)legacyProgress.hidden=true;
   section.style.cssText='margin-top:12px;padding:12px;border:1px solid #79648e;border-radius:10px;background:#19141f;color:#eee5eb';
   const heading=document.createElement('strong');heading.textContent='CH.04 · 사라진 6분 / 공동 기록 복원';section.append(heading);
   const intro=document.createElement('p');intro.textContent='정답을 바로 입력하는 문제가 아니라, 서로 다른 기록 2~3개를 대조해 네 구획을 복원하는 조사야. 아래 순서대로 진행해 봐.';section.append(intro);
@@ -50,9 +54,13 @@
   const isolation=$('hmIsolation05');if(isolation){isolation.hidden=true;isolation.style.setProperty('display','none','important');}
   for(const id of ['hmIsolationEnter','hmIsolationNext']){const el=$(id);if(el){el.hidden=true;el.style.setProperty('display','none','important');}}
   const vote=$('hmArchiveVote');
-  if(vote)vote.textContent='재구성 동의 · 각 조사원 1회';
+  if(vote)vote.textContent='GOLDEN HOUR 6 · 각 조사원 최종 동의';
   // Keep original record buttons, witness buttons, photorealistic scene and original vote handler.
   const result=$('hmArchiveResult');if(result)result.before(section);else panel.append(section);
+  // Obvious, testable marker in the photographic scene as well as the mobile answer sheet.
+  const sceneButton=$('hmArchivePuzzle');if(sceneButton)sceneButton.textContent='GOLDEN HOUR 6 · 사건 재구성';
+  const archiveLine=$('hmArchiveLine');if(archiveLine&&phase==='ch04')archiveLine.textContent='GOLDEN HOUR 기록보관실 · 답안지를 열고 네 구획을 복원하라.';
+  const finalButton=$('hmFinalPuzzle');if(finalButton)finalButton.textContent='CH.05 · 제0유물 최종 복원';
   const next=$('hmArchiveNext');if(next)next.hidden=true;
   const final=$('hmFinal06');if(final){
    const title=final.querySelector('strong');if(title)title.textContent='CH.05 · 제0유물의 제단';
@@ -64,6 +72,12 @@
    const fragment=final.querySelector('[data-artifact="4"]');if(fragment)fragment.textContent='봉인 관찰창 파편';
   }
   if($('hmFinalEnter'))$('hmFinalEnter').hidden=true;
+  if(final&&!$('hmGoldenFinalGuide')){
+   const guide=document.createElement('section');guide.id='hmGoldenFinalGuide';
+   guide.style.cssText='padding:12px;margin:10px 0;border:1px solid #8b7398;background:#241a2b;border-radius:9px;white-space:pre-wrap;line-height:1.8';
+   guide.textContent='CH.05 · 제0유물의 제단\n① 다섯 파편을 담당 조사원이 하나씩 판독\n② 파편 순서를 추리하여 복원\n③ 문·거울·시계·기록 조사 + 두 담당자의 단서 교차 확인\n④ 두 조사원이 손잡이를 각각 고정하고 최종 암호 입력';
+   const first=final.querySelector('p.sub');if(first)first.after(guide);else final.prepend(guide);
+  }
   const finalVisual=$('hmFinalScene');if(finalVisual){const title=finalVisual.querySelector('.f-title, .f-heading, strong');if(title&&/CH\.\s*0?6|여덟 번째 문/.test(title.textContent))title.textContent='CH.05 · 제0유물의 제단';}
   const end=$('hmFinalEnding');if(end){const title=end.querySelector('strong');if(title)title.textContent='END — 귀환 · 회명병원의 아홉 번째 참가자';}
  }
