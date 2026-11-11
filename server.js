@@ -364,7 +364,15 @@ wss.on('connection',ws=>{
     if(!old){if(r.started)return send(ws,{type:'error',message:'게임이 시작되어 신규 입장할 수 없습니다.'});}else{
     if(old.ws&&old.ws.readyState===WebSocket.OPEN)return send(ws,{type:'error',message:'이미 접속 중인 참가자입니다.'});
     old.ws=ws;old.offlineAt=0;c.room=null;ws.player=old;
-    send(ws,{...state(r),type:'joined',token:old.token,resumed:true,yourRole:old.role,isHost:old===r.host,senses:assignedSenses(r,old.role).map(x=>x.sense)});updateSenseAssignments(r);broadcast(r,state(r));return;}
+    send(ws,{...state(r),type:'joined',token:old.token,resumed:true,yourRole:old.role,isHost:old===r.host,senses:assignedSenses(r,old.role).map(x=>x.sense)});updateSenseAssignments(r);broadcast(r,state(r));
+     const final=r.chapter?.ch06;
+     if(r.chapter?.phase==='ch06'&&final?.finalVideoPending){
+      if(!(final.finalVideoWatched||[]).includes(old.role)){
+       send(ws,{type:'ch06_event',event:'final_video',message:'재접속되었습니다. 마지막 기록 영상을 끝까지 확인해야 모든 조사원이 귀환할 수 있습니다.'});
+       send(ws,{type:'horror_video',id:'G18',scope:'self'});
+      }else send(ws,{type:'ch06_event',event:'waiting',message:'최종 영상 확인은 완료되었습니다. 다른 조사원들을 기다리고 있습니다.'});
+     }
+     return;}
    }
    if(r&&r.started)return send(ws,{type:'error',message:'게임이 시작되어 신규 입장할 수 없습니다.'});
    // Recover a recent numeric invitation if an ephemeral server restarted.
