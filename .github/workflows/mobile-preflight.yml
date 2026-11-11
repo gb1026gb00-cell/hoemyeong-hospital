@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev/coop-v172-preserve-approved-ui
+      - dev/ch04-golden-hour-6
   workflow_dispatch:
 
 permissions:
