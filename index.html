@@ -94,7 +94,15 @@
   </div>
 
   <section id="ch01PuzzlePanel" hidden aria-label="접수실 협동 조사" style="max-height:34dvh;overflow:auto;background:#21192c;border:1px solid #675371;border-radius:10px;padding:10px;font-size:13px;">
-    <strong>CH.01 · 분리 조사</strong><p id="ch01Result" style="white-space:pre-wrap;line-height:1.5">각 조사실의 기록을 확인하세요.</p>
+    <strong>CH.01 · 분리 조사</strong>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0;padding:10px;border:1px solid #72576f;border-radius:10px">
+      <button type="button" data-ch01="start_investigation" style="grid-column:1/-1;min-height:44px">접수실 조사 시작 · 강제 분리</button>
+      <button type="button" data-ch01="reception_clue" data-object="mirror">거울 · 그림자 단서</button>
+      <button type="button" data-ch01="reception_clue" data-object="cabinet">캐비닛 · 분리 기록</button>
+      <button type="button" data-ch01="reception_clue" data-object="ledger" style="grid-column:1/-1">접수 명부 · 날짜 기록</button>
+      <label style="grid-column:1/-1">접수대 봉인 번호<input id="receptionAnswer" inputmode="numeric" autocomplete="off" style="width:100%;min-height:44px" placeholder="팀원 단서를 합쳐 입력"></label>
+      <button type="button" data-ch01="reception_submit" style="grid-column:1/-1;min-height:44px">접수대 봉인 해제 · 다음 챕터</button>
+    </div><p id="ch01Result" style="white-space:pre-wrap;line-height:1.5">각 조사실의 기록을 확인하세요.</p>
     <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;">
       <button type="button" data-ch01="inspect" data-object="intercom">내선 기록 조사</button>
       <button type="button" data-ch01="inspect" data-object="desk">기록 재조사</button>
@@ -354,7 +362,7 @@
     }
     ws.send(JSON.stringify({type:"chapter",action,...extra}));
   }
-  ch01Panel.addEventListener("click", e => { const btn=e.target.closest("[data-ch01]"); if(!btn)return; const action=btn.dataset.ch01; const val=id=>document.getElementById(id)?.value.trim()||""; const extra=btn.dataset.object?{object:btn.dataset.object}:btn.dataset.site?{site:btn.dataset.site}:{}; if(["sense_interaction","sense_challenge","sense_submit"].includes(action))extra.index=Number(val("senseIndex")); if(action==="sense_interaction")extra.sequence=val("senseSequence"); if(action==="sense_challenge"){extra.answer=val("senseAnswer");extra.crossKey=val("senseCrossKey");} if(action==="sense_submit")extra.digit=Number(val("senseDigit")); if(action==="evidence_inspect")extra.index=Number(val("evidenceIndex")); if(action==="evidence_submit")extra.answer=val("evidenceAnswer"); if(action==="ecg_submit")extra.answer=val("ecgAnswer"); if(action==="solve")extra.answer=val("panelAnswer"); chapterSend(action,extra); });
+  ch01Panel.addEventListener("click", e => { const btn=e.target.closest("[data-ch01]"); if(!btn)return; const action=btn.dataset.ch01; const val=id=>document.getElementById(id)?.value.trim()||""; const extra=btn.dataset.object?{object:btn.dataset.object}:btn.dataset.site?{site:btn.dataset.site}:{}; if(["sense_interaction","sense_challenge","sense_submit"].includes(action))extra.index=Number(val("senseIndex")); if(action==="sense_interaction")extra.sequence=val("senseSequence"); if(action==="sense_challenge"){extra.answer=val("senseAnswer");extra.crossKey=val("senseCrossKey");} if(action==="sense_submit")extra.digit=Number(val("senseDigit")); if(action==="evidence_inspect")extra.index=Number(val("evidenceIndex")); if(action==="evidence_submit")extra.answer=val("evidenceAnswer"); if(action==="ecg_submit")extra.answer=val("ecgAnswer"); if(action==="solve")extra.answer=val("panelAnswer"); if(action==="reception_submit")extra.answer=val("receptionAnswer"); chapterSend(action,extra); });
   const charNames = ['홍중','성화','윤호','여상','산','민기','우영','종호'];
 
   if(hmJoin) {
@@ -400,7 +408,7 @@
               currentPhase = data.chapter.phase;
               syncChapterVisual(currentPhase);
               const phaseStarted=data.started === true;
-              ch01Panel.hidden = !phaseStarted || !['separated','escaped'].includes(currentPhase);
+              ch01Panel.hidden = !phaseStarted || !['reception','separated','escaped'].includes(currentPhase);
               ch02Panel.hidden = !phaseStarted || !['ch02','ch02_cleared'].includes(currentPhase);
               ch03Panel.hidden = !phaseStarted || !['ch03','ch03_cleared'].includes(currentPhase);
               ch04Panel.hidden = !phaseStarted || !['ch04','ch04_cleared'].includes(currentPhase);
@@ -444,7 +452,7 @@
             if(data.started === true) {
               started = true;
               if(!lastStarted) { lastStarted = true; coopPanel.hidden = true; }
-              ch01Panel.hidden = !['separated','escaped'].includes(currentPhase);
+              ch01Panel.hidden = !['reception','separated','escaped'].includes(currentPhase);
               ch02Panel.hidden = !['ch02','ch02_cleared'].includes(currentPhase);
               ch03Panel.hidden = !['ch03','ch03_cleared'].includes(currentPhase);
               ch04Panel.hidden = !['ch04','ch04_cleared'].includes(currentPhase);
@@ -524,7 +532,7 @@ if(['ch06_event','ch06_result','artifact_result'].includes(data.type))ch06Result
             started=true; lastStarted=true; coopStatus.textContent='게임 시작 신호 수신';
             hmReady.disabled=true; hmStart.disabled=true;
             coopPanel.hidden = true;
-            ch01Panel.hidden = !['separated','escaped'].includes(currentPhase);
+            ch01Panel.hidden = !['reception','separated','escaped'].includes(currentPhase);
             ch02Panel.hidden = !['ch02','ch02_cleared'].includes(currentPhase);
             ch03Panel.hidden = !['ch03','ch03_cleared'].includes(currentPhase);
             ch04Panel.hidden = !['ch04','ch04_cleared'].includes(currentPhase);
