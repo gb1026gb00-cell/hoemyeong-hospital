@@ -233,6 +233,16 @@ function recovery(ch){
  return {percent,found,total:20,tier:percent===100?3:percent>=80?2:percent>=50?1:0};
 }
 const state=r=>({type:'state',cooperationPaused:!!r.started&&[...r.clients].filter(c=>c.ws&&c.ws.readyState===WebSocket.OPEN).length<2,artifactFragments:[...(r.artifactFragments||[])].sort(),dollComplete:r.pieces.size===4,clueOwners:clueOwners(r),roles:members(r).map(x=>x.role),members:members(r),pieces:[...r.pieces].sort(),started:r.started,capacity:r.capacity||2,devSolo:!!r.devSolo,chat:r.chat.slice(-25),chapter:publicChapter(r.chapter),recovery:recovery(r.chapter)});
+function enterFinalAfterCh04(r){
+ const ch=r.chapter;
+ if(!ch||ch.phase!=='ch04_cleared'||!ch.ch04?.solved)return false;
+ if(![0,1,2,3,4].every(i=>(r.artifactFragments||new Set()).has(i)))return false;
+ if(!(ch.ch04.artifactRecordWitnesses||[]).length)return false;
+ ch.phase='ch06';ch.ch06={inspected:[],fragments:[],switches:[],failed:0,solved:false,artifactSolved:false,artifactInspected:[]};
+ const dialogue=[['성화','잠깐. 저기 봐.'],['홍중','저게… 제단이야? 병원 지하에 왜 저런 게 있어?'],['우영','저게 진짜 뭐야. 우리 지금까지 저걸 찾으려고 온 거야?'],['민기','나 진짜 나가고 싶어. 더는 못 하겠어.'],['윤호','출구부터 찾자. 다들 떨어지지 말고.'],['여상','근데 이상하지 않아? 파편이 전부 저쪽을 향하고 있어.'],['종호','여기가 끝인가? 저거만 확인하면 나갈 수 있는 거야?'],['산','…아니. 저기 문이 하나 더 있어.']];
+ broadcast(r,{type:'ch06_event',event:'enter',message:'제단처럼 생긴 구조물 위에 제0유물의 흔적이 남아 있다. 그 뒤로 마지막 문이 보인다.',dialogue});
+ broadcast(r,state(r));chapterVoiceOnce(r,6);return true;
+}
 function chapterVoiceOnce(r,index){if(!r.chapter||!Number.isInteger(index)||index<1||index>6)return;const ch=r.chapter;if(!Array.isArray(ch.voicePlayed))ch.voicePlayed=[];if(ch.voicePlayed.includes(index))return;ch.voicePlayed.push(index);broadcast(r,state(r));broadcast(r,{type:'chapter_voice',chapter:index});}
 function broadcast(r,o){if(o.type==='state'){
  if([...r.clients].some(c=>c.ws&&c.ws.readyState===WebSocket.OPEN))r.lastActiveAt=Date.now();
@@ -519,7 +529,7 @@ wss.on('connection',ws=>{
      if(r.artifactFragments.has(4))return send(ws,{type:'fragment_result',ok:true,index:4,already:true,message:'마지막 파편은 이미 등록됐습니다.'});
      r.artifactFragments.add(4);
      broadcast(r,{type:'fragment_result',ok:true,index:4,message:'기록보관실 봉인 관찰창 아래에서 마지막 파편이 발견된다. 다섯 조각이 동시에 진동한다. (팀 공동 소지품 등록)'});
-     broadcast(r,state(r));return;
+     broadcast(r,state(r));enterFinalAfterCh04(r);return;
     }
     if(m.action==='fragment_search'){
     const index=FRAGMENT_PHASES.indexOf(ch.phase);
@@ -791,13 +801,6 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
     if(c.valves.length===3){c.solved=true;ch.phase='ch05_cleared';broadcast(r,{type:'ch05_event',event:'cleared',message:'격리실의 압력이 내려간다. 관찰창 너머에는 환자가 아니라, 조사원들의 이름이 적힌 빈 침대들이 놓여 있다. 마지막 구역으로 향하는 문이 열린다.'});}
     else broadcast(r,{type:'ch05_event',event:'progress',message:'밸브가 고정됐다. 다음 조사원이 이어서 조작해야 한다.'});
     broadcast(r,state(r));return;
-   }
-   if(m.action==='ch06_enter'&&ch.phase==='ch04_cleared'){
-    if(!(r.artifactFragments||new Set()).has(4))return send(ws,{type:'fragment_result',ok:false,message:'이 구역의 균열의 파편을 직접 찾아 공동 소지품에 등록해야 다음 구역으로 이동할 수 있습니다.'});
-    const activeHost=(r.host?.ws?.readyState===WebSocket.OPEN)?r.host:[...r.clients].filter(c=>c.ws&&c.ws.readyState===WebSocket.OPEN).sort((a,b)=>a.role-b.role)[0];
-     if(player!==activeHost)return send(ws,{type:'ch06_result',ok:false,message:'접속 중인 방장 또는 임시 진행 담당자만 마지막 문을 열 수 있습니다.'});
-    ch.phase='ch06';ch.ch06={inspected:[],fragments:[],switches:[],failed:0,solved:false,artifactSolved:false,artifactInspected:[]};
-    broadcast(r,{type:'ch06_event',event:'enter',message:'여덟 번째 문 앞에서 발소리가 멎는다. 벽에는 02:41, 거울에는 14:20. 문 옆 손잡이는 두 개다. 바닥의 그림자는 방 안에 들어온 사람보다 하나 많다.'});broadcast(r,state(r));chapterVoiceOnce(r,6);return;
    }
    if(ch.phase==='ch06'&&m.action==='ch06_inspect'){
     const sites={door:'문패: 「기록되지 않은 자는 문을 통과할 수 없다.」 원래 복원 절차는 일곱 단계였으나, 실험 후 문서에 여덟 번째 항목이 나타났다. 문에 서로 다른 두 개의 손잡이가 있다.',mirror:'거울: 시계는 14:20을 가리키지만 거울에 비친 숫자만 역순이다.',clock:'정지 시계: 02:41. 마지막 숫자 1에 검은 손자국이 남아 있다. 손자국은 유리 안쪽에 찍혀 있다.',ledger:'최종 기록: 208호의 구조 요청은 02:41에 시작되었다. 거울 속 시간은 실제 시간이 아니다. 문서 하단에 빈 서명란이 하나 더 있다. 방금 잉크가 번진 것처럼 젖어 있다.'};
