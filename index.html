@@ -158,24 +158,54 @@
     </div>
   </section>
   <section id="ch04PuzzlePanel" hidden aria-label="기록보관실 협동 조사" style="max-height:38dvh;overflow:auto;background:#21192c;border:1px solid #675371;border-radius:10px;padding:10px;font-size:13px">
-    <strong>CH.04 · 기록보관실</strong><p id="ch04Result" style="white-space:pre-wrap;line-height:1.5">기록을 대조해 사건을 재구성하세요.</p>
-    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">
-      <button type="button" data-ch04="ch04_inspect" data-object="ledger">퇴실 대장</button>
-      <button type="button" data-ch04="ch04_inspect" data-object="camera">감시 영상 기록</button>
-      <button type="button" data-ch04="ch04_inspect" data-object="call">내선 통화 기록</button>
-      <button type="button" data-ch04="ch04_inspect" data-object="tag">봉인된 문서</button>
-      <button type="button" data-ch04="ch04_surgery_record">수술 기록 조사</button>
-      <button type="button" data-ch04="ch04_witness" data-station="human">사람의 기록</button>
-      <button type="button" data-ch04="ch04_witness" data-station="machine">기계의 기록</button>
-      <button type="button" data-ch04="horror_inspect" data-site="cctv">CCTV 화면 조사</button>
-      <button type="button" data-ch04="horror_inspect" data-site="admissions_phone">원무과 전화 조사</button>
-      <button type="button" data-ch04="horror_inspect" data-site="mortuary_drawer">영안실 서랍 조사</button>
-      <label style="grid-column:1/-1">사건 재구성
-        <select id="ch04Answer" style="width:100%;min-height:40px"><option value="">결론 선택</option><option value="inside">환자는 병실 안에 남았다</option><option value="outside">환자는 병실 밖으로 나갔다</option></select>
+    <strong>CH.04 · 사라진 6분 / 기록보관실</strong>
+    <p style="font-size:12px;color:#cbbcd4;line-height:1.6">208호의 02:41 구조 요청. 네 종류의 기록을 서로 대조해 봉인된 복원 실험을 추적하세요. 기록과 해독 자료는 조사원끼리 공유해야 합니다.</p>
+    <p id="ch04Result" role="status" aria-live="polite" style="white-space:pre-wrap;line-height:1.6;border:1px solid #59485f;border-radius:8px;background:#151019;padding:10px">조사 지점을 선택하면 기록이 이곳에 표시됩니다.</p>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px">
+      <div style="min-width:0;padding:11px;border:1px solid #675371;border-radius:10px;background:linear-gradient(145deg,#302532,#1a1620)">
+        <div style="font-weight:700;color:#eadfe9;font-size:13px">A · 퇴실 대장</div>
+        <p style="font-size:12px;color:#c7b8cc;line-height:1.55;margin:6px 0 10px">환자 식별 번호와 출입 순서를 대조합니다.</p>
+        <button type="button" data-ch04="ch04_inspect" data-object="ledger" style="width:100%;min-height:44px">퇴실 대장 조사</button>
+      </div>
+      <div style="min-width:0;padding:11px;border:1px solid #675371;border-radius:10px;background:linear-gradient(145deg,#302532,#1a1620)">
+        <div style="font-weight:700;color:#eadfe9;font-size:13px">B · 감시 기록</div>
+        <p style="font-size:12px;color:#c7b8cc;line-height:1.55;margin:6px 0 10px">손상된 CCTV 프레임과 교환기 신호를 대조합니다.</p>
+        <button type="button" data-ch04="ch04_inspect" data-object="camera" style="width:100%;min-height:44px">CCTV 기록 조사</button>
+      </div>
+      <div style="min-width:0;padding:11px;border:1px solid #675371;border-radius:10px;background:linear-gradient(145deg,#302532,#1a1620)">
+        <div style="font-weight:700;color:#eadfe9;font-size:13px">C · 내선 전화</div>
+        <p style="font-size:12px;color:#c7b8cc;line-height:1.55;margin:6px 0 10px">208호 구조 요청의 숫자 신호를 조사합니다.</p>
+        <button type="button" data-ch04="ch04_inspect" data-object="call" style="width:100%;min-height:44px">내선 통화 조사</button>
+      </div>
+      <div style="min-width:0;padding:11px;border:1px solid #675371;border-radius:10px;background:linear-gradient(145deg,#302532,#1a1620)">
+        <div style="font-weight:700;color:#eadfe9;font-size:13px">D · 보존 봉투</div>
+        <p style="font-size:12px;color:#c7b8cc;line-height:1.55;margin:6px 0 10px">복원 실험의 시작 시각과 봉인 규칙을 확인합니다.</p>
+        <button type="button" data-ch04="ch04_inspect" data-object="tag" style="width:100%;min-height:44px">보존 봉투 조사</button>
+      </div>
+    </div>
+    <details style="margin-top:10px;border:1px solid #675371;border-radius:9px;padding:10px;background:#1a1420">
+      <summary style="cursor:pointer;font-weight:700;min-height:32px">추가 조사 · 수술 기록 및 감각 기록</summary>
+      <p style="font-size:12px;color:#cbbcd4">기존 G09 공포 영상과 협동 조사 기능을 유지합니다.</p>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">
+        <button type="button" data-ch04="ch04_surgery_record">수술 기록 조사</button>
+        <button type="button" data-ch04="ch04_witness" data-station="human">사람의 기록</button>
+        <button type="button" data-ch04="ch04_witness" data-station="machine">기계의 기록</button>
+        <button type="button" data-ch04="horror_inspect" data-site="cctv">CCTV 화면 조사</button>
+        <button type="button" data-ch04="horror_inspect" data-site="admissions_phone">원무과 전화 조사</button>
+        <button type="button" data-ch04="horror_inspect" data-site="mortuary_drawer">영안실 서랍 조사</button>
+      </div>
+    </details>
+    <div style="margin-top:10px;padding:10px;border:1px solid #675371;border-radius:9px;background:#19141f">
+      <strong>공동 복원 기록</strong>
+      <p style="font-size:12px;color:#cbbcd4;line-height:1.5">현재 단계에서는 기존 서버의 사건 재구성 검증을 유지합니다. GOLDEN HOUR 6 암호 입력과 담당자별 자료 공개는 다음 구현 단계에서 연결됩니다.</p>
+      <label style="display:block;margin:8px 0">사건 재구성
+        <select id="ch04Answer" style="width:100%;min-height:44px"><option value="">결론 선택</option><option value="inside">환자는 병실 안에 남았다</option><option value="outside">환자는 병실 밖으로 나갔다</option></select>
       </label>
-      <button type="button" data-ch04="ch04_vote">재구성 동의 (각 조사원)</button>
-      <button type="button" data-ch04="fragment_search" data-site="ledger">퇴실 대장의 제0유물 파편</button>
-      <button type="button" data-ch04="ch05_enter">CH.05 이동 (방장)</button>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">
+        <button type="button" data-ch04="ch04_vote">재구성 동의 (각 조사원)</button>
+        <button type="button" data-ch04="fragment_search" data-site="ledger">퇴실 대장의 제0유물 파편</button>
+        <button type="button" data-ch04="ch05_enter">CH.05 이동 (기존 경로)</button>
+      </div>
     </div>
   </section>
   <section id="ch05PuzzlePanel" hidden aria-label="격리실 협동 조사" style="max-height:38dvh;overflow:auto;background:#21192c;border:1px solid #675371;border-radius:10px;padding:10px;font-size:13px">
