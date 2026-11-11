@@ -658,7 +658,12 @@ wss.on('connection',ws=>{
     if(String(m.answer||'').trim()!==expected){
      c.failed++;broadcast(r,{type:'ch03_event',event:'wrong',message:'잘못된 운행 코드. 엘리베이터가 아래로 급강하했다가 멈춘다.'});broadcast(r,state(r));return;
     }
-    if(!(r.artifactFragments||new Set()).has(2))return send(ws,{type:'ch03_result',ok:false,message:'정답은 맞지만 거울 가장자리의 제0유물 파편을 먼저 회수해야 합니다.'});
+    // CH03: a correct code awards the chapter artifact to the shared inventory automatically.
+    if(!r.artifactFragments)r.artifactFragments=new Set();
+    if(!r.artifactFragments.has(2)){
+     r.artifactFragments.add(2);
+     broadcast(r,{type:'fragment_result',ok:true,index:2,message:FRAGMENT_DESCRIPTIONS[2]+' (정답 승인으로 팀 공동 소지품에 자동 등록)'});
+    }
     if(c.transitionPending)return send(ws,{type:'ch03_result',ok:true,message:'G02 전환 영상 시청이 진행 중입니다.'});
     c.transitionPending=true;c.transitionWatchedRoles=[];
     broadcast(r,{type:'ch03_event',event:'transition_video',video:'G02',message:'운행 코드 승인. 전 조사원이 전환 영상을 시청합니다.'});
