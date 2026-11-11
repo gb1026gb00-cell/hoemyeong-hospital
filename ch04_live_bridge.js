@@ -37,6 +37,8 @@
    const input=document.createElement('input');input.id=select.id;input.autocomplete='off';input.placeholder='최종 복원 식별명';input.style.cssText='width:100%;min-height:44px;color:#f7f1ff;background:#17111e;border:1px solid #79648e;border-radius:6px';
    select.replaceWith(input);
   }
+  const isolation=$('hmIsolation05');if(isolation){isolation.hidden=true;isolation.style.setProperty('display','none','important');}
+  for(const id of ['hmIsolationEnter','hmIsolationNext']){const el=$(id);if(el){el.hidden=true;el.style.setProperty('display','none','important');}}
   const vote=$('hmArchiveVote');
   if(vote)vote.textContent='재구성 동의 · 각 조사원 1회';
   // Keep original record buttons, witness buttons, photorealistic scene and original vote handler.
@@ -46,17 +48,27 @@
    const title=final.querySelector('strong');if(title)title.textContent='CH.05 · 제0유물의 제단';
    const input=$('hmFinalAnswer');if(input){input.inputMode='text';input.maxLength=4;input.placeholder='영문 네 글자';}
    const label=final.querySelector('label:has(#hmFinalAnswer)');if(label)label.firstChild.textContent='마지막 문 영문 암호';
+   const info=final.querySelector('p.sub');if(info)info.textContent='기록 네 곳과 두 담당자의 단서를 확보하고, 공동 제0유물 파편 다섯 개를 모두 판독하세요.';
+   const finale=document.createElement('div');finale.id='hmNinthDialogue';finale.setAttribute('role','log');finale.style.cssText='display:none;white-space:pre-wrap;line-height:1.7;background:#0e0b13;border:1px solid #755583;border-radius:8px;margin:12px 0;padding:12px;max-height:36vh;overflow:auto';
+   final.append(finale);
    const fragment=final.querySelector('[data-artifact="4"]');if(fragment)fragment.textContent='봉인 관찰창 파편';
   }
   if($('hmFinalEnter'))$('hmFinalEnter').hidden=true;
+  const finalVisual=$('hmFinalScene');if(finalVisual){const title=finalVisual.querySelector('.f-title, .f-heading, strong');if(title&&/CH\.\s*0?6|여덟 번째 문/.test(title.textContent))title.textContent='CH.05 · 제0유물의 제단';}
+  const end=$('hmFinalEnding');if(end){const title=end.querySelector('strong');if(title)title.textContent='END — 귀환 · 회명병원의 아홉 번째 참가자';}
  }
  function update(){
   mount();
   const c=chapter?.ch04||{};
   const p=$('hmGoldenProgress');
   if(p)p.textContent='공동 진행 · 자료 '+(c.inspected?.length||0)+'/8 · 해독 '+(c.decoded?.length||0)+'/4 · 증언 '+(c.witnesses?.length||0)+'/2 · 동의 '+(c.votes?.length||0)+'/2';
+  const progress=$('hmFinalProgress'),final=chapter?.ch06||{};
+  if(progress&&phase==='ch06')progress.textContent='기록 '+(final.inspected?.length||0)+'/4 · 담당 단서 '+(final.fragments?.length||0)+'/2 · 파편 판독 '+(final.artifactInspected?.length||0)+'/5 · 복원 '+(final.artifactSolved?'완료':'미완료')+' · 손잡이 '+(final.switches?.length||0)+'/2';
   if($('hmArchiveNext'))$('hmArchiveNext').hidden=true;
   if($('hmFinalEnter'))$('hmFinalEnter').hidden=true;
+  const isolation=$('hmIsolation05');if(isolation)isolation.style.setProperty('display','none','important');
+  for(const id of ['hmIsolationEnter','hmIsolationNext']){const el=$(id);if(el)el.style.setProperty('display','none','important');}
+  const sheet=$('hmSheetTitle');if(sheet&&(phase==='ch06'||phase==='finished'))sheet.textContent='回明病院 · CH.05 제0유물의 제단';
  }
  class GoldenSocket extends Native{
   constructor(...args){super(...args);socket=this;this.addEventListener('message',e=>{
@@ -64,6 +76,15 @@
    if((m.type==='state'||m.type==='joined')&&m.chapter){chapter=m.chapter;phase=m.chapter.phase||phase;update();}
    if(m.type==='ch04_event'&&m.event==='enter'){phase='ch04';update();}
    if(m.type==='ch04_result'&&m.message)notice(m.message);
+   if(m.type==='ch06_event'){
+    const dialog=$('hmNinthDialogue');
+    if(dialog&&Array.isArray(m.dialogue)&&m.dialogue.length){dialog.textContent=m.dialogue.map(line=>Array.isArray(line)?line.join(': '):String(line)).join('\n');dialog.style.display='block';}
+    if(dialog&&m.event==='ninth_return'&&m.message){dialog.textContent+='\n\n'+m.message;dialog.style.display='block';}
+    if(m.event==='enter'||m.event==='ninth_return'||m.event==='cleared'){
+      const e=$('hmFinalResult');if(e&&m.message)e.textContent=m.message;
+    }
+   }
+   queueMicrotask(update);
   });}
  }
  window.WebSocket=GoldenSocket;
