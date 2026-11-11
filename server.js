@@ -850,6 +850,7 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
     c.artifactSolved=true;broadcast(r,{type:'artifact_result',ok:true,message:'균열의 파편이 하나의 장치로 결합되었습니다. 마지막 문에 전원이 들어옵니다.'});broadcast(r,{type:'horror_video',id:'G07',scope:'all'});broadcast(r,state(r));return;
    }
    if(ch.phase==='ch06'&&m.action==='ch06_switch'){
+    if(!ch.ch06.artifactSolved)return send(ws,{type:'ch06_result',ok:false,message:'제0유물 파편 다섯 개를 먼저 판독하고 복원해야 마지막 문 손잡이를 고정할 수 있습니다.'});
     if(!r.devSolo&&[...r.clients].filter(x=>x.ws?.readyState===WebSocket.OPEN).length<2)return send(ws,{type:'ch06_result',ok:false,message:'두 조사원이 온라인이어야 합니다.'});
     const c=ch.ch06;if(c.inspected.length!==4||c.fragments.length!==2)return send(ws,{type:'ch06_result',ok:false,message:'네 곳의 기록과 서로 다른 두 조사원의 최종 단서를 확보하세요.'});
     if(!r.devSolo&&c.switches.includes(player.role))return send(ws,{type:'ch06_result',ok:false,message:'이미 손잡이를 잡았습니다. 다른 조사원이 필요합니다.'});
