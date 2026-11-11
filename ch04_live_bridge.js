@@ -89,6 +89,70 @@
   for(const id of ['hmIsolationEnter','hmIsolationNext']){const el=$(id);if(el)el.style.setProperty('display','none','important');}
   const sheet=$('hmSheetTitle');if(sheet&&(phase==='ch06'||phase==='finished'))sheet.textContent='回明病院 · CH.05 제0유물의 제단';
  }
+
+ // Atmospheric answer-sheet prologues: shown once per chapter, before opening the puzzle.
+ // These are narrative only; no answer, progress flag, or media event is changed.
+ const prologueSeen={ch04:false,ch06:false};
+ const prologues={
+  ch04:{
+   kicker:'回明病院 · 기록보관실 / 기밀 열람 기록',
+   heading:'CH.04 — 사라진 6분',
+   paragraphs:[
+    '02시 41분. 분명 누군가 구조를 요청했다.',
+    '퇴실 대장에는 아무도 나가지 않았다고 적혀 있었다. 감시 기록에는 아무도 들어오지 않았다고 적혀 있었다. 그런데 그 여섯 분 동안, 병원은 한 사람을 잃어버렸다.',
+    '서류는 거짓말을 하지 않는다. 다만 누가 지웠는지는 말하지 않는다.',
+    '서로 다른 손에 남은 기록을 맞추어라. 이곳에서 사라진 것은 시간이 아니라, 시간을 견딘 사람의 이름이었으므로.'
+   ],
+   closing:'[ 복원 지시 ] 기록이 서로 일치할 때까지, 누구도 퇴실한 것으로 처리하지 말 것.',
+   action:'봉인 기록을 열고 사건 재구성 시작'
+  },
+  ch06:{
+   kicker:'回明病院 · 제0유물 / 최종 관측 기록',
+   heading:'CH.05 — 제0유물의 제단',
+   paragraphs:[
+    '다섯 개의 균열이 하나의 물건이 되기를 기다리고 있었다.',
+    '문에는 두 개의 손잡이가 달려 있었다. 혼자서는 잡을 수 없는 거리였다. 처음부터 누군가를 남겨두도록 만들어진 문처럼.',
+    '거울 속의 인원은 아홉. 기록에 남은 이름은 여덟.',
+    '기록되지 않은 마지막 사람을 묻지 마라. 문이 열리는 순간, 그 사람이 가장 먼저 너를 알아볼 것이다.'
+   ],
+   closing:'[ 마지막 경고 ] 제0유물 복원 이후의 생환 여부는 보장하지 않는다.',
+   action:'마지막 기록을 열고 제단 조사 시작'
+  }
+ };
+ function showPrologue(which,continueAction){
+  if(prologueSeen[which]){continueAction();return;}
+  prologueSeen[which]=true;
+  const data=prologues[which],veil=document.createElement('div');
+  veil.id='hmGoldenPrologue';
+  veil.setAttribute('role','dialog');veil.setAttribute('aria-modal','true');
+  veil.setAttribute('aria-label',data.heading);
+  veil.style.cssText='position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;justify-content:center;padding:18px;background:#08070bf5;overflow:auto;color:#efe6e9;font-family:Georgia,serif;box-sizing:border-box';
+  const sheet=document.createElement('section');
+  sheet.style.cssText='width:min(100%,520px);max-height:90dvh;overflow:auto;padding:clamp(20px,5vw,32px);background:linear-gradient(145deg,#241c24,#111014);border:1px solid #75616f;box-shadow:0 20px 80px #000;box-sizing:border-box';
+  const kicker=document.createElement('div');kicker.textContent=data.kicker;
+  kicker.style.cssText='color:#bda7b7;font:11px/1.6 system-ui;letter-spacing:1.2px';sheet.append(kicker);
+  const heading=document.createElement('h2');heading.textContent=data.heading;heading.style.cssText='font:600 clamp(21px,5vw,27px)/1.35 Georgia,serif;margin:15px 0 21px;color:#f5edef';sheet.append(heading);
+  for(const line of data.paragraphs){
+   const p=document.createElement('p');p.textContent=line;p.style.cssText='font-size:clamp(13px,3.5vw,15px);line-height:2.05;color:#dfd3d9;margin:0 0 17px;white-space:pre-wrap';sheet.append(p);
+  }
+  const closing=document.createElement('p');closing.textContent=data.closing;
+  closing.style.cssText='border-top:1px solid #665260;padding-top:16px;color:#bc9faa;font:12px/1.7 system-ui';sheet.append(closing);
+  const go=document.createElement('button');go.type='button';go.textContent=data.action;
+  go.style.cssText='display:block;width:100%;min-height:48px;margin-top:20px;background:#4c3549;color:#fff;border:1px solid #a2859c;border-radius:8px;padding:12px;font:600 14px system-ui';
+  go.addEventListener('click',()=>{veil.remove();continueAction();},{once:true});
+  sheet.append(go);veil.append(sheet);document.body.append(veil);go.focus();
+ }
+ // Existing approved V172 scene triggers remain unchanged after the prologue.
+ // A capture listener inserts only the introductory sheet before each puzzle's first opening.
+ document.addEventListener('click',e=>{
+  const trigger=e.target?.closest?.('#hmArchivePuzzle,#hmFinalPuzzle');
+  if(!trigger)return;
+  const which=trigger.id==='hmArchivePuzzle'?'ch04':'ch06';
+  if((which==='ch04'&&phase!=='ch04')||(which==='ch06'&&phase!=='ch06')||prologueSeen[which])return;
+  e.preventDefault();e.stopImmediatePropagation();
+  showPrologue(which,()=>trigger.click());
+ },true);
+
  class GoldenSocket extends Native{
   constructor(...args){super(...args);socket=this;this.addEventListener('message',e=>{
    let m;try{m=JSON.parse(e.data)}catch{return;}
