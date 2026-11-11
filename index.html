@@ -248,7 +248,7 @@
     </div>
   </section>
   <section id="ch06PuzzlePanel" hidden aria-label="마지막 문과 제0유물" style="max-height:38dvh;overflow:auto;background:#21192c;border:1px solid #675371;border-radius:10px;padding:10px;font-size:13px">
-    <strong>CH.05 · 제0유물의 제단</strong><p id="ch06Result" style="white-space:pre-wrap;line-height:1.5">모든 파편을 판독하고 서로의 기록을 맞추세요.</p>
+    <strong>CH.05 · 제0유물의 제단</strong><p id="ch06CoopStatus" role="status" aria-live="polite" style="white-space:pre-wrap;line-height:1.5;color:#e2cbe8;font-size:12px">조사 및 파편 판독 진행 상황 대기</p><p id="ch06Result" style="white-space:pre-wrap;line-height:1.5">모든 파편을 판독하고 서로의 기록을 맞추세요.</p>
     <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">
       <button type="button" data-ch06="ch06_inspect" data-object="door">여덟 번째 문</button>
       <button type="button" data-ch06="ch06_inspect" data-object="mirror">거울</button>
@@ -421,6 +421,15 @@
               ch05Panel.hidden = !phaseStarted || !['ch05','ch05_cleared'].includes(currentPhase);
               ch06Panel.hidden = !phaseStarted || !['ch06','finished'].includes(currentPhase);
               ch06Panel.querySelectorAll('button,input,select').forEach(control=>{control.disabled=currentPhase==='finished';});
+              if(data.chapter.ch06){
+                const c=data.chapter.ch06;
+                const lines=['제0유물 판독 '+(c.artifactInspected||[]).length+'/5 · 복원 '+(c.artifactSolved?'완료':'대기'),
+                  '마지막 구역 조사 '+(c.inspected||[]).length+'/4',
+                  '역할별 최종 단서 '+(c.fragments||[]).length+'/2',
+                  '문 손잡이 고정 '+(c.switches||[]).length+'/2',
+                  '마지막 문 '+(c.solved?'해제 완료':'잠김')];
+                document.getElementById('ch06CoopStatus').textContent=lines.join('\n');
+              }
               if(currentPhase==='finished')ch06Result.textContent='여덟 번째 문이 열렸다. END — 귀환.\n제0유물 복원과 마지막 문 해제가 완료되었습니다.';
               dollPanel.hidden = !phaseStarted || !['ch02_cleared','ch03','ch03_cleared','ch04','ch04_cleared','ch05','ch05_cleared','ch06'].includes(currentPhase);
               if(Array.isArray(data.pieces)){
