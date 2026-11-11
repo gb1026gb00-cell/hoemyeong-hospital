@@ -29,6 +29,7 @@
   scene.dataset.dossierConnected='yes';
   const css=el('style');
   css.textContent='#hmArchiveScene .ar-hot:not(.hmDossierHot){display:none!important}#hmArchiveScene .hmDossierHot{position:absolute;z-index:7;transform:translate(-50%,-50%);min-width:42px;min-height:42px;width:clamp(42px,7vmin,54px);height:clamp(42px,7vmin,54px);padding:0;border-radius:50%;border:1px solid #a78cac;background:#1b1028bd;color:#fff;box-shadow:0 0 0 4px #150d2080,0 0 16px #cda9db77;font:700 18px system-ui;display:grid;place-items:center;touch-action:manipulation}#hmArchiveScene .hmDossierHot:focus-visible{outline:3px solid white}#hmArchiveScene .hmDossierHot[data-zone="E"]{border-color:#e7cdb2;box-shadow:0 0 0 4px #281a1980,0 0 17px #ffe5c099}';
+  css.textContent += '#hmArchiveScene .ar-bottom{display:none!important}#hmArchiveScene #hmArchivePuzzle{display:none!important}';
   document.head.append(css);
   const placements=[
    ['A','기록 선반',36.8,24.5],
@@ -57,8 +58,15 @@
    // Keep the newly selected tab visible, even if an existing UI component rerenders.
    const root=$('hmDossier');if(root)root.scrollIntoView({block:'nearest'});
   },true);
+  // Hide legacy controls duplicated by the A-E in-scene investigation hotspots.
   const main=scene.querySelector('#hmArchivePuzzle');
-  if(main)main.textContent='E · 최종 기록 재구성';
+  if(main){main.hidden=true;main.style.setProperty('display','none','important');}
+  for(const control of scene.querySelectorAll('button')){
+   if(control.classList.contains('hmDossierHot'))continue;
+   if(/주변의 이상 현상 조사|E\s*[·.]\s*최종 기록 재구성/.test(control.textContent||'')){
+    control.hidden=true;control.style.setProperty('display','none','important');
+   }
+  }
  }
 
  function mount(){
