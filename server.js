@@ -813,7 +813,7 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
    if(ch.phase==='ch04'&&m.action==='ch04_vote'){
     if(!r.devSolo&&[...r.clients].filter(x=>x.ws?.readyState===WebSocket.OPEN).length<2)return send(ws,{type:'ch04_result',ok:false,message:'두 조사원이 온라인이어야 합니다.'});
     const c=ch.ch04;if(CH04_KEYS.some(key=>!c.inspected.includes(key)))return send(ws,{type:'ch04_result',ok:false,message:'A~D의 여덟 문서를 모두 조사해야 합니다.'});if(!c.eVideoStarted)return send(ws,{type:'ch04_result',ok:false,message:'E 지점의 봉인 영상을 먼저 확인하세요.'});if(![...r.clients].filter(x=>x.ws?.readyState===WebSocket.OPEN).every(x=>(c.eVideoDone||[]).includes(x.role)))return send(ws,{type:'ch04_result',ok:false,message:'아직 영상을 끝까지 보지 않은 조사원이 있습니다.'});
-    if(String(m.answer||'').trim().toUpperCase().replace(/\s+/g,' ')!=='GOLDEN HOUR 6'){
+    if(String(m.answer||'').normalize('NFKC').toUpperCase().replace(/[\s\u3000\-_]+/g,'')!=='GOLDENHOUR6'){
      c.failed++;c.votes=[];broadcast(r,{type:'ch04_event',event:'wrong',message:'서류장이 동시에 벌어진다. 종이들이 바닥에 쏟아졌는데, 눈을 돌렸다 돌아보니 모든 기록이 다시 꽂혀 있다. 맨 앞의 이름만 지워졌다.'});broadcast(r,state(r));return;
     }
     if(r.devSolo){if(!c.votes.includes(player.role))c.votes.push(player.role);c.votes.push(-1)}else if(!c.votes.includes(player.role))c.votes.push(player.role);
