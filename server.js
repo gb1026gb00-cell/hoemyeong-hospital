@@ -702,7 +702,16 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
  if(!Array.isArray(ch.ch04.decoded))ch.ch04.decoded=[];if(!ch.ch04.decoded.includes(part))ch.ch04.decoded.push(part);
  broadcast(r,{type:'ch04_event',event:'decoded',message:'구획 '+part+' 해독 완료'});broadcast(r,state(r));return;
 }
-   if(ch.phase==='ch04'&&m.action==='ch04_surgery_record'){
+   if(ch.phase==='ch04'&&m.action==='ch04_artifact_record'){
+     const c=ch.ch04;if(!Array.isArray(c.artifactRecordWitnesses))c.artifactRecordWitnesses=[];
+     if(!c.artifactRecordWitnesses.includes(player.role)){
+      c.artifactRecordWitnesses.push(player.role);
+      send(ws,{type:'ch04_result',ok:true,message:'봉인 관찰창: 열람자의 이름이 빈 칸에 새겨진다. 기록 마지막 줄의 시각이 지금으로 바뀌었다. 유리 아래에는 제0유물의 마지막 파편이 숨겨져 있다.'});
+      send(ws,{type:'horror_video',id:'G04',scope:'self'});persist();
+     }else send(ws,{type:'ch04_result',ok:true,message:'봉인 기록은 다시 잠겨 있다. 유리 아래 파편은 복원 완료 후 회수할 수 있다.'});
+     return;
+    }
+    if(ch.phase==='ch04'&&m.action==='ch04_surgery_record'){
     const c=ch.ch04;
     if(!Array.isArray(c.surgeryRecordWitnesses))c.surgeryRecordWitnesses=[];
     const key=player.role;
