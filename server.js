@@ -249,7 +249,7 @@ const FRAGMENT_DESCRIPTIONS=[
  '208호 서랍의 안쪽 판을 밀자, 지워진 환자 이름이 흐르는 파편이 나온다.',
  '엘리베이터 거울 가장자리의 틈에 손을 넣자, 층수 대신 시각이 새겨진 파편이 걸린다.',
  '기록보관실 대장의 찢어진 등표지 안쪽에서 검게 변색된 파편이 떨어진다.',
- '격리실 관찰창 아래 실리콘 틈에서 마지막 파편이 발견된다. 다섯 조각이 동시에 진동한다.'
+ '기록보관실 봉인 관찰창 아래 실리콘 틈에서 마지막 파편이 발견된다. 다섯 조각이 동시에 진동한다.'
 ];
 function updateSenseAssignments(r){if(!r.started)return;for(const c of r.clients)if(c.ws&&c.ws.readyState===WebSocket.OPEN)send(c.ws,{type:"sense_assignment",senses:assignedSenses(r,c.role).map(x=>x.sense)});}
 
@@ -496,7 +496,15 @@ wss.on('connection',ws=>{
     if(!/^\d{8}$/.test(value)||value!==expected)return send(ws,{type:'ecg_result',ok:false,message:'심전도 배열이 일치하지 않습니다. 기록실의 배열 순서를 다시 확인하세요.'});
     ch.ecgSolved=true;broadcast(r,{type:'ecg_result',ok:true,message:'심전도 복원 완료. 각 조사실 제어판의 봉인이 풀렸습니다.'});broadcast(r,state(r));return;
    }
-   if(m.action==='fragment_search'){
+   if(m.action==='fragment_search'&&ch.phase==='ch04_cleared'&&String(m.site||'')==='glass'){
+     if(!(r.artifactFragments||new Set()).has(3))return send(ws,{type:'fragment_result',ok:false,message:'먼저 퇴실 대장의 파편을 회수하세요.'});
+     if(!r.artifactFragments)r.artifactFragments=new Set();
+     if(r.artifactFragments.has(4))return send(ws,{type:'fragment_result',ok:true,index:4,already:true,message:'마지막 파편은 이미 등록됐습니다.'});
+     r.artifactFragments.add(4);
+     broadcast(r,{type:'fragment_result',ok:true,index:4,message:'기록보관실 봉인 관찰창 아래에서 마지막 파편이 발견된다. 다섯 조각이 동시에 진동한다. (팀 공동 소지품 등록)'});
+     broadcast(r,state(r));return;
+    }
+    if(m.action==='fragment_search'){
     const index=FRAGMENT_PHASES.indexOf(ch.phase);
     if(index<0)return send(ws,{type:'fragment_result',ok:false,message:'아직 파편을 찾을 수 있는 구역이 아닙니다. 해당 구역의 퍼즐을 먼저 완료하세요.'});
     if(!r.artifactFragments)r.artifactFragments=new Set();
@@ -723,12 +731,6 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
     else broadcast(r,{type:'ch04_event',event:'vote',message:'사건 재구성에 첫 번째 조사원이 동의했다. 다른 조사원의 확인이 필요하다.'});
     broadcast(r,state(r));return;
    }
-   if(m.action==='ch05_enter'&&ch.phase==='ch04_cleared'){
-    if(!(r.artifactFragments||new Set()).has(3))return send(ws,{type:'fragment_result',ok:false,message:'이 구역의 균열의 파편을 직접 찾아 공동 소지품에 등록해야 다음 구역으로 이동할 수 있습니다.'});
-    if(player!==r.host)return send(ws,{type:'ch05_result',ok:false,message:'방장만 격리실 문을 열 수 있습니다.'});
-    ch.phase='ch05';ch.ch05={inspected:[],samples:[],valves:[],lastRole:null,failed:0,solved:false};
-    broadcast(r,{type:'ch05_event',event:'enter',message:'등 뒤에서 잠금쇠가 세 번 걸린다. 벽에는 관 세 개와 밸브 네 개. 출입 기록의 마지막 줄은 여러 번 덧씌워져 있다. 「정상 압력으로 돌려놓지 말 것」.'});broadcast(r,state(r));chapterVoiceOnce(r,5);return;
-   }
    if(ch.phase==='ch05'&&m.action==='ch05_inspect'){
     const sites={chart:'압력 기록지: 02:41 이전 정상 압력은 2→4→1. 그러나 환자 격리 직후 순서는 역전됐다.',glass:'관찰창: 왼쪽 관의 붉은 침전물은 바닥으로 가라앉는다. 가운데 관의 액체는 투명하다. 오른쪽 관의 검은 기포는 아래로 흐른다. 관을 두드리자 반대편에서도 같은 횟수로 두드린다.',plate:'경고 명판: 3번 밸브는 폐쇄. 비상 해제는 반드시 두 사람이 교대로 조작하시오.',door:'격리문 잠금장치: 「제8단계 — 잔류자 처리」. 관측값 두 개와 밸브 세 번의 교대 조작이 확인되어야 열린다.'};
     const object=String(m.object||'');if(!Object.hasOwn(sites,object))return send(ws,{type:'ch05_result',ok:false,message:'존재하지 않는 조사 지점입니다.'});
@@ -764,7 +766,7 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
     else broadcast(r,{type:'ch05_event',event:'progress',message:'밸브가 고정됐다. 다음 조사원이 이어서 조작해야 한다.'});
     broadcast(r,state(r));return;
    }
-   if(m.action==='ch06_enter'&&ch.phase==='ch05_cleared'){
+   if(m.action==='ch06_enter'&&ch.phase==='ch04_cleared'){
     if(!(r.artifactFragments||new Set()).has(4))return send(ws,{type:'fragment_result',ok:false,message:'이 구역의 균열의 파편을 직접 찾아 공동 소지품에 등록해야 다음 구역으로 이동할 수 있습니다.'});
     if(player!==r.host)return send(ws,{type:'ch06_result',ok:false,message:'방장만 마지막 문을 열 수 있습니다.'});
     ch.phase='ch06';ch.ch06={inspected:[],fragments:[],switches:[],failed:0,solved:false,artifactSolved:false,artifactInspected:[]};
@@ -903,7 +905,7 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
     if(!r.started||!Number.isInteger(m.piece)||m.piece<0||m.piece>3)return;
     const phase=r.chapter?.phase||'';
     const allowed=[['ch02_cleared','ch03','ch03_cleared','ch04','ch04_cleared','ch05','ch05_cleared','ch06','finished'],['ch03_cleared','ch04','ch04_cleared','ch05','ch05_cleared','ch06','finished'],['ch04_cleared','ch05','ch05_cleared','ch06','finished'],['ch05_cleared','ch06','finished']];
-    if(!allowed[m.piece].includes(phase))return send(ws,{type:'error',message:'아직 해당 인형 부품을 회수할 수 없습니다. 챕터 조사를 완료하세요.'});
+    if(!(m.piece===3&&phase==='ch04_cleared')&&!allowed[m.piece].includes(phase))return send(ws,{type:'error',message:'아직 해당 인형 부품을 회수할 수 없습니다. 챕터 조사를 완료하세요.'});
     if(r.pieces.has(m.piece))return;
     r.pieces.add(m.piece);
     broadcast(r,{type:'piece',pieces:[...r.pieces].sort(),complete:r.pieces.size===4});
