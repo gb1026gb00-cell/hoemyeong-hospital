@@ -6,6 +6,7 @@
  let startedOnce=false;
  let sharedInventory={pieces:[],artifactFragments:[]};
  function openSharedInventory(){
+  const counter=document.getElementById('artifactProgress');if(counter){counter.hidden=false;counter.scrollIntoView({behavior:'smooth',block:'nearest'});}return;
   document.getElementById('hmSharedInventoryModal')?.remove();
   const overlay=document.createElement('div');overlay.id='hmSharedInventoryModal';
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','팀 공동 수집함');
@@ -40,7 +41,7 @@
   constructor(...args){super(...args);socket=this;
    this.addEventListener('message',ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
     if(m.type==='started'||(m.type==='state'&&m.started===true)|| (m.type==='joined'&&m.started===true)){active=true;startedOnce=true;hideLobby();updateConnectionStatus();document.dispatchEvent(new Event('hm-v175-started'));}
-    if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity))){receptionAnswerLength=Number(m.capacity)/2+3;ch02RoomCapacity=Number(m.capacity);}if(Array.isArray(m.roles))ch02RoomRoles=m.roles.filter(Number.isInteger).slice().sort((a,b)=>a-b);active=!!m.started;phase=m.chapter?.phase||phase;if(Array.isArray(m.artifactFragments))ch03FragmentCollected=m.artifactFragments.includes(2);if(Array.isArray(m.pieces))sharedInventory.pieces=m.pieces.map(Number);if(Array.isArray(m.artifactFragments))sharedInventory.artifactFragments=m.artifactFragments.map(Number);renderSharedInventory();const inv=document.getElementById('hmCh03Inventory');if(inv)inv.textContent='🎒 제0유물 파편 · '+(m.artifactFragments?.length||0)+'/5'+(ch03FragmentCollected?' · 거울 파편 획득':' · 거울 파편 미획득');if(Array.isArray(m.chat))integratedChatHistory=m.chat.slice(-25);refreshIntegratedChat();updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
+    if(m.type==='state'||m.type==='joined'){if([2,4,8].includes(Number(m.capacity))){receptionAnswerLength=Number(m.capacity)/2+3;ch02RoomCapacity=Number(m.capacity);}if(Array.isArray(m.roles))ch02RoomRoles=m.roles.filter(Number.isInteger).slice().sort((a,b)=>a-b);active=!!m.started;phase=m.chapter?.phase||phase;if(Array.isArray(m.artifactFragments))ch03FragmentCollected=m.artifactFragments.includes(2);if(Array.isArray(m.pieces))sharedInventory.pieces=m.pieces.map(Number);if(Array.isArray(m.artifactFragments))sharedInventory.artifactFragments=m.artifactFragments.map(Number);renderSharedInventory();const inv=document.getElementById('hmCh03Inventory');if(inv)inv.textContent='제0유물 · '+sharedInventory.artifactFragments.length+'/5';if(Array.isArray(m.chat))integratedChatHistory=m.chat.slice(-25);refreshIntegratedChat();updateBell();updateConnectionStatus();document.dispatchEvent(new CustomEvent('hm-v175-state',{detail:{started:active}}));}
     if(m.type==='joined'&&typeof m.isHost==='boolean')ch02IsHost=m.isHost;
     if((m.type==='joined'||m.type==='state')&&m.yourRole!==undefined&&m.yourRole!==null&&Number.isInteger(Number(m.yourRole)))ch02AssignedRole=Number(m.yourRole);
     if(m.type==='ch02_certificate'&&Number.isInteger(Number(m.role)))ch02AssignedRole=Number(m.role);
@@ -139,7 +140,7 @@
     if(m.type==='ch03_event'&&m.event==='transition_video')playCh03ToCh04Video();
     if(m.type==='ch03_event'&&m.event==='cleared'){phase='ch03_cleared';showCh03Cleared();}
     if(m.type==='fragment_result'&&m.ok&&Number.isInteger(Number(m.index))){const fragment=Number(m.index);if(fragment>=0&&fragment<5&&!sharedInventory.artifactFragments.includes(fragment)){sharedInventory.artifactFragments.push(fragment);sharedInventory.artifactFragments.sort((a,b)=>a-b);}renderSharedInventory();}
-    if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2){ch03FragmentCollected=true;const inv=document.getElementById('hmCh03Inventory');if(inv)inv.textContent='🎒 제0유물 파편 수집함 · 거울 파편 획득';const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent='제0유물 파편이 공동 소지품에 등록되었습니다.';}
+    if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2){ch03FragmentCollected=true;const inv=document.getElementById('hmCh03Inventory');if(inv)inv.textContent='제0유물 · '+sharedInventory.artifactFragments.length+'/5';const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent='제0유물 파편이 공동 소지품에 등록되었습니다.';}
     if(m.type==='ch03_result'&&m.ok===false&&phase==='ch03'){const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent=m.message||'조사 요청을 완료하지 못했습니다.';}
     if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2&&phase==='ch03'){const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent='제0유물 파편이 공동 소지품에 등록되었습니다. 이제 운행 코드를 입력할 수 있습니다.';}
     if(m.type==='ch04_result'&&m.ok===false&&phase==='ch03_cleared'){const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent=m.message||'다음 구역으로 이동할 수 없습니다.';}
@@ -508,7 +509,7 @@
   hotspot('오른쪽 아래 기호 계산판',0,72,25,27,openCh03SymbolCalculator);
   hotspot('엘리베이터 중앙 문 · 영상 및 운행 코드',37,19,27,55,()=>{if(ch03VideoSeen)openCh03CodeStory();else sendInvestigation('ch03_video',{},'엘리베이터 중앙');});
   const inventory=document.createElement('button');inventory.type='button';inventory.id='hmCh03Inventory';inventory.style.cssText='grid-column:1/-1;padding:10px 12px;border:1px solid #766477;border-radius:7px;background:#211b28;color:#f4e8f1;font:600 14px system-ui;text-align:left';
-  const updateInventory=()=>{const progress=document.getElementById('artifactProgress')?.textContent||'제0유물 파편 수집함';inventory.textContent='🎒 '+progress+(ch03FragmentCollected?' · CH.03 유물 획득':' · 정답 승인 시 자동 수집');};
+  const updateInventory=()=>{inventory.textContent='제0유물 · '+sharedInventory.artifactFragments.length+'/5';};
   inventory.addEventListener('click',openSharedInventory);
   bottom.append(inventory);updateInventory();
   const form=document.createElement('form');form.id='hmCh03CodeForm';form.hidden=!ch03VideoSeen;form.style.cssText='grid-column:1/-1;display:'+(ch03VideoSeen?'flex':'none')+';gap:8px';
