@@ -1630,7 +1630,7 @@
  if(chatButton)chatButton.addEventListener('click',openTeamChat,true);
  function mountTeamChatButton(){
   let b=$('hmV174ChatFloating');
-  if(!b){b=document.createElement('button');b.id='hmV174ChatFloating';b.type='button';b.textContent='💬 팀 채팅';b.setAttribute('aria-label','팀원과 대화하기');b.style.cssText='position:fixed!important;right:12px!important;bottom:calc(20px + env(safe-area-inset-bottom))!important;z-index:2147483200!important;display:block;padding:12px 16px;border:1px solid #b39bc1;border-radius:24px;background:#25192ef2;color:#fff;font:700 14px system-ui;box-shadow:0 5px 18px #000b;touch-action:manipulation';b.addEventListener('click',openTeamChat);document.body.append(b);}
+  if(!b){b=document.createElement('button');b.id='hmV174ChatFloating';b.type='button';b.textContent='💬 팀 채팅';b.setAttribute('aria-label','팀원과 대화하기');b.style.cssText='position:fixed!important;right:12px!important;top:70px!important;bottom:auto!important;z-index:2147483200!important;display:block;padding:12px 16px;border:1px solid #b39bc1;border-radius:24px;background:#25192ef2;color:#fff;font:700 14px system-ui;box-shadow:0 5px 18px #000b;touch-action:manipulation';b.addEventListener('click',openTeamChat);document.body.append(b);}
   b.hidden=!active;b.style.display=active?'block':'none';
  }
  document.addEventListener('hm-v175-state',mountTeamChatButton);
