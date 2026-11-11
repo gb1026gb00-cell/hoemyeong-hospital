@@ -198,8 +198,24 @@
     <div style="margin-top:10px;padding:10px;border:1px solid #675371;border-radius:9px;background:#19141f">
       <strong>공동 복원 기록</strong>
       <p style="font-size:12px;color:#cbbcd4;line-height:1.5">현재 단계에서는 기존 서버의 사건 재구성 검증을 유지합니다. GOLDEN HOUR 6 암호 입력과 담당자별 자료 공개는 다음 구현 단계에서 연결됩니다.</p>
-      <label style="display:block;margin:8px 0">사건 재구성
-        <select id="ch04Answer" style="width:100%;min-height:44px"><option value="">결론 선택</option><option value="inside">환자는 병실 안에 남았다</option><option value="outside">환자는 병실 밖으로 나갔다</option></select>
+      <div style="margin:10px 0;padding:10px;border:1px solid #675371;border-radius:8px">
+        <strong>해독 담당 자료 · 소유 조사원만 열람</strong>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px">
+          <button type="button" data-ch04="ch04_decoder" data-object="keyA">A · 환자 대조표</button>
+          <button type="button" data-ch04="ch04_decoder" data-object="keyB">B · 프레임 판별표</button>
+          <button type="button" data-ch04="ch04_decoder" data-object="keyC">C · 문자 변환표</button>
+          <button type="button" data-ch04="ch04_decoder" data-object="keyD">D · 시간 검증표</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px">
+        <label style="min-width:0">구획 A 해독<input id="ch04PartA" autocomplete="off" style="width:100%;min-height:44px" placeholder="A 결과"><button type="button" data-ch04="ch04_decode" data-part="A" style="width:100%;min-height:44px">구획 A 확인</button></label>
+        <label style="min-width:0">구획 B 해독<input id="ch04PartB" autocomplete="off" style="width:100%;min-height:44px" placeholder="B 결과"><button type="button" data-ch04="ch04_decode" data-part="B" style="width:100%;min-height:44px">구획 B 확인</button></label>
+        <label style="min-width:0">구획 C 해독<input id="ch04PartC" autocomplete="off" style="width:100%;min-height:44px" placeholder="C 결과"><button type="button" data-ch04="ch04_decode" data-part="C" style="width:100%;min-height:44px">구획 C 확인</button></label>
+        <label style="min-width:0">구획 D 해독<input id="ch04PartD" autocomplete="off" style="width:100%;min-height:44px" placeholder="D 결과"><button type="button" data-ch04="ch04_decode" data-part="D" style="width:100%;min-height:44px">구획 D 확인</button></label>
+      </div>
+      <p id="ch04DecodedStatus" aria-live="polite" style="color:#d9c4df;font-size:12px">공동 해독: 0 / 4</p>
+      <label style="display:block;margin:8px 0">최종 복원 식별명
+        <input id="ch04Answer" autocomplete="off" style="width:100%;min-height:44px" placeholder="복원 식별명 입력">
       </label>
       <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">
         <button type="button" data-ch04="ch04_vote">재구성 동의 (각 조사원)</button>
@@ -330,7 +346,7 @@
   ch05Panel.addEventListener("click",e=>{const b=e.target.closest("[data-ch05]");if(!b)return;const action=b.dataset.ch05,extra={};if(b.dataset.object)extra.object=b.dataset.object;if(b.dataset.sample)extra.sample=b.dataset.sample;if(b.dataset.site)extra.site=b.dataset.site;if(b.dataset.number)extra.number=Number(b.dataset.number);chapterSend(action,extra);});
   const ch04Panel=document.getElementById("ch04PuzzlePanel");
   const ch04Result=document.getElementById("ch04Result");
-  ch04Panel.addEventListener("click",e=>{const b=e.target.closest("[data-ch04]");if(!b)return;const action=b.dataset.ch04,extra={};if(b.dataset.object)extra.object=b.dataset.object;if(b.dataset.station)extra.station=b.dataset.station;if(b.dataset.site)extra.site=b.dataset.site;if(action==="ch04_vote")extra.answer=document.getElementById("ch04Answer").value;chapterSend(action,extra);});
+  ch04Panel.addEventListener("click",e=>{const b=e.target.closest("[data-ch04]");if(!b)return;const action=b.dataset.ch04,extra={};if(b.dataset.object)extra.object=b.dataset.object;if(b.dataset.station)extra.station=b.dataset.station;if(b.dataset.site)extra.site=b.dataset.site;if(b.dataset.part)extra.part=b.dataset.part;if(action==="ch04_decode")extra.answer=document.getElementById("ch04Part"+extra.part).value.trim();if(action==="ch04_vote")extra.answer=document.getElementById("ch04Answer").value.trim();chapterSend(action,extra);});
   const ch03Panel=document.getElementById("ch03PuzzlePanel");
   const ch03Result=document.getElementById("ch03Result");
   ch03Panel.addEventListener("click",e=>{const b=e.target.closest("[data-ch03]");if(!b)return;const action=b.dataset.ch03,extra={};if(b.dataset.object)extra.object=b.dataset.object;if(b.dataset.station)extra.station=b.dataset.station;if(b.dataset.site)extra.site=b.dataset.site;if(action==="ch03_submit")extra.answer=document.getElementById("ch03Answer").value.trim();chapterSend(action,extra);});
@@ -468,6 +484,7 @@
           if(data.type === 'ch02_event' || data.type === 'ch02_result') ch02Result.textContent = data.message || '208호 조사 상태가 변경됐습니다.';
           if(data.type === 'ch03_event' || data.type === 'ch03_result') ch03Result.textContent = data.message || '엘리베이터 조사 상태가 변경됐습니다.';
           if(data.type === 'ch04_event' || data.type === 'ch04_result') ch04Result.textContent = data.message || '기록보관실 조사 상태가 변경됐습니다.';
+           if((data.type==='state'||data.type==='joined')&&data.chapter?.ch04){const p=data.chapter.ch04;const el=document.getElementById('ch04DecodedStatus');if(el)el.textContent='공동 해독: '+(p.decoded||[]).length+' / 4 · 완료 구획: '+(p.decoded||[]).join(', ');}
           if(data.type === 'ch05_event' || data.type === 'ch05_result') ch05Result.textContent = data.message || '격리실 조사 상태가 변경됐습니다.';
           if(['ch06_event','ch06_result','artifact_result'].includes(data.type))ch06Result.textContent=data.message||'마지막 문 조사 상태가 변경됐습니다.';
           if(data.type==='doll_event'){
