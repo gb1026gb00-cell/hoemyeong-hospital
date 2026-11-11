@@ -24,7 +24,7 @@
   const doll=document.createElement('h3');doll.textContent='인형 부품 · '+pieces.length+'/4';detail.append(doll);
   for(let i=0;i<4;i++){const row=document.createElement('div');row.textContent=(pieces.includes(i)?'✓ 획득':'○ 미획득')+' · 인형 부품 '+(i+1);row.style.cssText='padding:8px 10px;margin:5px 0;background:#28212c;border-radius:6px';detail.append(row);}
   const artifact=document.createElement('h3');artifact.textContent='기존 제0유물 기록 · '+fragments.length+'/5';artifact.style.cssText='margin-top:18px';detail.append(artifact);
-  const desc=document.createElement('p');desc.textContent='현재 서버에 별도로 저장된 기존 기록입니다. 인형과 유물의 최종 통합 규칙은 아직 적용 전입니다.';detail.append(desc);
+  const desc=document.createElement('p');desc.textContent='조사 중 회수한 제0유물 파편은 팀 전체가 공유합니다. 획득한 기록은 다음 구역에서도 유지됩니다.';detail.append(desc);
   for(let i=0;i<5;i++){const row=document.createElement('div');row.textContent=(fragments.includes(i)?'✓ 획득':'○ 미획득')+' · 기록 '+(i+1);row.style.cssText='padding:7px 10px;margin:4px 0;background:#28212c;border-radius:6px';detail.append(row);}
  }
 
@@ -138,6 +138,7 @@
     if(m.type==='chapter_transition_video'&&(m.from===1||m.from===2)){if(Number(m.to)===3)ch03EntryVideoPending=true;playChapterEntryVideo(m.video,m.to);}
     if(m.type==='ch03_event'&&m.event==='transition_video')playCh03ToCh04Video();
     if(m.type==='ch03_event'&&m.event==='cleared'){phase='ch03_cleared';showCh03Cleared();}
+    if(m.type==='fragment_result'&&m.ok&&Number.isInteger(Number(m.index))){const fragment=Number(m.index);if(fragment>=0&&fragment<5&&!sharedInventory.artifactFragments.includes(fragment)){sharedInventory.artifactFragments.push(fragment);sharedInventory.artifactFragments.sort((a,b)=>a-b);}renderSharedInventory();}
     if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2){ch03FragmentCollected=true;const inv=document.getElementById('hmCh03Inventory');if(inv)inv.textContent='🎒 제0유물 파편 수집함 · 거울 파편 획득';const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent='제0유물 파편이 공동 소지품에 등록되었습니다.';}
     if(m.type==='ch03_result'&&m.ok===false&&phase==='ch03'){const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent=m.message||'조사 요청을 완료하지 못했습니다.';}
     if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2&&phase==='ch03'){const note=document.getElementById('hmIndependentCh03Note');if(note)note.textContent='제0유물 파편이 공동 소지품에 등록되었습니다. 이제 운행 코드를 입력할 수 있습니다.';}
