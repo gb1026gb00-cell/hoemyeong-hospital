@@ -812,14 +812,14 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
     broadcast(r,state(r));return;
    }
    if(ch.phase==='ch06'&&m.action==='ch06_inspect'){
-    const sites={door:'문패: 「기록되지 않은 자는 문을 통과할 수 없다.」 원래 복원 절차는 일곱 단계였으나, 실험 후 문서에 여덟 번째 항목이 나타났다. 문에 서로 다른 두 개의 손잡이가 있다.',mirror:'거울: 시계는 14:20을 가리키지만 거울에 비친 숫자만 역순이다.',clock:'정지 시계: 02:41. 마지막 숫자 1에 검은 손자국이 남아 있다. 손자국은 유리 안쪽에 찍혀 있다.',ledger:'최종 기록: 208호의 구조 요청은 02:41에 시작되었다. 거울 속 시간은 실제 시간이 아니다. 문서 하단에 빈 서명란이 하나 더 있다. 방금 잉크가 번진 것처럼 젖어 있다.'};
+    const sites={door:'문패: 「기록되지 않은 자는 문을 통과할 수 없다.」 문에는 네 글자의 영문 입력칸과 서로 다른 두 개의 손잡이가 있다. 두 기록 담당자가 함께 봉인을 풀어야 한다.',mirror:'거울: 글자가 좌우로 뒤집혀 있다. 거울 아래에는 「반사된 순서가 아니라, 원본 기록의 첫째부터 넷째까지」라고 새겨져 있다.',clock:'정지 시계: 02:41. 유리 안쪽 검은 손자국 아래에 Ⅰ·Ⅱ·Ⅲ·Ⅳ 네 개의 홈이 있다. 시각은 사건의 흔적일 뿐, 문의 암호가 아니다.',ledger:'최종 기록: 208호의 구조 요청은 02:41에 시작되었다. 마지막 문은 병실 번호나 시각이 아닌 영문 네 글자를 요구한다. 암호는 기록 담당자의 홀수 칸과 거울 담당자의 짝수 칸을 번갈아 배치한다.'};
     const key=String(m.object||'');if(!Object.hasOwn(sites,key))return send(ws,{type:'ch06_result',ok:false,message:'존재하지 않는 조사 지점입니다.'});
     if(!ch.ch06.inspected.includes(key))ch.ch06.inspected.push(key);
     send(ws,{type:'ch06_result',ok:true,message:sites[key]});broadcast(r,state(r));return;
    }
    if(ch.phase==='ch06'&&m.action==='ch06_fragment'){
     const key=String(m.fragment||'');const roles=[...r.clients].map(x=>x.role).sort((a,b)=>a-b);
-    const fragments={record:{role:roles[0],text:'기록 담당자의 최종 문장: 02:41은 사건이 발생한 시간이다. 마지막 문은 시간을 묻지 않는다.'},reflection:{role:roles[1],text:'거울 담당자의 최종 문장: 14:20은 02:41의 왜곡된 반사다. 문이 요구하는 것은 사건이 발생한 방 번호다.'}};
+    const fragments={record:{role:roles[0],text:'기록 담당자의 최종 문장: 원본 봉인표의 첫 번째 칸은 A, 세 번째 칸은 U다. 짝수 칸은 거울 담당자만 읽을 수 있다.'},reflection:{role:roles[1],text:'거울 담당자의 최종 문장: 원본 봉인표의 두 번째 칸은 Z, 네 번째 칸은 P다. 홀수 칸은 기록 담당자만 읽을 수 있다.'}};
     const fragment=fragments[key];if(!fragment||(!r.devSolo&&fragment.role!==player.role))return send(ws,{type:'ch06_result',ok:false,message:'이 단서는 다른 조사원에게 배정되어 있습니다.'});
     if(!ch.ch06.fragments.includes(key))ch.ch06.fragments.push(key);
     send(ws,{type:'ch06_result',ok:true,message:fragment.text});broadcast(r,state(r));return;
@@ -857,7 +857,7 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
    }
    if(ch.phase==='ch06'&&m.action==='ch06_answer'){
     const c=ch.ch06;if(c.solved)return; if(!c.artifactSolved)return send(ws,{type:'ch06_result',ok:false,message:'균열의 파편을 먼저 복원해야 마지막 문이 열립니다.'}); if(c.switches.length<2)return send(ws,{type:'ch06_result',ok:false,message:'서로 다른 두 조사원이 손잡이를 고정해야 합니다.'});
-    if(String(m.answer||'').trim()!=='208'){
+    if(String(m.answer||'').trim().toUpperCase()!=='AZUP'){
      c.failed++;c.switches=[];broadcast(r,{type:'ch06_event',event:'wrong',message:'문이 세 번 두드려진다. 손잡이가 풀리고 두 사람의 그림자가 거울에서 사라진다.'});broadcast(r,state(r));return;
     }
     c.solved=true;ch.phase='finished';broadcast(r,{type:'horror_video',id:'G18',scope:'all'});broadcast(r,{type:'ch06_event',event:'cleared',message:'여덟 번째 문이 열린다. 기록에는 208호가 비어 있었다. 그러나 구조 요청은 그 안에서 시작됐다. 문 너머에는 회명병원의 처음 접수실이 있다. END — 귀환.'});broadcast(r,state(r));return;
