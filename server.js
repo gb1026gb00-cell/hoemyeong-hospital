@@ -806,7 +806,7 @@ wss.on('connection',ws=>{
     if(String(m.answer||'').trim()!=='208'){
      c.failed++;c.switches=[];broadcast(r,{type:'ch06_event',event:'wrong',message:'문이 세 번 두드려진다. 손잡이가 풀리고 두 사람의 그림자가 거울에서 사라진다.'});broadcast(r,state(r));return;
     }
-    c.solved=true;ch.phase='finished';broadcast(r,{type:'ch06_event',event:'cleared',message:'여덟 번째 문이 열린다. 기록에는 208호가 비어 있었다. 그러나 구조 요청은 그 안에서 시작됐다. 문 너머에는 회명병원의 처음 접수실이 있다. END — 귀환.'});broadcast(r,state(r));return;
+    c.solved=true;ch.phase='finished';broadcast(r,{type:'horror_video',id:'G18',scope:'all'});broadcast(r,{type:'ch06_event',event:'cleared',message:'여덟 번째 문이 열린다. 기록에는 208호가 비어 있었다. 그러나 구조 요청은 그 안에서 시작됐다. 문 너머에는 회명병원의 처음 접수실이 있다. END — 귀환.'});broadcast(r,state(r));return;
    }
    // V176: only the explicit "start_investigation" action launches G08 and separation.
    // Touching a ledger, mirror, cabinet or desk may never launch a cinematic.
