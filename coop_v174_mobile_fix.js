@@ -64,8 +64,8 @@
      if(status)status.textContent=m.message||'파편 수집 상태를 확인해 주세요.';
     }
     if((m.type==='state'||m.type==='joined')&&m.chapter?.phase==='ch02_cleared'&&!document.getElementById('hmCh02ClearScene'))showCh02Clear();
-    if(m.type==='ch04_event'&&m.event==='enter')refreshIntegratedChat();
-    if((m.type==='state'||m.type==='joined')&&m.chapter?.phase==='ch04')refreshIntegratedChat();
+    if(m.type==='ch04_event'&&m.event==='enter'){ch03TransitionStarted=false;document.getElementById('hmCh03CodeStory')?.remove();document.getElementById('hmIndependentCh03')?.remove();document.getElementById('hmCh03Cleared')?.remove();refreshIntegratedChat();}
+    if((m.type==='state'||m.type==='joined')&&m.chapter?.phase==='ch04'){ch03TransitionStarted=false;document.getElementById('hmCh03CodeStory')?.remove();refreshIntegratedChat();}
     if(m.type==='ch03_event'&&m.event==='enter'){
      phase='ch03';
      const image=document.getElementById('sceneImage');
@@ -137,7 +137,7 @@
     if(m.type==='horror_video'&&m.id==='G08')playForcedSeparation();
     if(m.type==='horror_video'&&m.id==='G06'&&phase==='ch03')playCh03ElevatorVideo();
     if(m.type==='chapter_transition_video'&&(m.from===1||m.from===2)){if(Number(m.to)===3)ch03EntryVideoPending=true;playChapterEntryVideo(m.video,m.to);}
-    if(m.type==='ch03_event'&&m.event==='transition_video')playCh03ToCh04Video();
+    if(m.type==='ch03_event'&&m.event==='transition_video'){ch03TransitionStarted=true;document.getElementById('hmCh03CodeStory')?.remove();document.getElementById('hmIndependentCh03')?.remove();document.getElementById('hmCh03Cleared')?.remove();playCh03ToCh04Video();}
     if(m.type==='ch03_event'&&m.event==='cleared'){phase='ch03_cleared';showCh03Cleared();}
     if(m.type==='fragment_result'&&m.ok&&Number.isInteger(Number(m.index))){const fragment=Number(m.index);if(fragment>=0&&fragment<5&&!sharedInventory.artifactFragments.includes(fragment)){sharedInventory.artifactFragments.push(fragment);sharedInventory.artifactFragments.sort((a,b)=>a-b);}renderSharedInventory();}
     if(m.type==='fragment_result'&&m.ok&&Number(m.index)===2){ch03FragmentCollected=true;const inv=document.getElementById('hmCh03Inventory');if(inv)inv.textContent='제0유물 · '+sharedInventory.artifactFragments.length+'/5';const status=document.getElementById('hmCh03ClearedStatus');if(status)status.textContent='제0유물 파편이 공동 소지품에 등록되었습니다.';}
@@ -380,7 +380,8 @@
   overlay.append(video,info);document.body.append(overlay);
   video.play().catch(()=>{video.muted=true;video.play().catch(()=>{info.textContent='자동재생이 차단됐습니다. 영상을 눌러 재생하세요.';video.controls=true;});});
  }
- let ch03ToCh04Playing=false;
+ let ch03TransitionStarted=false;
+  let ch03ToCh04Playing=false;
  function playCh03ToCh04Video(){
   if(ch03ToCh04Playing||document.getElementById('hmCh03ToCh04Video'))return;
   ch03ToCh04Playing=true;
@@ -401,6 +402,7 @@
  }
  let ch03VideoSeen=false;
  function openCh03CodeStory(){
+   if(ch03TransitionStarted||phase!=='ch03')return;
   document.getElementById('hmCh03CodeStory')?.remove();
   const overlay=document.createElement('div');overlay.id='hmCh03CodeStory';
   overlay.style.cssText='position:fixed;inset:0;z-index:2147483600;background:#050407f5;color:#e8dfe0;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;font:15px/1.85 Georgia,serif';
@@ -459,7 +461,7 @@
  }
  function mountIndependentCh03(){
   const old=document.getElementById('hmIndependentCh03');
-  if(!active||phase!=='ch03'){old?.remove();return;}
+  if(!active||phase!=='ch03'||ch03TransitionStarted){old?.remove();return;}
   if(old){old.style.setProperty('display','flex','important');return;}
   document.getElementById('hmCh02ClearScene')?.remove();
   document.getElementById('hmCh02NewDialog')?.remove();
@@ -542,7 +544,7 @@
  document.addEventListener('hm-v175-state',reconcileChapterSurface);
  document.addEventListener('hm-v175-started',reconcileChapterSurface);
  // Legacy UI mutates its scene after WebSocket events; reassert only for cleared/CH03.
- setInterval(()=>{if(active&&(phase==='ch02_cleared'||phase==='ch03'||phase==='ch03_cleared'))reconcileChapterSurface();},750);
+ setInterval(()=>{if(active&&!ch03TransitionStarted&&(phase==='ch02_cleared'||phase==='ch03'||phase==='ch03_cleared'))reconcileChapterSurface();},750);
  document.addEventListener('hm-v175-state',mountIndependentCh03);
  document.addEventListener('hm-v175-started',mountIndependentCh03);
  const laterStory={
