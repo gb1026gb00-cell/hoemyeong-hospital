@@ -671,15 +671,15 @@ wss.on('connection',ws=>{
    }
    if(ch.phase==='ch03'&&m.action==='ch03_clue'){
     const station=String(m.station||'');
-    const clues={log:{role:0,text:'운행 일지: 첫 숫자는 눌린 층의 번호. 마지막 숫자는 스피커 내부의 긁힌 숫자.'},reflection:{role:1,text:'반사면 분석: 가운데 숫자는 거울에 나타난 추가 인물이 펼친 손가락 수.'}};
+    const clues={log:{role:0,text:'운행 일지: 세 조사 장소의 관찰값을 확보한 다음, 방 인원에 해당하는 회로 수식을 적용하라.'},reflection:{role:1,text:'반사면 분석: 거울 속 추가 인물의 손가락 수를 확인하고, 패널 및 스피커 담당자의 관찰값과 대조하라.'}};
     const clue=clues[station];if(!clue||(!r.devSolo&&player.role!==clueOwners(r)[clue.role]))return send(ws,{type:'ch03_result',ok:false,message:'다른 조사원에게 배정된 감각 기록입니다.'});
     // Each room size has a different circuit-selection rule. All source values
     // are visible at the panel (4), mirror (1), speaker (7); the missing operation
     // formerly made the accepted two-digit codes impossible to derive.
     const circuitRule={
-     2:'2인 회로: (눌린 층 4 + 거울 속 손가락 1) × 조사 지점 3곳 = 15. 스피커의 7은 회로 식별값이며 계산에서 제외한다.',
-     4:'4인 회로: 눌린 층 4 × (스피커의 긁힌 숫자 7 + 거울 속 손가락 1) = 32.',
-     8:'8인 회로: 스피커의 긁힌 숫자 7 × (눌린 층 4 + 거울 속 손가락 1) = 35.'
+     2:'2인 회로: (눌린 층수 + 거울의 손가락 수) × 조사한 장소의 개수. 스피커 숫자는 회로 식별값이며 계산에서 제외한다.',
+     4:'4인 회로: 눌린 층수 × (스피커의 긁힌 숫자 + 거울의 손가락 수).',
+     8:'8인 회로: 스피커의 긁힌 숫자 × (눌린 층수 + 거울의 손가락 수).'
     };
     if(!ch.ch03.clues.includes(station))ch.ch03.clues.push(station);
     const extra=station==='log'?'\n운행 일지 뒷면의 인원별 회로 규칙: '+(circuitRule[r.capacity]||circuitRule[2]):'\n회로 적용 전 세 관찰값(층수·거울·스피커)을 다른 조사원과 대조할 것.';
