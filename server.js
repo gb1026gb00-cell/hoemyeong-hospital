@@ -186,7 +186,8 @@ const server=http.createServer((req,res)=>{
     // Inline the Golden Hour bridge in /play itself: no additional network request or stale script URL can leave CH04 with the legacy UI.
     const goldenBridge=fs.readFileSync(path.join(__dirname,'ch04_live_bridge.js'),'utf8');
     const dossierV2=fs.readFileSync(path.join(__dirname,'ch04_dossier_v2.js'),'utf8');
-    const script='<script src="/coop-v174-mobile-fix.js?v=ch02-certificate-20261110-2"></script><script src="/coop-v175-lobby.js"></script><script data-golden-hour="GOLDEN-HOUR-REAL-CH04-20261111">\n'+goldenBridge+'\n</script><script data-golden-hour-dossier="20261111-v2">\n'+dossierV2+'\n</script>';
+    const altarV2=fs.readFileSync(path.join(__dirname,'ch05_altar_hotspots.js'),'utf8');
+    const script='<script src="/coop-v174-mobile-fix.js?v=ch02-certificate-20261110-2"></script><script src="/coop-v175-lobby.js"></script><script data-golden-hour="GOLDEN-HOUR-REAL-CH04-20261111">\n'+goldenBridge+'\n</script><script data-golden-hour-dossier="20261111-v2">\n'+dossierV2+'\n</script><script data-altar-map="CH05-AE-20261111">\n'+altarV2+'\n</script>';
     const localHtml=html.split('https://gb1026gb00-cell.github.io/hoemyeong-hospital/').join('/');
     const output=/<\/body>/i.test(localHtml)?localHtml.replace(/<\/body>/i,script+'</body>'):localHtml+script;
     res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
