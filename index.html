@@ -125,22 +125,12 @@
   <section id="ch02PuzzlePanel" hidden aria-label="208호 협동 조사" style="max-height:38dvh;overflow:auto;background:#21192c;border:1px solid #675371;border-radius:10px;padding:10px;font-size:13px;">
     <strong>CH.02 · 208호</strong><p id="ch02Result" style="white-space:pre-wrap;line-height:1.5">환자 기록과 병실을 조사하세요.</p>
     <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">
-      <button type="button" data-ch02="ch02_explore" data-object="bed">침대 조사</button>
-      <button type="button" data-ch02="ch02_explore" data-object="drawer">서랍 조사</button>
-      <button type="button" data-ch02="ch02_explore" data-object="monitor">모니터 조사</button>
-      <button type="button" data-ch02="ch02_inspect" data-station="chart">환자 차트</button>
-      <button type="button" data-ch02="ch02_inspect" data-station="camera">CCTV 기록</button>
-      <button type="button" data-ch02="ch02_corridor">복도 확인</button>
-      <button type="button" data-ch02="ch02_room302">302호 문틈</button>
-      <button type="button" data-ch02="ch02_wheelchair">휠체어</button>
-      <label style="grid-column:1/-1">퇴실 기록 암호<input id="ch02Answer" inputmode="numeric" style="width:100%;min-height:40px"></label>
-      <button type="button" data-ch02="ch02_unlock">병실 잠금 해제</button>
-      <button type="button" data-ch02="ch02_switch">안전장치 고정</button>
-      <button type="button" data-ch02="ch02_pressure" data-valve="1">밸브 1</button>
-      <button type="button" data-ch02="ch02_pressure" data-valve="2">밸브 2</button>
-      <button type="button" data-ch02="ch02_pressure" data-valve="3">밸브 3</button>
-      
-      <button type="button" data-ch02="ch03_enter">CH.03 이동 (방장)</button>
+      <button type="button" data-ch02="ch02_new_inspect" data-site="certificate">사망진단서 조사</button>
+      <button type="button" data-ch02="ch02_new_inspect" data-site="ecg">심전도 기록 조사</button>
+      <button type="button" data-ch02="ch02_new_inspect" data-site="eight">침대 끝 식별표</button>
+      <button type="button" data-ch02="ch02_new_inspect" data-site="underbed">침대 아래 조사</button>
+      <label style="grid-column:1/-1">환자 상태 판정<input id="ch02NewAnswer" type="text" maxlength="8" autocapitalize="characters" autocomplete="off" placeholder="영문 판정 코드" style="width:100%;min-height:44px"></label>
+      <button type="button" data-ch02="ch02_new_solve" style="grid-column:1/-1;min-height:44px">환자 상태 판정 · 다음 구역 이동</button>
     </div>
   </section>
   <section id="ch03PuzzlePanel" hidden aria-label="엘리베이터 협동 조사" style="max-height:38dvh;overflow:auto;background:#21192c;border:1px solid #675371;border-radius:10px;padding:10px;font-size:13px">
@@ -354,7 +344,7 @@
   ch03Panel.addEventListener("click",e=>{const b=e.target.closest("[data-ch03]");if(!b)return;const action=b.dataset.ch03,extra={};if(b.dataset.object)extra.object=b.dataset.object;if(b.dataset.station)extra.station=b.dataset.station;if(b.dataset.site)extra.site=b.dataset.site;if(action==="ch03_submit")extra.answer=document.getElementById("ch03Answer").value.trim();chapterSend(action,extra);});
   const ch02Panel = document.getElementById("ch02PuzzlePanel");
   const ch02Result = document.getElementById("ch02Result");
-  ch02Panel.addEventListener("click",e=>{const b=e.target.closest("[data-ch02]");if(!b)return;const action=b.dataset.ch02;const extra={};if(b.dataset.object)extra.object=b.dataset.object;if(b.dataset.station)extra.station=b.dataset.station;if(b.dataset.site)extra.site=b.dataset.site;if(b.dataset.valve)extra.valve=Number(b.dataset.valve);if(action==="ch02_unlock")extra.answer=document.getElementById("ch02Answer").value.trim();chapterSend(action,extra);});
+  ch02Panel.addEventListener("click",e=>{const b=e.target.closest("[data-ch02]");if(!b)return;const action=b.dataset.ch02;const extra={};if(b.dataset.object)extra.object=b.dataset.object;if(b.dataset.station)extra.station=b.dataset.station;if(b.dataset.site)extra.site=b.dataset.site;if(b.dataset.valve)extra.valve=Number(b.dataset.valve);if(action==="ch02_new_solve")extra.answer=document.getElementById("ch02NewAnswer").value.trim();chapterSend(action,extra);});
   const ch01Result = document.getElementById("ch01Result");
   function chapterSend(action, extra={}) {
     if(!ws || ws.readyState!==WebSocket.OPEN || !started) {
