@@ -211,7 +211,7 @@ wss.on('close',()=>clearInterval(heartbeat));
 const send=(ws,o)=>{if(ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify(o))};
 const validRoom=x=>typeof x==='string'&&/^[A-Z0-9_-]{1,16}$/.test(x);
 const members=r=>[...r.clients].map(c=>({role:c.role,character:c.character,ready:c.ready,host:c===r.host,online:!!c.ws&&c.ws.readyState===WebSocket.OPEN})).sort((a,b)=>a.role-b.role);
-const publicChapter=ch=>ch?{voicePlayed:[...(ch.voicePlayed||[])],phase:ch.phase,solved:[...(ch.solved||[])],bellBy:ch.bellBy,sensoryDone:[...(ch.sensoryDone||[])],sensoryUnlocked:!!ch.ecgSolved,ecgReady:(ch.sensoryDone||[]).length===8,evidenceFound:[...(ch.evidenceFound||[])],evidenceSolved:!!ch.evidenceSolved,ch02:ch.ch02?{active:true,found:[...(ch.ch02.found||[])],switches:[...(ch.ch02.switches||[])],unlocked:ch.ch02.unlocked,explored:[...(ch.ch02.explored||[])],alarm:!!ch.ch02.alarm,pressure:[...(ch.ch02.pressure||[])],pressureSolved:!!ch.ch02.pressureSolved,pressureLastRole:ch.ch02.pressureLastRole??null}:null,ch03:ch.ch03?{inspected:[...ch.ch03.inspected],clues:[...ch.ch03.clues],failed:ch.ch03.failed,solved:ch.ch03.solved}:null,ch04:ch.ch04?{inspected:[...ch.ch04.inspected],witnesses:[...ch.ch04.witnesses],votes:[...ch.ch04.votes],decoded:[...(ch.ch04.decoded||[])],artifactRecordWitnesses:[...(ch.ch04.artifactRecordWitnesses||[])],failed:ch.ch04.failed,solved:ch.ch04.solved}:null,ch05:ch.ch05?{inspected:[...ch.ch05.inspected],samples:[...ch.ch05.samples],valves:[...ch.ch05.valves],lastRole:ch.ch05.lastRole,failed:ch.ch05.failed,solved:ch.ch05.solved}:null,ch06:ch.ch06?{inspected:[...ch.ch06.inspected],fragments:[...ch.ch06.fragments],switches:[...ch.ch06.switches],failed:ch.ch06.failed,artifactSolved:!!ch.ch06.artifactSolved,artifactInspected:[...(ch.ch06.artifactInspected||[])],finalVideoPending:!!ch.ch06.finalVideoPending,finalVideoWatchedCount:(ch.ch06.finalVideoWatched||[]).length,solved:ch.ch06.solved}:null}: {phase:'reception',solved:[],bellBy:null};
+const publicChapter=ch=>ch?{voicePlayed:[...(ch.voicePlayed||[])],phase:ch.phase,solved:[...(ch.solved||[])],bellBy:ch.bellBy,sensoryDone:[...(ch.sensoryDone||[])],sensoryUnlocked:!!ch.ecgSolved,ecgReady:(ch.sensoryDone||[]).length===8,evidenceFound:[...(ch.evidenceFound||[])],evidenceSolved:!!ch.evidenceSolved,ch02:ch.ch02?{active:true,found:[...(ch.ch02.found||[])],switches:[...(ch.ch02.switches||[])],unlocked:ch.ch02.unlocked,explored:[...(ch.ch02.explored||[])],alarm:!!ch.ch02.alarm,pressure:[...(ch.ch02.pressure||[])],pressureSolved:!!ch.ch02.pressureSolved,pressureLastRole:ch.ch02.pressureLastRole??null}:null,ch03:ch.ch03?{inspected:[...ch.ch03.inspected],clues:[...ch.ch03.clues],failed:ch.ch03.failed,solved:ch.ch03.solved}:null,ch04:ch.ch04?{videoStarted:!!ch.ch04.eVideoStarted,videoDone:[...(ch.ch04.eVideoDone||[])],inspected:[...ch.ch04.inspected],witnesses:[...ch.ch04.witnesses],votes:[...ch.ch04.votes],decoded:[...(ch.ch04.decoded||[])],artifactRecordWitnesses:[...(ch.ch04.artifactRecordWitnesses||[])],failed:ch.ch04.failed,solved:ch.ch04.solved}:null,ch05:ch.ch05?{inspected:[...ch.ch05.inspected],samples:[...ch.ch05.samples],valves:[...ch.ch05.valves],lastRole:ch.ch05.lastRole,failed:ch.ch05.failed,solved:ch.ch05.solved}:null,ch06:ch.ch06?{inspected:[...ch.ch06.inspected],fragments:[...ch.ch06.fragments],switches:[...ch.ch06.switches],failed:ch.ch06.failed,artifactSolved:!!ch.ch06.artifactSolved,artifactInspected:[...(ch.ch06.artifactInspected||[])],finalVideoPending:!!ch.ch06.finalVideoPending,finalVideoWatchedCount:(ch.ch06.finalVideoWatched||[]).length,solved:ch.ch06.solved}:null}: {phase:'reception',solved:[],bellBy:null};
 
 // [수정 반영] 3~8인 플레이 시 단서 소유권이 상위 2명에게만 편중되지 않고 참여 인원에 맞게 분산되도록 개선
 const clueOwners=r=>{
@@ -255,23 +255,30 @@ function broadcast(r,o){if(o.type==='state'){
  if([...r.clients].some(c=>c.ws&&c.ws.readyState===WebSocket.OPEN))r.lastActiveAt=Date.now();
  persist();o=state(r);
  }for(const c of r.clients)if(c.ws)send(c.ws,o.type==='state'?{...o,yourRole:c.role,isHost:c===r.host}:o)}
-const CH04_RECORDS={"ledger":"퇴실 대장: 208호 정상 퇴실 0명. 번호/문자: 07/G,18/R,15/O,22/T,12/L,09/N. CCTV 출입 순서로 읽으시오. 1997 회명계획, 2001 제0유물 출현.","camera":"CCTV: 02:41 그림자가 208호에 들어감, 출입번호 07→15→12. 프레임/신호/문자 01/04/D,02/09/X,03/11/E,04/06/A,05/16/N,06/20/V. 복구 02:47.","call":"내선: 208호 02:41 구조 요청, 통화 8초, 수화기 미사용. 정상 신호 04→11→16. 음성 숫자 08/15/21/18.","tag":"보존 봉투: 2003.11.26 제8차 복원 실험 시작 02:41. 기록에 없는 사람을 복원하지 말 것. A=01…Z=26. 순서: 사람 기록→기계 기록→음성 기록→기록되지 않은 시간.","keyA":"환자 대조표: CCTV 출입번호와 퇴실 대장 번호를 대조해 출입 순서대로 읽는다.","keyB":"프레임 판별표: 교환기 정상 신호에 해당하는 CCTV 프레임만 신호 순서대로 읽는다.","keyC":"문자 변환표: 봉투의 A=01~Z=26을 내선의 네 숫자에 적용한다.","keyD":"시간 검증표: 봉투 시작 시각부터 CCTV 복구 시각까지 경과 분을 계산한다."};
-const CH04_KEYS=['ledger','camera','call','tag','keyA','keyB','keyC','keyD'];
-const CH04_ANSWERS={A:'GOL',B:'DEN',C:'HOUR',D:'6'};
+const CH04_RECORDS={
+ ledger:'回明病院 / 환자 퇴실 관리 대장\n병실: 208호\n기록 시각: 02:41\n정상 퇴실 인원: 0명\n담당자 서명: 확인 불가\n분류 표식: [01-G] [02-O]\n\n퇴실 기록이 비어 있는데도 두 개의 분류 표식이 남아 있다.',
+ camera:'SECURITY / CAMERA 03\n02:41 — 208호 출입 감지\n02:42 — 영상 일부 손실\n02:47 — 기록 복원\n출입 인원: 판독 불가\n분류 표식: [03-L]\n\n영상이 손상된 구간에 다른 사람의 그림자가 남아 있다.',
+ call:'INTERNAL CALL / LOG 208\n수신 병실: 208호\n호출 시각: 02:41:08\n통화 지속: 8초\n발신자: 등록되지 않은 환자\n분류 표식: [04-D]\n\n통화는 연결되었으나 수화기를 든 사람은 없었다.',
+ tag:'CONFIDENTIAL / 봉인 보관\n봉인일: 2003.11.26\n제8차 복원 실험\n기록 상태: 열람 제한\n봉인 담당자: 이름 삭제\n분류 표식: [05-E] [06-N]\n\n봉투의 봉인이 훼손되어 있는데 열람 기록은 0건이다.',
+ keyB:'IMAGE RECOVERY / SIGNAL SHEET\n채널: CAM 03\n정상 신호: 04 / 11 / 16\n유효 프레임: 3개\n복구 상태: 부분 복원\n분류 표식: [07-H]\n\n손상된 화면에서도 사람의 윤곽만은 또렷하게 남아 있다.',
+ keyA:'PATIENT CROSS-REFERENCE\n대상 병실: 208호\n대조 환자: 성명 불명\n퇴실 대장과 감시 기록 불일치\n신원 복원: 미완료\n분류 표식: [08-O] [09-U]\n\n기록에 없는 사람의 신원 확인 칸이 새로 생겼다.',
+ keyD:'TIME DISCREPANCY REPORT\n구조 요청: 02:41\n영상 복구: 02:47\n기록 누락 구간: 6분\n검증 결과: 원인 불명\n분류 표식: [10-R]\n\n시계는 멈췄는데 그 이후의 기록이 계속 작성되고 있다.',
+ keyC:'RESTORATION / DECODING KEY\n분류 표식: 01~11\n복원 방식: 오름차순 배열\n열람자 확인: 미등록\n최종 식별자: 봉인됨\n분류 표식: [11-6]\n\n마지막 표식은 문자 대신 하나의 숫자로 적혀 있다.'
+};
+const CH04_KEYS=['ledger','camera','call','tag','keyB','keyA','keyD','keyC'];
+const CH04_ANSWERS={A:'GOL',B:'DEN',C:'HOUR',D:'6'}; // legacy compatibility; current dossier uses numbered fragments.
 function ch04Owners(r){
  const roles=[...r.clients].filter(c=>c.ws&&c.ws.readyState===WebSocket.OPEN).map(c=>c.role).sort((a,b)=>a-b);
  if(r.devSolo&&roles.length===1)return Object.fromEntries(CH04_KEYS.map(k=>[k,roles[0]]));
  if(roles.length<2)return {};
  const c=r.chapter?.ch04;if(!c)return {};
- if(!c.owners||typeof c.owners!=='object'){
-  const order=roles.length===2?[0,1,0,1,1,0,1,0]:CH04_KEYS.map((_,i)=>i%roles.length);
-  c.owners=Object.fromEntries(CH04_KEYS.map((key,i)=>[key,roles[order[i]]]));
- }
- const counts=Object.fromEntries(roles.map(role=>[role,0]));
- for(const key of CH04_KEYS)if(roles.includes(c.owners[key]))counts[c.owners[key]]++;
- for(const key of CH04_KEYS)if(!roles.includes(c.owners[key])){
-  const role=roles.reduce((a,b)=>counts[a]<=counts[b]?a:b);
-  c.owners[key]=role;counts[role]++;
+ if(!c.owners||typeof c.owners!=='object')c.owners={};
+ const alloc=roles.length===2?[0,1,0,1,0,1,0,1]:roles.length===4?[0,1,2,3,0,2,3,1]:CH04_KEYS.map((_,i)=>i%roles.length);
+ const expected=Object.fromEntries(CH04_KEYS.map((key,i)=>[key,roles[alloc[i]]]));
+ // Reassign cleanly when starting the revised dossier: 2/4/8 player roles are deterministic.
+ if(!c.assignmentVersion||c.assignmentVersion!==2){c.owners=expected;c.assignmentVersion=2;}
+ else{
+  for(const key of CH04_KEYS)if(!roles.includes(c.owners[key]))c.owners[key]=expected[key];
  }
  return c.owners;
 }
@@ -775,9 +782,36 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
     if(!ch.ch04.witnesses.includes(station))ch.ch04.witnesses.push(station);
     send(ws,{type:'ch04_result',ok:true,message:witness.text});broadcast(r,state(r));return;
    }
+   // CH04 revised A-D dossier: E launches the common G04 cinematic exactly once,
+   // then each connected investigator must acknowledge actual video completion.
+   if(ch.phase==='ch04'&&m.action==='ch04_e_open'){
+    const c=ch.ch04;
+    if(CH04_KEYS.some(key=>!c.inspected.includes(key)))return send(ws,{type:'ch04_result',ok:false,message:'A~D의 여덟 가지 자료를 먼저 모두 조사해야 최종 기록을 열 수 있습니다.'});
+    if(!c.eVideoStarted){
+     c.eVideoStarted=true;c.eVideoDone=[];
+     c.artifactRecordWitnesses=c.artifactRecordWitnesses||[];
+     if(!c.artifactRecordWitnesses.includes(player.role))c.artifactRecordWitnesses.push(player.role);
+     broadcast(r,{type:'ch04_e_video',video:'G04'});
+     broadcast(r,state(r));persist();
+    }else if((c.eVideoDone||[]).length<[...r.clients].filter(x=>x.ws?.readyState===WebSocket.OPEN).length){
+     send(ws,{type:'ch04_e_video',video:'G04'});
+    }else send(ws,{type:'ch04_e_ready',message:'영상 시청이 완료됐습니다. 열한 개 분류 표식을 번호순으로 조립하십시오.'});
+    return;
+   }
+   if(ch.phase==='ch04'&&m.action==='ch04_e_video_done'){
+    const c=ch.ch04;
+    if(!c.eVideoStarted)return;
+    c.eVideoDone=c.eVideoDone||[];
+    if(!c.eVideoDone.includes(player.role))c.eVideoDone.push(player.role);
+    const peers=[...r.clients].filter(x=>x.ws?.readyState===WebSocket.OPEN);
+    if(peers.length>=2&&peers.every(x=>c.eVideoDone.includes(x.role))){
+     broadcast(r,{type:'ch04_e_ready',message:'전원 영상 확인 완료. 번호 01부터 11까지의 문자를 순서대로 조립하십시오.'});
+    }
+    broadcast(r,state(r));persist();return;
+   }
    if(ch.phase==='ch04'&&m.action==='ch04_vote'){
     if(!r.devSolo&&[...r.clients].filter(x=>x.ws?.readyState===WebSocket.OPEN).length<2)return send(ws,{type:'ch04_result',ok:false,message:'두 조사원이 온라인이어야 합니다.'});
-    const c=ch.ch04;if(!(c.artifactRecordWitnesses||[]).length)return send(ws,{type:'ch04_result',ok:false,message:'제0유물 봉인 기록(G04)을 먼저 조사해야 최종 복원이 가능합니다.'});if((c.decoded||[]).length!==4||c.witnesses.length!==2)return send(ws,{type:'ch04_result',ok:false,message:'네 구획 해독과 두 감각 기록을 먼저 확보하세요.'});
+    const c=ch.ch04;if(CH04_KEYS.some(key=>!c.inspected.includes(key)))return send(ws,{type:'ch04_result',ok:false,message:'A~D의 여덟 문서를 모두 조사해야 합니다.'});if(!c.eVideoStarted)return send(ws,{type:'ch04_result',ok:false,message:'E 지점의 봉인 영상을 먼저 확인하세요.'});if(![...r.clients].filter(x=>x.ws?.readyState===WebSocket.OPEN).every(x=>(c.eVideoDone||[]).includes(x.role)))return send(ws,{type:'ch04_result',ok:false,message:'아직 영상을 끝까지 보지 않은 조사원이 있습니다.'});
     if(String(m.answer||'').trim().toUpperCase().replace(/\s+/g,' ')!=='GOLDEN HOUR 6'){
      c.failed++;c.votes=[];broadcast(r,{type:'ch04_event',event:'wrong',message:'서류장이 동시에 벌어진다. 종이들이 바닥에 쏟아졌는데, 눈을 돌렸다 돌아보니 모든 기록이 다시 꽂혀 있다. 맨 앞의 이름만 지워졌다.'});broadcast(r,state(r));return;
     }
