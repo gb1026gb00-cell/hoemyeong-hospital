@@ -421,6 +421,7 @@
               ch05Panel.hidden = !phaseStarted || !['ch05','ch05_cleared'].includes(currentPhase);
               ch06Panel.hidden = !phaseStarted || !['ch06','finished'].includes(currentPhase);
               ch06Panel.querySelectorAll('button,input,select').forEach(control=>{control.disabled=currentPhase==='finished';});
+              if(currentPhase==='finished')ch06Result.textContent='여덟 번째 문이 열렸다. END — 귀환.\n제0유물 복원과 마지막 문 해제가 완료되었습니다.';
               dollPanel.hidden = !phaseStarted || !['ch02_cleared','ch03','ch03_cleared','ch04','ch04_cleared','ch05','ch05_cleared','ch06'].includes(currentPhase);
               if(Array.isArray(data.pieces)){
                 document.getElementById('dollStatus').textContent=' '+data.pieces.length+' / 4';
