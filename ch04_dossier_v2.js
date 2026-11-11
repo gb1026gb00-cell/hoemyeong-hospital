@@ -3,16 +3,16 @@
 (()=>{
  const Native=window.WebSocket,$=id=>document.getElementById(id);
  const docs=[
- ['ledger','A','퇴실 대장','回明病院 / 환자 퇴실 관리 대장','01:G,02:O','병실 208호\n02:41\n정상 퇴실 인원 0명\n담당자 서명 확인 불가'],
- ['camera','A','감시 기록','SECURITY / CAMERA 03','03:L','02:41 출입 감지\n02:42 화면 일부 손실\n02:47 기록 복구\n출입 인원 판독 불가'],
- ['call','B','내선 통화 기록','INTERNAL CALL / LOG 208','04:D','208호 구조 요청\n02:41:08\n통화 지속 8초\n발신자 미등록'],
- ['tag','B','보존 봉투','CONFIDENTIAL / 봉인 보관','05:E,06:N','2003.11.26\n제8차 복원 실험\n열람 제한\n봉인 담당자 삭제'],
- ['keyB','C','프레임 판별표','IMAGE RECOVERY / SIGNAL SHEET','07:H','CAM 03\n정상 신호 04 / 11 / 16\n유효 프레임 3개\n부분 복원'],
- ['keyA','C','환자 대조표','PATIENT CROSS-REFERENCE','08:O,09:U','대상 병실 208호\n성명 불명\n퇴실 대장·감시 기록 불일치\n신원 복원 미완료'],
- ['keyD','D','시간 검증표','TIME DISCREPANCY REPORT','10:R','구조 요청 02:41\n영상 복구 02:47\n누락 6분\n원인 불명'],
- ['keyC','D','문자 변환표','RESTORATION / DECODING KEY','11:6','표식 01~11\n번호 오름차순 배열\n최종 식별자 봉인됨']
+ ['ledger','A','퇴실 대장','回明病院 / 환자 퇴실 관리 대장','병실 208호 / 정상 퇴실 0명\n\n순서가 섞인 환자 분류 코드\nR-19 / 12\nR-07 / 07\nR-12 / 15\n\n※ 배열 순서는 환자 대조표, 문자 규칙은 문자 변환표에 있다.'],
+ ['camera','A','감시 기록','SECURITY / CAMERA 03','02:41 — 208호 출입 감지\n02:42 — 영상 손실\n02:47 — 영상 복구\n\n복구된 프레임 코드 (순서 손실)\nC-28 / 14\nC-04 / 04\nC-16 / 05\n\n※ 정상 프레임 배열은 프레임 판별표에 있다.'],
+ ['call','B','내선 통화 기록','INTERNAL CALL / LOG 208','02:41:08 — 구조 요청 / 8초\n수화기를 든 사람은 없었다.\n\n음성에서 분리된 숫자 코드\nS-02 / 21\nS-09 / 18\nS-05 / 08\nS-07 / 15\n\n※ 통화 복원 순서는 문자 변환표에서 찾으라.'],
+ ['tag','B','보존 봉투','CONFIDENTIAL / 봉인 보관','제8차 복원 실험\n봉인 시각: 02:41\n열람 기록: 0건\n\n복원 순서: 퇴실 → 감시 → 내선 → 누락 시간\n\n※ 마지막 표식은 글자가 아니다. 감시 기록과 시간 검증표를 대조하라.'],
+ ['keyB','C','프레임 판별표','IMAGE RECOVERY / SIGNAL SHEET','유효 프레임 세 장\n두 번째 구획 · 배열 칸 04~06\n\n04 ← C-04\n05 ← C-16\n06 ← C-28\n\n※ C 코드의 숫자는 감시 기록에 있다. 숫자→문자 규칙은 다른 문서에 있다.'],
+ ['keyA','C','환자 대조표','PATIENT CROSS-REFERENCE','퇴실 대장 분류 표식 복원\n첫 번째 구획 · 배열 칸 01~03\n\n01 ← R-07\n02 ← R-12\n03 ← R-19\n\n※ R 코드의 숫자는 퇴실 대장에 있다. 숫자→문자 규칙도 필요하다.'],
+ ['keyD','D','시간 검증표','TIME DISCREPANCY REPORT','최종 배열: 11번 칸\n\n봉인 시각과 영상 복구 시각의 차이를 계산하라.\n두 시각은 각각 보존 봉투와 감시 기록에 남아 있다.\n\n단위: 분 / 정수\n※ 시간이 사라졌지만 마지막 칸은 비어 있지 않다.'],
+ ['keyC','D','문자 변환표','RESTORATION / DECODING KEY','숫자 01~26 = 영문 A~Z\n01=A, 02=B, 03=C … 26=Z\n\n내선 통화 배열 칸 07~10\n07 ← S-05\n08 ← S-07\n09 ← S-02\n10 ← S-09\n\n※ 같은 복호화 규칙은 퇴실 대장과 감시 기록에도 적용된다.']
  ];
- let ws,phase='',state={},role=-1,roles=[],tab='A',opened='',mounted=false,videoActive=false,ready=false;
+ let ws,phase='',state={},role=-1,roles=[],tab='A',opened='',mounted=false,videoActive=false,ready=false,draft=Array(11).fill('');
  const el=(tag,text)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;return x;};
  const send=(action,extra={})=>{if(!ws||ws.readyState!==Native.OPEN){msg('서버가 연결되지 않았습니다.');return;}ws.send(JSON.stringify(Object.assign({type:'chapter',action},extra)));};
  const msg=t=>{const e=$('hmDossierStatus');if(e)e.textContent=t;};
@@ -77,7 +77,7 @@
   style.textContent='#hmDossier{background:#19131e;color:#eae2ef;font:13px/1.7 system-ui;padding:12px}#hmDossier *{box-sizing:border-box}#hmDossier button{color:#f0e5f4;background:#382a42;border:1px solid #846a8d;border-radius:7px;min-height:44px;padding:10px;font:600 13px system-ui;cursor:pointer}#hmDossier button[aria-pressed=true]{background:#624767}#hmDossier button:disabled{opacity:.5}#hmDossier .dTabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin:12px 0}#hmDossier .dCard{border:1px solid #63516c;background:#241d2b;border-radius:9px;padding:12px;margin:10px 0}#hmDossier .dPaper{background:#322d2a;color:#eddfcf;padding:16px;margin:9px 0;white-space:pre-wrap;font:13px/1.85 Georgia,serif;border:1px solid #857563}#hmDossier .dPaper strong{display:block;color:#d7bcab;margin:0 0 12px}#hmDossier .dMark{display:inline-block;padding:5px 9px;border:1px solid #b49e7f;margin:8px 5px 0 0}#hmDossier .dGrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}#hmDossier .dTile{text-align:center;padding:7px 2px;border:1px solid #655570;background:#2d2433}#hmDossier .dTile small{display:block}#hmDossier input{width:100%;background:#100d14;color:white;border:1px solid #907799;padding:13px;min-height:46px}#hmDossier .dStatus{white-space:pre-wrap;background:#100d14;border:1px solid #675373;padding:10px;margin:11px 0}';
   document.head.append(style);
   const root=el('section');root.id='hmDossier';
-  root.append(el('small','回明病院 / ARCHIVE INVESTIGATION'),el('h2','CH.04 — 사라진 6분'),el('p','A~D 자료에서 순서가 적힌 표식을 모아 마지막 식별명을 복원하십시오.'));
+  root.append(el('small','回明病院 / ARCHIVE INVESTIGATION'),el('h2','CH.04 — 사라진 6분'),el('p','A~D의 서로 다른 기록을 대조해 숫자를 해독하고, 01~11의 올바른 순서를 직접 복원하십시오.'));
   const nav=el('nav');nav.className='dTabs';for(const z of ['A','B','C','D','E']){const b=btn(z,()=>{tab=z;opened='';render();});b.dataset.tab=z;nav.append(b);}root.append(nav);
   const body=el('div');body.id='hmDossierBody';root.append(body);
   const status=el('div','기록을 조사하세요.');status.id='hmDossierStatus';status.className='dStatus';root.append(status);
@@ -99,8 +99,7 @@
     if(mine){
      card.append(btn(isSeen?'문서 다시 열기':'봉인 기록 열람',()=>{opened=d[0];send('ch04_inspect',{object:d[0]});render();}));
      if(opened===d[0]&&isSeen){
-      const paper=el('div');paper.className='dPaper';paper.append(el('strong',d[3]),el('div',d[5]),el('p','문서 하단 / 분류 표식'));
-      for(const frag of d[4].split(',')){const tag=el('span',frag.replace(':',' — '));tag.className='dMark';paper.append(tag);}
+      const paper=el('div');paper.className='dPaper';paper.append(el('strong',d[3]),el('div',d[4]));
       card.append(paper);
      }
     }
@@ -109,18 +108,30 @@
    }
   }else{
    body.append(el('h3','E · 봉인 기록 / 사건 재구성'));
-   body.append(el('p','열한 개의 표식을 번호순으로 배열하십시오. 다른 조사원에게 배정된 표식은 팀원과 공유하세요.'));
-   const own=new Map(docs.filter(d=>assigned.includes(d[0])&&inspected.includes(d[0])).flatMap(d=>d[4].split(',').map(part=>part.split(':'))));
+   body.append(el('p','문서의 숫자를 문자로 바꾸고, 다른 조사원이 가진 표와 대조하여 01~11의 빈칸을 완성하십시오. 이 화면에는 정답 문자가 자동 표시되지 않습니다.'));
+   const hint=el('p','관찰 기록 → 프레임 대조 / 내선 기록 → 변환표 / 봉인 시각 → 시간 검증. 서로의 단서를 팀 채팅으로 공유하세요.');hint.style.color='#b8a2c2';body.append(hint);
    const grid=el('div');grid.className='dGrid';
-   for(let n=1;n<=11;n++){const key=String(n).padStart(2,'0'),tile=el('div');tile.className='dTile';tile.append(el('small',key),el('strong',own.get(key)||'?'));grid.append(tile);}body.append(grid);
-   body.append(el('p','공동 기록: '+inspected.length+'/8 · 영상 완료: '+(state.videoDone||[]).length+'/'+roles.length));
+   for(let n=1;n<=11;n++){
+    const tile=el('label');tile.className='dTile';tile.style.padding='5px 2px';tile.append(el('small',String(n).padStart(2,'0')));
+    const input=el('input');input.dataset.position=String(n-1);input.value=draft[n-1];input.maxLength=1;
+    input.autocapitalize='characters';input.autocomplete='off';input.spellcheck=false;input.inputMode=n===11?'numeric':'text';
+    input.setAttribute('aria-label','복원 순서 '+n+'번 칸');
+    input.style.cssText='min-height:36px;max-width:100%;padding:4px 0;text-align:center;font-size:17px;font-weight:bold;background:#120d19;border:1px solid #8b7395;border-radius:4px';
+    input.addEventListener('input',()=>{const val=input.value.normalize('NFKC').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(-1);input.value=val;draft[n-1]=val;if(val){const next=grid.querySelector('[data-position="'+n+'"]');if(next)next.focus();}});
+    tile.append(input);grid.append(tile);
+   }
+   body.append(grid);
+   body.append(el('p','공동 기록 '+inspected.length+'/8 · E 영상 확인 '+(state.videoDone||[]).length+'/'+roles.length));
    const videoButton=btn('E · 봉인 영상 G04 시청',()=>send('ch04_e_open'));videoButton.disabled=inspected.length!==8;body.append(videoButton);
    if(ready){
-    const note=el('p','[복원 지시] 기록은 순서를 잃었으나 번호는 사라지지 않았다. 흩어진 열한 개의 표식을 되돌려라.');body.append(note);
-    const input=el('input');input.id='hmDossierAnswer';input.autocomplete='off';input.placeholder='최종 복원 식별명';body.append(input);
-    body.append(btn('사건 재구성 동의',()=>send('ch04_vote',{answer:input.value.trim()})));
-    body.append(el('p','동의 '+(state.votes||[]).length+'/2 · 서로 다른 두 조사원이 필요합니다.'));
-   }else body.append(el('p','전원이 봉인 영상을 확인하면 최종 답안지가 열립니다.'));
+    body.append(el('p','[복원 지시] 잃어버린 순서를 되찾아라. 첫 번째·두 번째·세 번째 구획은 영문, 마지막 칸은 누락 시간이다.'));
+    body.append(btn('11칸 배열 확인 · 복원 동의',()=>{
+     if(draft.some(x=>!x)){msg('01~11번 칸을 모두 채워주세요.');return;}
+     send('ch04_vote',{answer:draft.slice(0,6).join('')+' '+draft.slice(6,10).join('')+' '+draft[10]});
+    }));
+    body.append(el('p','동의 '+(state.votes||[]).length+'/2 · 서로 다른 두 조사원이 승인해야 넘어갑니다.'));
+   }else body.append(el('p','전원이 G04 영상을 끝까지 시청하면 배열 확인 버튼이 열립니다.'));
+
   }
  }
  function playVideo(){
