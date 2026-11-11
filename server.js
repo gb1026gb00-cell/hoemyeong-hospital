@@ -794,7 +794,8 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
    }
    if(m.action==='ch06_enter'&&ch.phase==='ch04_cleared'){
     if(!(r.artifactFragments||new Set()).has(4))return send(ws,{type:'fragment_result',ok:false,message:'이 구역의 균열의 파편을 직접 찾아 공동 소지품에 등록해야 다음 구역으로 이동할 수 있습니다.'});
-    if(player!==r.host)return send(ws,{type:'ch06_result',ok:false,message:'방장만 마지막 문을 열 수 있습니다.'});
+    const activeHost=(r.host?.ws?.readyState===WebSocket.OPEN)?r.host:[...r.clients].filter(c=>c.ws&&c.ws.readyState===WebSocket.OPEN).sort((a,b)=>a.role-b.role)[0];
+     if(player!==activeHost)return send(ws,{type:'ch06_result',ok:false,message:'접속 중인 방장 또는 임시 진행 담당자만 마지막 문을 열 수 있습니다.'});
     ch.phase='ch06';ch.ch06={inspected:[],fragments:[],switches:[],failed:0,solved:false,artifactSolved:false,artifactInspected:[]};
     broadcast(r,{type:'ch06_event',event:'enter',message:'여덟 번째 문 앞에서 발소리가 멎는다. 벽에는 02:41, 거울에는 14:20. 문 옆 손잡이는 두 개다. 바닥의 그림자는 방 안에 들어온 사람보다 하나 많다.'});broadcast(r,state(r));chapterVoiceOnce(r,6);return;
    }
