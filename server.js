@@ -365,12 +365,14 @@ wss.on('connection',ws=>{
     if(old.ws&&old.ws.readyState===WebSocket.OPEN)return send(ws,{type:'error',message:'이미 접속 중인 참가자입니다.'});
     old.ws=ws;old.offlineAt=0;c.room=null;ws.player=old;
     send(ws,{...state(r),type:'joined',token:old.token,resumed:true,yourRole:old.role,isHost:old===r.host,senses:assignedSenses(r,old.role).map(x=>x.sense)});updateSenseAssignments(r);broadcast(r,state(r));
+     // Legacy saved rooms may still contain a pending G18 flag.
+     // Playback is never a prerequisite for reaching the ending.
      const final=r.chapter?.ch06;
-     if(r.chapter?.phase==='ch06'&&final?.finalVideoPending){
-      if(!(final.finalVideoWatched||[]).includes(old.role)){
-       send(ws,{type:'ch06_event',event:'final_video',message:'재접속되었습니다. 마지막 기록 영상을 끝까지 확인해야 모든 조사원이 귀환할 수 있습니다.'});
-       send(ws,{type:'horror_video',id:'G18',scope:'self'});
-      }else send(ws,{type:'ch06_event',event:'waiting',message:'최종 영상 확인은 완료되었습니다. 다른 조사원들을 기다리고 있습니다.'});
+     if(r.chapter?.phase==='ch06'&&final?.solved&&final.finalVideoPending){
+      final.finalVideoPending=false;r.chapter.phase='finished';
+      broadcast(r,{type:'ch06_event',event:'ninth_return',message:'회명병원 · 단체 대화 (9)\n시스템: 알 수 없음 님이 다시 접속했습니다.\n알 수 없음: 아직 아무도 나가지 않았는데요.\n시스템: 제9참가자 접속 종료 불가.'});
+      broadcast(r,{type:'ch06_event',event:'cleared',message:'여덟 번째 문이 열린다. END — 귀환.'});
+      broadcast(r,state(r));
      }
      return;}
    }
