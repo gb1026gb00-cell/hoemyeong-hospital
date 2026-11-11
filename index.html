@@ -416,6 +416,7 @@
               ch04Panel.hidden = !phaseStarted || !['ch04','ch04_cleared'].includes(currentPhase);
               ch05Panel.hidden = !phaseStarted || !['ch05','ch05_cleared'].includes(currentPhase);
               ch06Panel.hidden = !phaseStarted || !['ch06','finished'].includes(currentPhase);
+              ch06Panel.querySelectorAll('button,input,select').forEach(control=>{control.disabled=currentPhase==='finished';});
               dollPanel.hidden = !phaseStarted || !['ch02_cleared','ch03','ch03_cleared','ch04','ch04_cleared','ch05','ch05_cleared','ch06'].includes(currentPhase);
               if(Array.isArray(data.pieces)){
                 document.getElementById('dollStatus').textContent=' '+data.pieces.length+' / 4';
