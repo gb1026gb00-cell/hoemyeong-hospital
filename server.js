@@ -802,10 +802,10 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
     if(!r.devSolo&&player.role!==all[i%all.length])return send(ws,{type:'artifact_result',ok:false,message:'이 파편의 판독은 다른 조사원에게 배정되었습니다.'});
     const clues=[
      '접수의 파편: 엘리베이터의 파편 바로 다음에 놓여야 한다.',
-     '병동의 파편: 격리실의 파편 바로 다음에 놓여야 한다.',
+     '병동의 파편: 봉인 관찰창의 파편 바로 다음에 놓여야 한다.',
      '엘리베이터의 파편: 배열의 첫 번째 조각이다. 이곳에서 층수가 사라졌다.',
      '기록실의 파편: 배열의 마지막 조각이다. 모든 이름은 여기서 끝난다.',
-     '격리실의 파편: 접수의 파편 바로 다음에 놓여야 한다.'
+     '봉인 관찰창의 파편: 접수의 파편 바로 다음에 놓여야 한다.'
     ];
     if(!ch.ch06.artifactInspected)ch.ch06.artifactInspected=[];
     if(!ch.ch06.artifactInspected.includes(i))ch.ch06.artifactInspected.push(i);
