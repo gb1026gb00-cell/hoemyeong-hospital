@@ -197,7 +197,7 @@
     </details>
     <div style="margin-top:10px;padding:10px;border:1px solid #675371;border-radius:9px;background:#19141f">
       <strong>공동 복원 기록</strong>
-      <p style="font-size:12px;color:#cbbcd4;line-height:1.5">현재 단계에서는 기존 서버의 사건 재구성 검증을 유지합니다. GOLDEN HOUR 6 암호 입력과 담당자별 자료 공개는 다음 구현 단계에서 연결됩니다.</p>
+      <p style="font-size:12px;color:#cbbcd4;line-height:1.5">네 구획을 교차 해독한 뒤 GOLDEN HOUR 6을 입력하고 두 조사원이 동의하세요. 대장의 파편과 봉인 관찰창의 마지막 파편을 회수하면 마지막 문으로 이동할 수 있습니다.</p>
       <div style="margin:10px 0;padding:10px;border:1px solid #675371;border-radius:8px">
         <strong>해독 담당 자료 · 소유 조사원만 열람</strong>
         <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px">
@@ -220,11 +220,13 @@
       <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">
         <button type="button" data-ch04="ch04_vote">재구성 동의 (각 조사원)</button>
         <button type="button" data-ch04="fragment_search" data-site="ledger">퇴실 대장의 제0유물 파편</button>
-        <button type="button" data-ch04="ch05_enter">CH.05 이동 (기존 경로)</button>
+        <button type="button" data-ch04="ch04_artifact_record">봉인 관찰창 · 제0유물 기록 (G04)</button>
+        <button type="button" data-ch04="fragment_search" data-site="glass">봉인 관찰창 · 마지막 파편</button>
+        <button type="button" data-ch04="ch06_enter">마지막 문으로 이동 (방장)</button>
       </div>
     </div>
   </section>
-  <section id="ch05PuzzlePanel" hidden aria-label="격리실 협동 조사" style="max-height:38dvh;overflow:auto;background:#21192c;border:1px solid #675371;border-radius:10px;padding:10px;font-size:13px">
+  <section id="ch05PuzzlePanel" hidden aria-label="미사용 이전 격리실 (보존된 코드)" style="max-height:38dvh;overflow:auto;background:#21192c;border:1px solid #675371;border-radius:10px;padding:10px;font-size:13px">
     <strong>CH.05 · 격리실</strong><p id="ch05Result" style="white-space:pre-wrap;line-height:1.5">관측 기록을 교차 확인하고 밸브를 조작하세요.</p>
     <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">
       <button type="button" data-ch05="ch05_inspect" data-object="chart">압력 기록지</button>
