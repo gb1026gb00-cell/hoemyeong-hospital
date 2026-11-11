@@ -503,6 +503,14 @@
 }
  const close=document.createElement('button');close.type='button';close.textContent='대화 확인 · 제단 조사하기';close.style.cssText='min-height:46px;background:#493553;color:white;border:1px solid #9879a8;border-radius:9px';close.onclick=()=>box.remove();box.appendChild(close);
 }
+if(data.type==='ch06_event'&&data.event==='ninth_return'){
+ const previous=document.getElementById('hmNinthReturn');if(previous)previous.remove();
+ const panel=document.createElement('section');panel.id='hmNinthReturn';panel.setAttribute('role','dialog');panel.setAttribute('aria-label','제9참가자 귀환');
+ panel.style.cssText='position:fixed;inset:8dvh 12px;z-index:2147483400;background:#100d14f5;color:#f4e9f4;border:1px solid #8d5266;border-radius:14px;display:flex;flex-direction:column;justify-content:center;gap:18px;padding:22px;box-shadow:0 10px 45px #000e';
+ const heading=document.createElement('strong');heading.textContent='회명병원 · 단체 대화 (9)';heading.style.cssText='font-size:18px;text-align:center;color:#e5b3c4';panel.appendChild(heading);
+ const message=document.createElement('p');message.style.cssText='white-space:pre-wrap;line-height:1.9;text-align:center';message.textContent=data.message||'';panel.appendChild(message);
+ const button=document.createElement('button');button.type='button';button.textContent='마지막 기록 확인';button.style.cssText='min-height:48px;background:#493553;color:white;border:1px solid #9879a8;border-radius:9px';button.onclick=()=>panel.remove();panel.appendChild(button);document.body.appendChild(panel);
+}
 if(['ch06_event','ch06_result','artifact_result'].includes(data.type))ch06Result.textContent=data.message||'마지막 문 조사 상태가 변경됐습니다.';
           if(data.type==='doll_event'){
             document.getElementById('dollStatus').textContent=' 4 / 4 · 조립 완료';
