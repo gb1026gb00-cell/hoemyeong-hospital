@@ -563,7 +563,7 @@
   }
   laterIntroSeen.add(phase);
   const overlay=document.createElement('div');overlay.className='hmLaterStoryIntro';overlay.dataset.phase=phase;
-  overlay.style.cssText='position:fixed;inset:0;z-index:999995;background:#050505;color:#f5f5f5;display:flex;justify-content:center;align-items:center;padding:14px;box-sizing:border-box;font:14px/1.5 system-ui';
+  overlay.style.cssText='position:fixed;inset:0;z-index:2147483500;background:#050505;color:#f5f5f5;display:flex;justify-content:center;align-items:center;padding:14px;box-sizing:border-box;font:14px/1.5 system-ui';
   const phone=document.createElement('section');phone.style.cssText='width:min(500px,100%);height:min(720px,92dvh);display:flex;flex-direction:column;background:#101010;border:1px solid #343434;border-radius:15px;overflow:hidden;box-shadow:0 16px 50px #000';
   const head=document.createElement('header');head.textContent='회명병원 · 단체 대화 (9)';head.style.cssText='padding:17px 19px;border-bottom:1px solid #303030;font-weight:700;text-align:center';phone.append(head);
   const thread=document.createElement('div');thread.style.cssText='flex:1;overflow:auto;padding:17px 15px;display:flex;flex-direction:column;gap:11px';
