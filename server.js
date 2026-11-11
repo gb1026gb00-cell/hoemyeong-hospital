@@ -212,7 +212,7 @@ wss.on('close',()=>clearInterval(heartbeat));
 const send=(ws,o)=>{if(ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify(o))};
 const validRoom=x=>typeof x==='string'&&/^[A-Z0-9_-]{1,16}$/.test(x);
 const members=r=>[...r.clients].map(c=>({role:c.role,character:c.character,ready:c.ready,host:c===r.host,online:!!c.ws&&c.ws.readyState===WebSocket.OPEN})).sort((a,b)=>a.role-b.role);
-const publicChapter=ch=>ch?{voicePlayed:[...(ch.voicePlayed||[])],phase:ch.phase,solved:[...(ch.solved||[])],bellBy:ch.bellBy,sensoryDone:[...(ch.sensoryDone||[])],sensoryUnlocked:!!ch.ecgSolved,ecgReady:(ch.sensoryDone||[]).length===8,evidenceFound:[...(ch.evidenceFound||[])],evidenceSolved:!!ch.evidenceSolved,ch02:ch.ch02?{active:true,found:[...(ch.ch02.found||[])],switches:[...(ch.ch02.switches||[])],unlocked:ch.ch02.unlocked,explored:[...(ch.ch02.explored||[])],alarm:!!ch.ch02.alarm,pressure:[...(ch.ch02.pressure||[])],pressureSolved:!!ch.ch02.pressureSolved,pressureLastRole:ch.ch02.pressureLastRole??null}:null,ch03:ch.ch03?{inspected:[...ch.ch03.inspected],clues:[...ch.ch03.clues],failed:ch.ch03.failed,solved:ch.ch03.solved}:null,ch04:ch.ch04?{videoStarted:!!ch.ch04.eVideoStarted,videoDone:[...(ch.ch04.eVideoDone||[])],inspected:[...ch.ch04.inspected],witnesses:[...ch.ch04.witnesses],votes:[...ch.ch04.votes],decoded:[...(ch.ch04.decoded||[])],artifactRecordWitnesses:[...(ch.ch04.artifactRecordWitnesses||[])],failed:ch.ch04.failed,solved:ch.ch04.solved}:null,ch05:ch.ch05?{inspected:[...ch.ch05.inspected],samples:[...ch.ch05.samples],valves:[...ch.ch05.valves],lastRole:ch.ch05.lastRole,failed:ch.ch05.failed,solved:ch.ch05.solved}:null,ch06:ch.ch06?{inspected:[...ch.ch06.inspected],fragments:[...ch.ch06.fragments],switches:[...ch.ch06.switches],failed:ch.ch06.failed,artifactSolved:!!ch.ch06.artifactSolved,artifactInspected:[...(ch.ch06.artifactInspected||[])],finalVideoPending:!!ch.ch06.finalVideoPending,finalVideoWatchedCount:(ch.ch06.finalVideoWatched||[]).length,solved:ch.ch06.solved}:null}: {phase:'reception',solved:[],bellBy:null};
+const publicChapter=ch=>ch?{voicePlayed:[...(ch.voicePlayed||[])],phase:ch.phase,solved:[...(ch.solved||[])],bellBy:ch.bellBy,sensoryDone:[...(ch.sensoryDone||[])],sensoryUnlocked:!!ch.ecgSolved,ecgReady:(ch.sensoryDone||[]).length===8,evidenceFound:[...(ch.evidenceFound||[])],evidenceSolved:!!ch.evidenceSolved,ch02:ch.ch02?{active:true,found:[...(ch.ch02.found||[])],switches:[...(ch.ch02.switches||[])],unlocked:ch.ch02.unlocked,explored:[...(ch.ch02.explored||[])],alarm:!!ch.ch02.alarm,pressure:[...(ch.ch02.pressure||[])],pressureSolved:!!ch.ch02.pressureSolved,pressureLastRole:ch.ch02.pressureLastRole??null}:null,ch03:ch.ch03?{inspected:[...ch.ch03.inspected],clues:[...ch.ch03.clues],failed:ch.ch03.failed,solved:ch.ch03.solved}:null,ch04:ch.ch04?{videoStarted:!!ch.ch04.eVideoStarted,videoDone:[...(ch.ch04.eVideoDone||[])],inspected:[...ch.ch04.inspected],witnesses:[...ch.ch04.witnesses],votes:[...ch.ch04.votes],decoded:[...(ch.ch04.decoded||[])],artifactRecordWitnesses:[...(ch.ch04.artifactRecordWitnesses||[])],failed:ch.ch04.failed,solved:ch.ch04.solved}:null,ch05:ch.ch05?{inspected:[...ch.ch05.inspected],samples:[...ch.ch05.samples],valves:[...ch.ch05.valves],lastRole:ch.ch05.lastRole,failed:ch.ch05.failed,solved:ch.ch05.solved}:null,ch06:ch.ch06?{zoneInspected:[...(ch.ch06.zoneInspected||[])],inspected:[...ch.ch06.inspected],fragments:[...ch.ch06.fragments],switches:[...ch.ch06.switches],failed:ch.ch06.failed,artifactSolved:!!ch.ch06.artifactSolved,artifactInspected:[...(ch.ch06.artifactInspected||[])],finalVideoPending:!!ch.ch06.finalVideoPending,finalVideoWatchedCount:(ch.ch06.finalVideoWatched||[]).length,solved:ch.ch06.solved}:null}: {phase:'reception',solved:[],bellBy:null};
 
 // [수정 반영] 3~8인 플레이 시 단서 소유권이 상위 2명에게만 편중되지 않고 참여 인원에 맞게 분산되도록 개선
 const clueOwners=r=>{
@@ -865,6 +865,26 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
     else broadcast(r,{type:'ch05_event',event:'progress',message:'밸브가 고정됐다. 다음 조사원이 이어서 조작해야 한다.'});
     broadcast(r,state(r));return;
    }
+   // CH05 / existing server phase ch06: cooperative photograph investigation.
+   if(ch.phase==='ch06'&&m.action==='ch06_zone'){
+    const zone=String(m.zone||'').toUpperCase();
+    const data={
+     A:{object:'clock',title:'천장 수술등',text:'여섯 개의 전등 중 두 개만 아직 켜져 있다. 전원 분기표에는 무층 정지 → 접수 기록 복구 순서로 재가동했다고 적혀 있다. 이 시각 02:41은 문의 네 글자 암호가 아니다.'},
+     B:{object:'mirror',title:'왼쪽 전력·생체신호 장치',text:'장치에 남은 세 개의 전송 영수증. ① 층수 없음 / 정전 ② 접수 창구 / 잉크 굳음 ③ 봉인 유리 / 발광. 영수증은 시간이 아니라 기록이 서로 전달된 순서다.'},
+     C:{object:'ledger',title:'오른쪽 봉인 기록판',text:'결재 문서 두 장이 겹쳐 있다. 봉인 관찰창 기록보다 208호의 생체 신호가 늦게 등록됐다. 208호 기록이 종료된 뒤에만 기록보관실 결재가 가능했다.'},
+     D:{object:'door',title:'오른쪽 유리 관찰함',text:'관찰함의 파편 표면에는 순서가 아니라 전후 관계가 새겨져 있다. 접수 흔적은 관찰창의 안쪽, 병동 이송 흔적은 바깥쪽에 찍혀 있다. 완성된 다섯 파편은 중앙 수술대에서만 반응한다.'}
+    };
+    if(!Object.hasOwn(data,zone))return send(ws,{type:'ch06_result',ok:false,message:'존재하지 않는 조사 위치입니다.'});
+    const roles=[...r.clients].map(x=>x.role).sort((a,b)=>a-b);
+    const idx=['A','B','C','D'].indexOf(zone);
+    const owner=roles[(idx+5)%roles.length];
+    if(!r.devSolo&&player.role!==owner)return send(ws,{type:'ch06_result',ok:false,message:zone+' 지점은 다른 조사원이 판독해야 합니다. 팀 채팅으로 단서를 공유하세요.'});
+    const c=ch.ch06;c.zoneInspected=c.zoneInspected||[];
+    if(!c.zoneInspected.includes(zone))c.zoneInspected.push(zone);
+    if(!c.inspected.includes(data[zone].object))c.inspected.push(data[zone].object);
+    send(ws,{type:'ch06_result',ok:true,message:zone+' · '+data[zone].title+'\n'+data[zone].text});
+    broadcast(r,state(r));return;
+   }
    if(ch.phase==='ch06'&&m.action==='ch06_inspect'){
     const sites={door:'문패: 「기록되지 않은 자는 문을 통과할 수 없다.」 문에는 네 글자의 영문 입력칸과 서로 다른 두 개의 손잡이가 있다. 두 기록 담당자가 함께 봉인을 풀어야 한다.',mirror:'거울: 글자가 좌우로 뒤집혀 있다. 거울 아래에는 「반사된 순서가 아니라, 원본 기록의 첫째부터 넷째까지」라고 새겨져 있다.',clock:'정지 시계: 02:41. 유리 안쪽 검은 손자국 아래에 Ⅰ·Ⅱ·Ⅲ·Ⅳ 네 개의 홈이 있다. 시각은 사건의 흔적일 뿐, 문의 암호가 아니다.',ledger:'최종 기록: 208호의 구조 요청은 02:41에 시작되었다. 마지막 문은 병실 번호나 시각이 아닌 영문 네 글자를 요구한다. 암호는 기록 담당자의 홀수 칸과 거울 담당자의 짝수 칸을 번갈아 배치한다.'};
     const key=String(m.object||'');if(!Object.hasOwn(sites,key))return send(ws,{type:'ch06_result',ok:false,message:'존재하지 않는 조사 지점입니다.'});
@@ -884,11 +904,11 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
     const all=[...r.clients].map(x=>x.role).sort((a,b)=>a-b);
     if(!r.devSolo&&player.role!==all[i%all.length])return send(ws,{type:'artifact_result',ok:false,message:'이 파편의 판독은 다른 조사원에게 배정되었습니다.'});
     const clues=[
-     '접수의 파편: 엘리베이터의 파편 바로 다음에 놓여야 한다.',
-     '병동의 파편: 봉인 관찰창의 파편 바로 다음에 놓여야 한다.',
-     '엘리베이터의 파편: 배열의 첫 번째 조각이다. 이곳에서 층수가 사라졌다.',
-     '기록실의 파편: 배열의 마지막 조각이다. 모든 이름은 여기서 끝난다.',
-     '봉인 관찰창의 파편: 접수의 파편 바로 다음에 놓여야 한다.'
+     '접수의 파편: 잉크가 마른 시각에는 이미 엘리베이터의 층수가 지워져 있었다. 유리 관찰창이 발광하기 전의 흔적이다.',
+     '병동의 파편: 208호 생체 신호는 봉인 유리에서 전달됐으며, 보관실의 최종 결재 이전에 끊어졌다.',
+     '엘리베이터의 파편: 모든 기록의 시작점. 분기표에는 층수 없음과 최초 정전만 남았다.',
+     '기록실의 파편: 마지막 결재가 찍힌 문서. 그 아래에는 후속 기록이 없다.',
+     '봉인 관찰창의 파편: 접수대에서 넘어온 잉크가 유리 안쪽에 묻어 있다. 이 흔적이 사라진 뒤에야 208호 병동 기록이 시작됐다.'
     ];
     if(!ch.ch06.artifactInspected)ch.ch06.artifactInspected=[];
     if(!ch.ch06.artifactInspected.includes(i))ch.ch06.artifactInspected.push(i);
@@ -897,6 +917,7 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
    if(ch.phase==='ch06'&&m.action==='artifact_submit'){
     const c=ch.ch06;
     if(c.artifactSolved)return send(ws,{type:'artifact_result',ok:true,message:'제0유물은 이미 복원되었습니다. 마지막 문을 조사하세요.'});
+    if((c.zoneInspected||[]).length!==4)return send(ws,{type:'artifact_result',ok:false,message:'천장 조명·왼쪽 장치·기록판·유리 관찰함의 교차 조사 네 곳이 아직 완료되지 않았습니다.'});
     if((r.artifactFragments||new Set()).size!==5||new Set(c.artifactInspected||[]).size!==5)return send(ws,{type:'artifact_result',ok:false,message:'다섯 파편을 모두 회수하고 담당 조사원이 판독해야 합니다.'});
     const order=String(m.order||'').replace(/[\s,>→-]/g,'');
     if(order!=='20413'){c.artifactFailed=(c.artifactFailed||0)+1;return send(ws,{type:'artifact_result',ok:false,message:'균열의 배열이 맞지 않습니다. 서로의 판독 기록을 대조하세요.'});}
