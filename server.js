@@ -257,14 +257,14 @@ function broadcast(r,o){if(o.type==='state'){
  persist();o=state(r);
  }for(const c of r.clients)if(c.ws)send(c.ws,o.type==='state'?{...o,yourRole:c.role,isHost:c===r.host}:o)}
 const CH04_RECORDS={
- ledger:'回明病院 / 환자 퇴실 관리 대장\n병실: 208호\n기록 시각: 02:41\n정상 퇴실 인원: 0명\n담당자 서명: 확인 불가\n분류 표식: [01-G] [02-O]\n\n퇴실 기록이 비어 있는데도 두 개의 분류 표식이 남아 있다.',
- camera:'SECURITY / CAMERA 03\n02:41 — 208호 출입 감지\n02:42 — 영상 일부 손실\n02:47 — 기록 복원\n출입 인원: 판독 불가\n분류 표식: [03-L]\n\n영상이 손상된 구간에 다른 사람의 그림자가 남아 있다.',
- call:'INTERNAL CALL / LOG 208\n수신 병실: 208호\n호출 시각: 02:41:08\n통화 지속: 8초\n발신자: 등록되지 않은 환자\n분류 표식: [04-D]\n\n통화는 연결되었으나 수화기를 든 사람은 없었다.',
- tag:'CONFIDENTIAL / 봉인 보관\n봉인일: 2003.11.26\n제8차 복원 실험\n기록 상태: 열람 제한\n봉인 담당자: 이름 삭제\n분류 표식: [05-E] [06-N]\n\n봉투의 봉인이 훼손되어 있는데 열람 기록은 0건이다.',
- keyB:'IMAGE RECOVERY / SIGNAL SHEET\n채널: CAM 03\n정상 신호: 04 / 11 / 16\n유효 프레임: 3개\n복구 상태: 부분 복원\n분류 표식: [07-H]\n\n손상된 화면에서도 사람의 윤곽만은 또렷하게 남아 있다.',
- keyA:'PATIENT CROSS-REFERENCE\n대상 병실: 208호\n대조 환자: 성명 불명\n퇴실 대장과 감시 기록 불일치\n신원 복원: 미완료\n분류 표식: [08-O] [09-U]\n\n기록에 없는 사람의 신원 확인 칸이 새로 생겼다.',
- keyD:'TIME DISCREPANCY REPORT\n구조 요청: 02:41\n영상 복구: 02:47\n기록 누락 구간: 6분\n검증 결과: 원인 불명\n분류 표식: [10-R]\n\n시계는 멈췄는데 그 이후의 기록이 계속 작성되고 있다.',
- keyC:'RESTORATION / DECODING KEY\n분류 표식: 01~11\n복원 방식: 오름차순 배열\n열람자 확인: 미등록\n최종 식별자: 봉인됨\n분류 표식: [11-6]\n\n마지막 표식은 문자 대신 하나의 숫자로 적혀 있다.'
+ ledger:'回明病院 / 퇴실 관리 대장\n병실 208호 · 정상 퇴실 인원 0\n환자 분류 기록 (순서가 섞여 있음)\nR-19 / 12\nR-07 / 07\nR-12 / 15\n\nR 표식은 환자 대조표에서 배열 번호를 찾을 수 있다. 숫자는 아직 문자로 복원되지 않았다.',
+ camera:'SECURITY / CAMERA 03\n02:41 — 208호 출입 감지\n02:42 — 영상 일부 손실\n02:47 — 기록 복구\n복구된 프레임 표식 (뒤섞임)\nC-28 / 14\nC-04 / 04\nC-16 / 05\n\nC 표식의 올바른 순서는 프레임 판별표를 참조하라.',
+ call:'INTERNAL CALL / LOG 208\n02:41:08 — 호출 지속 8초 / 수화기 미사용\n잡음에서 복원한 숫자 묶음 (수신 순서 손실)\nS-02 / 21\nS-09 / 18\nS-05 / 08\nS-07 / 15\n\nS 표식은 문자 변환표와 대조해야 한다.',
+ tag:'CONFIDENTIAL / 봉인 보존 봉투\n제8차 복원 실험 · 봉인 시각 02:41\n정상 퇴실 인원 0명\n\n원본 지시: 네 기록 구획은 퇴실 → 감시 → 내선 → 누락 시간 순서로 결합한다.\n남은 단위는 문자가 아니라 기록에서 사라진 시간의 길이다.\n\n복원 시각은 감시 기록에서, 시간 위치는 시간 검증표에서 찾으라.',
+ keyB:'IMAGE RECOVERY / 프레임 판별표\n손상된 신호를 제외한 C-프레임 복원 순서\n구획 두 번째, 배열 칸 04~06\n04 ← C-04\n05 ← C-16\n06 ← C-28\n\n각 프레임에 기록된 숫자 값은 감시 기록을 참조하라.',
+ keyA:'PATIENT CROSS-REFERENCE / 환자 대조표\n퇴실 대장 환자 코드의 정상 배열\n구획 첫 번째, 배열 칸 01~03\n01 ← R-07\n02 ← R-12\n03 ← R-19\n\n환자 기록 자체는 퇴실 대장에서 열람해야 한다.',
+ keyD:'TIME DISCREPANCY REPORT / 시간 검증표\n마지막 배열 칸: 11\n봉인 시각과 CCTV 복구 시각의 차이를 분 단위 정수로 입력한다.\n봉인 원본은 보존 봉투에, 복구 시각은 감시 기록에 있다.\n\n경과 시간을 계산할 때 초 단위는 버린다.',
+ keyC:'RESTORATION / 문자 변환표\n문자 복구: 01=A, 02=B … 26=Z\n같은 규칙을 R·C·S 숫자 코드 모두에 적용한다.\n내선 통화 S 코드의 복원 순서\n07 ← S-05\n08 ← S-07\n09 ← S-02\n10 ← S-09\n\n전체 배열은 01부터 11까지 순서대로 읽는다.'
 };
 const CH04_KEYS=['ledger','camera','call','tag','keyB','keyA','keyD','keyC'];
 const CH04_ANSWERS={A:'GOL',B:'DEN',C:'HOUR',D:'6'}; // legacy compatibility; current dossier uses numbered fragments.
