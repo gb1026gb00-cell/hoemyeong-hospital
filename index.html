@@ -415,7 +415,7 @@
               ch03Panel.hidden = !phaseStarted || !['ch03','ch03_cleared'].includes(currentPhase);
               ch04Panel.hidden = !phaseStarted || !['ch04','ch04_cleared'].includes(currentPhase);
               ch05Panel.hidden = !phaseStarted || !['ch05','ch05_cleared'].includes(currentPhase);
-              ch06Panel.hidden = !phaseStarted || currentPhase !== 'ch06';
+              ch06Panel.hidden = !phaseStarted || !['ch06','finished'].includes(currentPhase);
               dollPanel.hidden = !phaseStarted || !['ch02_cleared','ch03','ch03_cleared','ch04','ch04_cleared','ch05','ch05_cleared','ch06'].includes(currentPhase);
               if(Array.isArray(data.pieces)){
                 document.getElementById('dollStatus').textContent=' '+data.pieces.length+' / 4';
@@ -458,7 +458,7 @@
               ch03Panel.hidden = !['ch03','ch03_cleared'].includes(currentPhase);
               ch04Panel.hidden = !['ch04','ch04_cleared'].includes(currentPhase);
               ch05Panel.hidden = !['ch05','ch05_cleared'].includes(currentPhase);
-              ch06Panel.hidden = currentPhase !== 'ch06';
+              ch06Panel.hidden = !['ch06','finished'].includes(currentPhase);
             }
             if(data.token){ token = data.token; try{localStorage.setItem('hm-token:'+hmRoom.value.trim().toUpperCase(), token);}catch(_){} }
             myRole = data.yourRole ?? myRole;
