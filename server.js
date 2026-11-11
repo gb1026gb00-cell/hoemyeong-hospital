@@ -873,6 +873,7 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
      broadcast(r,{type:'ch06_event',event:'waiting',message:'최종 영상 확인 '+c.finalVideoWatched.length+' / '+required.length+'명. 나머지 조사원을 기다립니다.'});broadcast(r,state(r));return;
     }
     c.finalVideoPending=false;ch.phase='finished';
+    broadcast(r,{type:'ch06_event',event:'ninth_return',message:'회명병원 · 단체 대화 (9)\n시스템: 알 수 없음 님이 다시 접속했습니다.\n알 수 없음: 아직 아무도 나가지 않았는데요.\n시스템: 제9참가자 접속 종료 불가.'});
     broadcast(r,{type:'ch06_event',event:'cleared',message:'여덟 번째 문이 열린다. 기록에는 208호가 비어 있었다. 그러나 구조 요청은 그 안에서 시작됐다. 문 너머에는 회명병원의 처음 접수실이 있다. END — 귀환.'});broadcast(r,state(r));return;
    }
    // V176: only the explicit "start_investigation" action launches G08 and separation.
