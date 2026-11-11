@@ -14,6 +14,7 @@ const checks = [
   ['CH05 five fragments and reconstruction', server.includes('20413') && server.includes('AZUP')],
   ['CH05 multiplayer UI retained', index.includes('id="ch05PuzzlePanel"')],
   ['Approved visual UI preserved in live /play route', server.includes("pathname==='/play'") && server.includes("approved-v172.html")],
+  // The deployed /play page loads approved-v172.html + mobile bridge, NOT index.html.\n  // Do not pass a release solely because index.html has the latest puzzle controls.\n  ['CH04 live mobile bridge can submit reconstruction', mobile.includes('ch04_vote')],\n  ['CH05 live mobile bridge can submit reconstruction', mobile.includes('ch05_reconstruct')],
 ];
 for (const [name, ok] of checks) {
   console.log((ok ? 'PASS ' : 'FAIL ') + name);
