@@ -433,7 +433,7 @@ wss.on('connection',ws=>{
      hidden_room:{phase:'ch03',id:'G17',message:'층 안내도에 없는 병실의 문이 열린다.'},
      artifact_final:{phase:'ch06',id:'G18',message:'제0유물의 균열이 최종 구역으로 번진다.'},
      bed_under:{phase:'ch02',id:'H01',message:'침대 아래에 무언가가 있다.'},
-     archive_eye:{phase:'ch04',id:'H03',message:'기록함 안쪽에서 눈이 마주친다.'},
+     // CH04 archive-eye replay removed: H03 is already used for the earlier chapter transition.
      observation_glass:{phase:'ch05',id:'H04',message:'관찰창에 손바닥이 나타난다.'},
      mortuary_drawer:{phase:'ch04',id:'G10',message:'영안실 서랍 안쪽에서 차가운 공기가 흘러나온다.'}, 
      // G12 (8층 비상계단) disabled: not part of the approved CH02/CH03 video flow.   
