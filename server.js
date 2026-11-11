@@ -758,12 +758,21 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
    }
    if(ch.phase==='ch04'&&m.action==='ch04_vote'){
     if(!r.devSolo&&[...r.clients].filter(x=>x.ws?.readyState===WebSocket.OPEN).length<2)return send(ws,{type:'ch04_result',ok:false,message:'두 조사원이 온라인이어야 합니다.'});
-    const c=ch.ch04;if((c.decoded||[]).length!==4||c.witnesses.length!==2)return send(ws,{type:'ch04_result',ok:false,message:'네 구획 해독과 두 감각 기록을 먼저 확보하세요.'});
+    const c=ch.ch04;if(!(c.artifactRecordWitnesses||[]).length)return send(ws,{type:'ch04_result',ok:false,message:'제0유물 봉인 기록(G04)을 먼저 조사해야 최종 복원이 가능합니다.'});if((c.decoded||[]).length!==4||c.witnesses.length!==2)return send(ws,{type:'ch04_result',ok:false,message:'네 구획 해독과 두 감각 기록을 먼저 확보하세요.'});
     if(String(m.answer||'').trim().toUpperCase().replace(/\s+/g,' ')!=='GOLDEN HOUR 6'){
      c.failed++;c.votes=[];broadcast(r,{type:'ch04_event',event:'wrong',message:'서류장이 동시에 벌어진다. 종이들이 바닥에 쏟아졌는데, 눈을 돌렸다 돌아보니 모든 기록이 다시 꽂혀 있다. 맨 앞의 이름만 지워졌다.'});broadcast(r,state(r));return;
     }
     if(r.devSolo){if(!c.votes.includes(player.role))c.votes.push(player.role);c.votes.push(-1)}else if(!c.votes.includes(player.role))c.votes.push(player.role);
-    if(c.votes.length>=2){c.solved=true;ch.phase='ch04_cleared';broadcast(r,{type:'ch04_event',event:'cleared',message:'GOLDEN HOUR 6 복원 완료. PATIENT STATUS: UNKNOWN. 제0유물 파편을 조사하시오.'});}
+    if(c.votes.length>=2){
+      c.solved=true;ch.phase='ch04_cleared';
+      if(!r.artifactFragments)r.artifactFragments=new Set();
+      for(const index of [3,4])if(!r.artifactFragments.has(index)){
+       r.artifactFragments.add(index);
+       broadcast(r,{type:'fragment_result',ok:true,index,message:FRAGMENT_DESCRIPTIONS[index]+' (CH.04 복원 완료 · 팀 공동 소지품 자동 등록)'});
+      }
+      broadcast(r,{type:'ch04_event',event:'cleared',message:'GOLDEN HOUR 6 복원 완료. PATIENT STATUS: UNKNOWN. 제0유물 파편이 공동 수집함에 자동 등록됩니다.'});
+      broadcast(r,state(r));enterFinalAfterCh04(r);
+     }
     else broadcast(r,{type:'ch04_event',event:'vote',message:'사건 재구성에 첫 번째 조사원이 동의했다. 다른 조사원의 확인이 필요하다.'});
     broadcast(r,state(r));return;
    }
