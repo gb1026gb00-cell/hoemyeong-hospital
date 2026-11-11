@@ -2736,4 +2736,19 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  }
  document.addEventListener('DOMContentLoaded',()=>{apply();const p=document.getElementById('place');if(p)new MutationObserver(apply).observe(p,{childList:true,characterData:true,subtree:true});});
  if(document.readyState!=='loading')apply();
-})();</script></body></html>
+})();</script>
+<!-- hm-chat-chapter-overlap-guard: visual-only; no puzzle or network handler changes -->
+<style id="hm-chat-chapter-overlap-guard">
+@media(max-width:700px){
+ body.hm-ui-chapter:has(#v528ChatPanel:not([hidden])) :is(#hm531,#hm548,#hm556,#hm557,#hm558,#hm559){visibility:hidden!important;pointer-events:none!important}
+}
+</style>
+<script id="hm-chat-chapter-focus-guard">(()=>{
+ 'use strict';
+ document.addEventListener('focusin',event=>{
+  if(!event.target?.closest?.('#hm531,#hm548,#hm556,#hm557,#hm558,#hm559'))return;
+  const panel=document.getElementById('v528ChatPanel');
+  if(panel&&!panel.hidden){panel.hidden=true;document.getElementById('v528ChatToggle')?.setAttribute('aria-expanded','false')}
+ },true);
+})();</script>
+</body></html>
