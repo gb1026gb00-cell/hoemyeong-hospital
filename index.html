@@ -103,6 +103,8 @@
       <label style="grid-column:1/-1">접수대 봉인 번호<input id="receptionAnswer" inputmode="numeric" autocomplete="off" style="width:100%;min-height:44px" placeholder="팀원 단서를 합쳐 입력"></label>
       <button type="button" data-ch01="reception_submit" style="grid-column:1/-1;min-height:44px">접수대 봉인 해제 · 다음 챕터</button>
     </div><p id="ch01Result" style="white-space:pre-wrap;line-height:1.5">각 조사실의 기록을 확인하세요.</p>
+    <details id="ch01LegacyTools" hidden style="margin-top:10px;padding:10px;border:1px solid #514258;border-radius:8px">
+      <summary>이전 조사 기록 · 호환성 도구</summary>
     <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;">
       <button type="button" data-ch01="inspect" data-object="intercom">내선 기록 조사</button>
       <button type="button" data-ch01="inspect" data-object="desk">기록 재조사</button>
@@ -129,6 +131,7 @@
       <label>8자리 심전도 복원 배열<input id="ecgAnswer" inputmode="numeric" maxlength="8" style="width:100%;min-height:40px"></label>
       <button type="button" data-ch01="ecg_submit">심전도 복원</button>
     </div>
+    </details>
   </section>
   <section id="ch02PuzzlePanel" hidden aria-label="208호 협동 조사" style="max-height:38dvh;overflow:auto;background:#21192c;border:1px solid #675371;border-radius:10px;padding:10px;font-size:13px;">
     <strong>CH.02 · 208호</strong><p id="ch02Result" style="white-space:pre-wrap;line-height:1.5">환자 기록과 병실을 조사하세요.</p>
@@ -409,6 +412,9 @@
               syncChapterVisual(currentPhase);
               const phaseStarted=data.started === true;
               ch01Panel.hidden = !phaseStarted || !['reception','separated','escaped'].includes(currentPhase);
+              ch01Panel.querySelector('[data-ch01="start_investigation"]').hidden=currentPhase!=='reception';
+              ch01Panel.querySelectorAll('[data-ch01="reception_clue"],[data-ch01="reception_submit"]').forEach(button=>{button.hidden=currentPhase==='reception';});
+              document.getElementById('receptionAnswer').closest('label').hidden=currentPhase==='reception';
               ch02Panel.hidden = !phaseStarted || !['ch02','ch02_cleared'].includes(currentPhase);
               ch03Panel.hidden = !phaseStarted || !['ch03','ch03_cleared'].includes(currentPhase);
               ch04Panel.hidden = !phaseStarted || !['ch04','ch04_cleared'].includes(currentPhase);
