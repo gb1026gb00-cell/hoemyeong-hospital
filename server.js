@@ -183,7 +183,9 @@ const server=http.createServer((req,res)=>{
    if(err||!stat.isFile()){res.writeHead(503,{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'});return res.end('Approved V172 game file is unavailable');}
    fs.readFile(approved,'utf8',(readError,html)=>{
     if(readError){res.writeHead(503,{'Content-Type':'text/plain; charset=utf-8'});return res.end('Game file read failed');}
-    const script='<script src="/coop-v174-mobile-fix.js?v=ch02-certificate-20261110-2"></script><script src="/coop-v175-lobby.js"></script><script src="/ch04-live-bridge.js?v=golden-hour-integrated-20261111"></script>';
+    // Inline the Golden Hour bridge in /play itself: no additional network request or stale script URL can leave CH04 with the legacy UI.
+    const goldenBridge=fs.readFileSync(path.join(__dirname,'ch04_live_bridge.js'),'utf8');
+    const script='<script src="/coop-v174-mobile-fix.js?v=ch02-certificate-20261110-2"></script><script src="/coop-v175-lobby.js"></script><script data-golden-hour="GOLDEN-HOUR-REAL-CH04-20261111">\n'+goldenBridge+'\n</script>';
     const localHtml=html.split('https://gb1026gb00-cell.github.io/hoemyeong-hospital/').join('/');
     const output=/<\/body>/i.test(localHtml)?localHtml.replace(/<\/body>/i,script+'</body>'):localHtml+script;
     res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
