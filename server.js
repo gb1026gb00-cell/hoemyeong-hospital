@@ -839,8 +839,7 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
    if(ch.phase==='ch06'&&m.action==='artifact_inspect'){
     const i=Number(m.fragment), owned=[...(r.artifactFragments||[])];
     if(!Number.isInteger(i)||i<0||i>4||!owned.includes(i))return send(ws,{type:'artifact_result',ok:false,message:'아직 회수하지 못한 파편입니다.'});
-    const online=[...r.clients].filter(x=>x.ws&&x.ws.readyState===WebSocket.OPEN).map(x=>x.role).sort((a,b)=>a-b);
-    const all=online.length>=2?online:[...r.clients].map(x=>x.role).sort((a,b)=>a-b);
+    const all=[...r.clients].map(x=>x.role).sort((a,b)=>a-b);
     if(!r.devSolo&&player.role!==all[i%all.length])return send(ws,{type:'artifact_result',ok:false,message:'이 파편의 판독은 다른 조사원에게 배정되었습니다.'});
     const clues=[
      '접수의 파편: 엘리베이터의 파편 바로 다음에 놓여야 한다.',
