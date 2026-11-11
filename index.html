@@ -341,6 +341,7 @@
   const ch06Panel=document.getElementById("ch06PuzzlePanel"),ch06Result=document.getElementById("ch06Result");
   const dollPanel=document.getElementById("dollPanel");
   dollPanel.addEventListener("click",e=>{const b=e.target.closest("[data-piece]");if(!b)return;if(!ws||ws.readyState!==WebSocket.OPEN||!started)return;ws.send(JSON.stringify({type:"piece",piece:Number(b.dataset.piece)}));});
+  document.addEventListener('hm-horror-video-ended',e=>{if(e.detail==='G18'&&currentPhase==='ch06')chapterSend('ch06_final_video_done');});
   ch06Panel.addEventListener("click",e=>{const b=e.target.closest("[data-ch06]");if(!b)return;const action=b.dataset.ch06,extra={};if(b.dataset.object)extra.object=b.dataset.object;if(b.dataset.fragment)extra.fragment=b.dataset.fragment;if(action==="artifact_inspect")extra.fragment=Number(document.getElementById("artifactIndex").value);if(action==="artifact_submit")extra.order=document.getElementById("artifactOrder").value.trim();if(action==="ch06_answer")extra.answer=document.getElementById("ch06Answer").value.trim();chapterSend(action,extra);});
   const ch05Panel=document.getElementById("ch05PuzzlePanel");
   const ch05Result=document.getElementById("ch05Result");
@@ -586,7 +587,7 @@ if(['ch06_event','ch06_result','artifact_result'].includes(data.type))ch06Result
  }
  function playVideo(id){if(!safeId(id))return;if(activeVideo){queue.push(id);return;}videoStart.onclick=null;videoStart.textContent='공포 영상 재생';videoStart.hidden=true;activeVideo=true;if(!audio.paused){audio.pause();pausedVoiceForVideo=true;}echoAudio.pause();echoAudio.currentTime=0;echoCaption.hidden=true;overlay.hidden=false;overlay.style.display='flex';video.src=mediaRoot+id+'.mp4';applyVolume();video.currentTime=0;video.play().catch(()=>{videoStart.hidden=false;document.dispatchEvent(new CustomEvent('hm-media-blocked',{detail:id}));});}
  videoStart.addEventListener('click',()=>{if(videoStart.onclick)return;videoStart.hidden=true;video.play().catch(()=>{videoStart.hidden=false;});});
- video.addEventListener('playing',()=>{videoStart.hidden=true;videoStart.onclick=null;});video.addEventListener('ended',nextVideo);video.addEventListener('error',()=>{videoStart.hidden=false;videoStart.textContent='영상 로드 실패 · 계속하기';videoStart.onclick=nextVideo;});
+ video.addEventListener('playing',()=>{videoStart.hidden=true;videoStart.onclick=null;});video.addEventListener('ended',()=>{const finishedId=(video.currentSrc||video.src||'').match(/\/(G18)\.mp4(?:[?#]|$)/)?.[1];if(finishedId)document.dispatchEvent(new CustomEvent('hm-horror-video-ended',{detail:finishedId}));nextVideo();});video.addEventListener('error',()=>{videoStart.hidden=false;videoStart.textContent='영상 로드 실패 · 계속하기';videoStart.onclick=nextVideo;});
  function startVoice(n){
    audio.pause();audio.src=mediaRoot+'voice_ch'+String(n).padStart(2,'0')+'.mp3';
    applyVolume();audio.play().catch(()=>document.dispatchEvent(new CustomEvent('hm-media-blocked',{detail:'voice_ch'+n})));
