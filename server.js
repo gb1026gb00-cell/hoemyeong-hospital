@@ -862,7 +862,18 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
     if(String(m.answer||'').trim().toUpperCase()!=='AZUP'){
      c.failed++;c.switches=[];broadcast(r,{type:'ch06_event',event:'wrong',message:'문이 세 번 두드려진다. 손잡이가 풀리고 두 사람의 그림자가 거울에서 사라진다.'});broadcast(r,state(r));return;
     }
-    c.solved=true;ch.phase='finished';broadcast(r,{type:'horror_video',id:'G18',scope:'all'});broadcast(r,{type:'ch06_event',event:'cleared',message:'여덟 번째 문이 열린다. 기록에는 208호가 비어 있었다. 그러나 구조 요청은 그 안에서 시작됐다. 문 너머에는 회명병원의 처음 접수실이 있다. END — 귀환.'});broadcast(r,state(r));return;
+    c.solved=true;c.finalVideoPending=true;c.finalVideoWatched=[];broadcast(r,{type:'horror_video',id:'G18',scope:'all'});broadcast(r,{type:'ch06_event',event:'final_video',message:'마지막 문이 열리기 시작합니다. 모든 조사원이 최종 기록을 확인할 때까지 기다리세요.'});broadcast(r,state(r));return;
+   }
+   if(ch.phase==='ch06'&&m.action==='ch06_final_video_done'){
+    const c=ch.ch06;if(!c?.solved||!c.finalVideoPending)return;
+    if(!Array.isArray(c.finalVideoWatched))c.finalVideoWatched=[];
+    if(!c.finalVideoWatched.includes(player.role))c.finalVideoWatched.push(player.role);
+    const required=[...r.clients].map(x=>x.role);
+    if(!required.every(role=>c.finalVideoWatched.includes(role))){
+     broadcast(r,{type:'ch06_event',event:'waiting',message:'최종 영상 확인 '+c.finalVideoWatched.length+' / '+required.length+'명. 나머지 조사원을 기다립니다.'});broadcast(r,state(r));return;
+    }
+    c.finalVideoPending=false;ch.phase='finished';
+    broadcast(r,{type:'ch06_event',event:'cleared',message:'여덟 번째 문이 열린다. 기록에는 208호가 비어 있었다. 그러나 구조 요청은 그 안에서 시작됐다. 문 너머에는 회명병원의 처음 접수실이 있다. END — 귀환.'});broadcast(r,state(r));return;
    }
    // V176: only the explicit "start_investigation" action launches G08 and separation.
    // Touching a ledger, mirror, cabinet or desk may never launch a cinematic.
