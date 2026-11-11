@@ -23,6 +23,17 @@
   
   .hot { position: absolute; border: 1px solid #a989c9; background: #160e21b8; border-radius: 20px; padding: 6px 9px; font-size: 12px; box-shadow: 0 0 12px #b06ce755; cursor: pointer; }
   
+  /* Keep chapter answer fields in their own scroll region above bottom controls/chat overlays. */
+  #ch01PuzzlePanel,#ch02PuzzlePanel,#ch03PuzzlePanel,#ch04PuzzlePanel,#ch05PuzzlePanel,#ch06PuzzlePanel {
+    flex: 0 1 auto; min-height: 0; max-height: min(34dvh, 310px) !important;
+    overflow-y: auto; overscroll-behavior: contain; position: relative; z-index: 1;
+    scroll-padding-bottom: 18px;
+  }
+  #app nav { flex: 0 0 auto; position: relative; z-index: 2; }
+  #ch03Answer,#ch04Answer,#ch06Answer { scroll-margin-bottom: 90px; }
+  @media (max-height: 680px) {
+    #ch01PuzzlePanel,#ch02PuzzlePanel,#ch03PuzzlePanel,#ch04PuzzlePanel,#ch05PuzzlePanel,#ch06PuzzlePanel { max-height: 27dvh !important; }
+  }
   .narrative { background: #21192c; border: 1px solid #594566; border-radius: 10px; padding: 11px 13px; font-size: 13px; line-height: 1.45; min-height: 54px; }
   nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
   nav button { background: #2c2138; border: 1px solid #6c557c; border-radius: 10px; min-height: 53px; font-size: 12px; }
