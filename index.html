@@ -492,9 +492,15 @@
  let box=document.getElementById('hmAltarDialogue');
  if(!box){box=document.createElement('section');box.id='hmAltarDialogue';box.setAttribute('role','dialog');box.setAttribute('aria-label','제0유물의 제단 · 단체 대화');box.style.cssText='position:fixed;inset:5dvh 12px;z-index:2147483300;background:#15111bf5;color:#f4ebf7;border:1px solid #715780;border-radius:14px;display:flex;flex-direction:column;padding:14px;box-shadow:0 10px 45px #000e';document.body.appendChild(box);}
  box.replaceChildren();
- const title=document.createElement('strong');title.textContent='회명병원 · 제0유물의 제단';box.appendChild(title);
+ const title=document.createElement('strong');title.textContent='회명병원 · 단체 대화 (9) · 제0유물의 제단';box.appendChild(title);
  const log=document.createElement('div');log.style.cssText='overflow:auto;flex:1;min-height:0;margin:12px 0;display:flex;flex-direction:column;gap:9px';box.appendChild(log);
- for(const [name,message] of data.dialogue){const item=document.createElement('div');item.style.cssText='background:#322638;border-radius:12px;padding:10px;max-width:92%;align-self:flex-start';const who=document.createElement('strong');who.style.cssText='display:block;color:#c6a9d5;font-size:12px;margin-bottom:4px';who.textContent=name;const line=document.createElement('span');line.textContent=message;item.append(who,line);log.appendChild(item);}
+ for(const [name,message] of data.dialogue){
+ const item=document.createElement('div');
+ const system=name==='시스템',unknown=name==='알 수 없음';
+ item.style.cssText=system?'align-self:center;max-width:98%;padding:8px;text-align:center;color:#d8b6c8;font-size:12px;white-space:pre-wrap':unknown?'background:#462831;border:1px solid #82515b;border-radius:12px;padding:10px;max-width:92%;align-self:flex-start':'background:#322638;border-radius:12px;padding:10px;max-width:92%;align-self:flex-start';
+ if(!system){const who=document.createElement('strong');who.style.cssText='display:block;color:'+(unknown?'#e8aeb8':'#c6a9d5')+';font-size:12px;margin-bottom:4px';who.textContent=name;item.appendChild(who);}
+ const line=document.createElement('span');line.textContent=message;item.appendChild(line);log.appendChild(item);
+}
  const close=document.createElement('button');close.type='button';close.textContent='대화 확인 · 제단 조사하기';close.style.cssText='min-height:46px;background:#493553;color:white;border:1px solid #9879a8;border-radius:9px';close.onclick=()=>box.remove();box.appendChild(close);
 }
 if(['ch06_event','ch06_result','artifact_result'].includes(data.type))ch06Result.textContent=data.message||'마지막 문 조사 상태가 변경됐습니다.';
