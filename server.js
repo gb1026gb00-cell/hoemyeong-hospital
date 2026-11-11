@@ -843,6 +843,7 @@ if(ch.phase==='ch04'&&m.action==='ch04_decode'){
    }
    if(ch.phase==='ch06'&&m.action==='artifact_submit'){
     const c=ch.ch06;
+    if(c.artifactSolved)return send(ws,{type:'artifact_result',ok:true,message:'제0유물은 이미 복원되었습니다. 마지막 문을 조사하세요.'});
     if((r.artifactFragments||new Set()).size!==5||new Set(c.artifactInspected||[]).size!==5)return send(ws,{type:'artifact_result',ok:false,message:'다섯 파편을 모두 회수하고 담당 조사원이 판독해야 합니다.'});
     const order=String(m.order||'').replace(/[\s,>→-]/g,'');
     if(order!=='20413'){c.artifactFailed=(c.artifactFailed||0)+1;return send(ws,{type:'artifact_result',ok:false,message:'균열의 배열이 맞지 않습니다. 서로의 판독 기록을 대조하세요.'});}
