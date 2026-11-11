@@ -508,7 +508,7 @@
           if(data.type === 'ch02_event' || data.type === 'ch02_result') ch02Result.textContent = data.message || '208호 조사 상태가 변경됐습니다.';
           if(data.type === 'ch03_event' || data.type === 'ch03_result') ch03Result.textContent = data.message || '엘리베이터 조사 상태가 변경됐습니다.';
           if(data.type === 'ch04_event' || data.type === 'ch04_result') ch04Result.textContent = data.message || '기록보관실 조사 상태가 변경됐습니다.';
-           if((data.type==='state'||data.type==='joined')&&data.chapter?.ch04){const p=data.chapter.ch04;const el=document.getElementById('ch04DecodedStatus');if(el)el.textContent='공동 해독: '+(p.decoded||[]).length+' / 4 · 완료 구획: '+(p.decoded||[]).join(', ');}
+           if((data.type==='state'||data.type==='joined')&&data.chapter?.ch04){const p=data.chapter.ch04;const el=document.getElementById('ch04DecodedStatus');if(el)el.textContent='공동 해독: '+(p.decoded||[]).length+' / 4 · 완료 구획: '+((p.decoded||[]).join(', ')||'없음')+' · 역할별 기록 '+(p.witnesses||[]).length+'/2 · 재구성 동의 '+(p.votes||[]).length+'/2';}
           if(data.type === 'ch05_event' || data.type === 'ch05_result') ch05Result.textContent = data.message || '격리실 조사 상태가 변경됐습니다.';
           if(data.type==='ch06_event'&&data.event==='enter'&&Array.isArray(data.dialogue)){
  let box=document.getElementById('hmAltarDialogue');
