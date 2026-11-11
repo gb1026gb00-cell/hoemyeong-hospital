@@ -87,6 +87,21 @@ const server=http.createServer((req,res)=>{
   if(req.method==='HEAD')return res.end();
   return require('fs').createReadStream(require('path').join(__dirname,'coop_v174_mobile_fix.js')).pipe(res);
  }
+ // Opt-in Cloudflare R2 media offload. Keep original Render handlers as a rollback.
+ // Enable only after verifying R2 objects and cross-origin audio/video behavior.
+ if((req.method==='GET'||req.method==='HEAD')&&process.env.R2_MEDIA_ENABLED==='1'){
+  const mediaKey=pathname.slice(1);
+  const r2Media=/^(?:G(?:0[1-9]|1[0-8])|H0[134]|intro_only|reception_hand)\.mp4$/.test(mediaKey)
+   ||/^(?:CH01_reverse_corrupted|voice_(?:original_)?ch0[1-6])\.mp3$/.test(mediaKey)
+   ||/^[A-Za-z0-9_-]+\.webp$/.test(mediaKey)
+   ||/^audio\/[A-Za-z0-9_-]+\.(?:mp3|wav|ogg)$/.test(mediaKey)
+   ||/^assets\/images\/[A-Za-z0-9_-]+\.webp$/.test(mediaKey);
+  if(r2Media){
+   const base=(process.env.R2_MEDIA_BASE_URL||'https://pub-ddd573dbcf4a4d7bb46861bb5dd468b1.r2.dev').replace(/\/$/,'');
+   res.writeHead(302,{'Location':base+'/'+mediaKey,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+   return res.end();
+  }
+ }
  if((req.method==='GET'||req.method==='HEAD')&&pathname==='/CH01_reverse_corrupted.mp3'){
   const fs=require('fs'),path=require('path'),file=path.join(__dirname,'CH01_reverse_corrupted.mp3');
   return fs.stat(file,(err,stat)=>{
