@@ -246,7 +246,7 @@
     </div>
   </section>
   <section id="ch06PuzzlePanel" hidden aria-label="마지막 문과 제0유물" style="max-height:38dvh;overflow:auto;background:#21192c;border:1px solid #675371;border-radius:10px;padding:10px;font-size:13px">
-    <strong>CH.05 · 제0유물의 제단</strong><p id="ch06Result" style="white-space:pre-wrap;line-height:1.5">모든 파편을 판독하고 서로의 기록을 맞추세요.</p>
+    <strong>CH.05 · 제0유물의 제단</strong><p id="ch06FinalVideoStatus" role="status" aria-live="polite" hidden style="padding:8px;border:1px solid #675371;border-radius:8px;color:#e4c9ec;font-size:12px"></p><p id="ch06Result" style="white-space:pre-wrap;line-height:1.5">모든 파편을 판독하고 서로의 기록을 맞추세요.</p>
     <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">
       <button type="button" data-ch06="ch06_inspect" data-object="door">여덟 번째 문</button>
       <button type="button" data-ch06="ch06_inspect" data-object="mirror">거울</button>
@@ -416,6 +416,13 @@
               ch04Panel.hidden = !phaseStarted || !['ch04','ch04_cleared'].includes(currentPhase);
               ch05Panel.hidden = !phaseStarted || !['ch05','ch05_cleared'].includes(currentPhase);
               ch06Panel.hidden = !phaseStarted || currentPhase !== 'ch06';
+              const finalStatus=document.getElementById('ch06FinalVideoStatus');
+              const finalChapter=data.chapter.ch06;
+              finalStatus.hidden=!(phaseStarted&&currentPhase==='ch06'&&finalChapter?.finalVideoPending);
+              if(!finalStatus.hidden){
+                const total=Array.isArray(data.members)?data.members.length:0;
+                finalStatus.textContent='최종 기록 영상 확인 '+(finalChapter.finalVideoWatchedCount||0)+' / '+total+'명 · 모든 조사원이 완료할 때까지 대기';
+              }
               dollPanel.hidden = !phaseStarted || !['ch02_cleared','ch03','ch03_cleared','ch04','ch04_cleared','ch05','ch05_cleared','ch06'].includes(currentPhase);
               if(Array.isArray(data.pieces)){
                 document.getElementById('dollStatus').textContent=' '+data.pieces.length+' / 4';
