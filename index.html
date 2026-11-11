@@ -247,7 +247,7 @@
     </div>
   </section>
   <section id="ch06PuzzlePanel" hidden aria-label="마지막 문과 제0유물" style="max-height:38dvh;overflow:auto;background:#21192c;border:1px solid #675371;border-radius:10px;padding:10px;font-size:13px">
-    <strong>CH.05 · 제0유물의 제단 (기존 CH.06)</strong><p id="ch06Result" style="white-space:pre-wrap;line-height:1.5">모든 파편을 판독하고 서로의 기록을 맞추세요.</p>
+    <strong>CH.05 · 제0유물의 제단</strong><p id="ch06Result" style="white-space:pre-wrap;line-height:1.5">모든 파편을 판독하고 서로의 기록을 맞추세요.</p>
     <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">
       <button type="button" data-ch06="ch06_inspect" data-object="door">여덟 번째 문</button>
       <button type="button" data-ch06="ch06_inspect" data-object="mirror">거울</button>
@@ -260,7 +260,7 @@
       <label style="grid-column:1/-1">제0유물 파편 배열<input id="artifactOrder" placeholder="판독한 순서대로 다섯 번호 입력" inputmode="numeric" maxlength="5" style="width:100%;min-height:40px"></label>
       <button type="button" data-ch06="artifact_submit">제0유물 복원</button>
       <button type="button" data-ch06="ch06_switch">마지막 문 손잡이 고정</button>
-      <label style="grid-column:1/-1">마지막 문 암호<input id="ch06Answer" inputmode="numeric" style="width:100%;min-height:40px"></label>
+      <label style="grid-column:1/-1">마지막 문 암호<input id="ch06Answer" inputmode="text" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="영문 4글자" aria-label="마지막 문 영문 네 글자 암호" style="width:100%;min-height:40px;text-transform:uppercase"></label>
       <button type="button" data-ch06="ch06_answer">마지막 문 해제</button>
     </div>
   </section>
