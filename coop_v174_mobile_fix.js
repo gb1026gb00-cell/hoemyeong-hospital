@@ -463,7 +463,7 @@
   grime.style.cssText='position:absolute;left:76%;top:10%;width:17%;height:76%;pointer-events:none;opacity:.9;mix-blend-mode:multiply;background:radial-gradient(ellipse at 23% 15%,#070a09 0%,#161e1a 18%,transparent 46%),radial-gradient(ellipse at 78% 43%,#080b09 0%,#161d18 23%,transparent 53%),radial-gradient(ellipse at 42% 73%,#060807 0%,#18211c 27%,transparent 60%),linear-gradient(102deg,transparent 5%,#101411a8 39%,transparent 72%);filter:blur(2px)';imageLayer.append(grime);
   root.append(scene);
   const bottom=document.createElement('div');bottom.style.cssText='flex:none;padding:10px 12px 16px;background:#100d12;border-top:1px solid #494149;display:grid;grid-template-columns:1fr 1fr;gap:8px';
-  const note=document.createElement('div');note.id='hmIndependentCh03Note';note.textContent='왼쪽 거울을 문질러 숫자를 찾으세요. 제0유물은 거울 오른쪽 테두리의 틈에 있습니다. 오른쪽 벽의 작은 버튼으로 엘리베이터를 작동하고, 안내문·계산판은 각각 직접 눌러 조사하세요.';note.style.cssText='grid-column:1/-1;min-height:0;white-space:pre-wrap;color:#d9c9d5;padding:10px;background:#1e1721;border:1px solid #4b394d;border-radius:6px';bottom.append(note);
+  const note=document.createElement('div');note.id='hmIndependentCh03Note';note.textContent='왼쪽 거울에서 단서를 확인하고, 엘리베이터 옆 가려진 층별 안내문과 아래 계산판을 조사하세요. 중앙 문을 눌러 영상을 확인한 뒤 운행 코드를 제출하면 제0유물이 자동 수집됩니다.';note.style.cssText='grid-column:1/-1;min-height:0;white-space:pre-wrap;color:#d9c9d5;padding:10px;background:#1e1721;border:1px solid #4b394d;border-radius:6px';bottom.append(note);
   function sendInvestigation(action,extra,label){
    note.textContent=label+' 조사 요청 중…';
    if(socket?.readyState===NativeWS.OPEN){socket.send(JSON.stringify({type:'chapter',action,...extra}));}
@@ -488,12 +488,12 @@
   // Hotspots are attached to the same 16:9 image layer, so cover cropping
   // cannot shift a touch target relative to its photographed object.
   hotspot('거울 문지르기',5,12,19,58,openCh03Mirror);
-  const fragmentHotspot=hotspot('거울 오른쪽 테두리 틈 · 제0유물 조사',24,19,9,43,()=>sendInvestigation('ch03_fragment',{},'거울 가장자리'));fragmentHotspot.style.zIndex='3';
-  hotspot('오른쪽 벽 층별 안내문',73,18,17,42,openCh03FloorDirectory);
+
+  hotspot('엘리베이터 옆 가려진 층별 안내문',76,10,22,65,openCh03FloorDirectory);
   hotspot('오른쪽 아래 기호 계산판',0,72,25,27,openCh03SymbolCalculator);
-  hotspot('엘리베이터 운행 버튼',64,40,10,24,()=>sendInvestigation('ch03_video',{},'엘리베이터'));
+  hotspot('엘리베이터 중앙 문 · 영상 및 운행 코드',37,19,27,55,()=>{if(ch03VideoSeen){const form=document.getElementById('hmCh03CodeForm');if(form){form.hidden=false;form.style.display='flex';form.scrollIntoView({behavior:'smooth',block:'nearest'});form.querySelector('input')?.focus();}}else sendInvestigation('ch03_video',{},'엘리베이터 중앙');});
   const inventory=document.createElement('button');inventory.type='button';inventory.id='hmCh03Inventory';inventory.style.cssText='grid-column:1/-1;padding:10px 12px;border:1px solid #766477;border-radius:7px;background:#211b28;color:#f4e8f1;font:600 14px system-ui;text-align:left';
-  const updateInventory=()=>{const progress=document.getElementById('artifactProgress')?.textContent||'제0유물 파편 수집함';inventory.textContent='🎒 '+progress+(ch03FragmentCollected?' · 거울 파편 획득':' · 거울 파편 미획득');};
+  const updateInventory=()=>{const progress=document.getElementById('artifactProgress')?.textContent||'제0유물 파편 수집함';inventory.textContent='🎒 '+progress+(ch03FragmentCollected?' · CH.03 유물 획득':' · 정답 승인 시 자동 수집');};
   inventory.addEventListener('click',openSharedInventory);
   bottom.append(inventory);updateInventory();
   const form=document.createElement('form');form.id='hmCh03CodeForm';form.hidden=!ch03VideoSeen;form.style.cssText='grid-column:1/-1;display:'+(ch03VideoSeen?'flex':'none')+';gap:8px';
