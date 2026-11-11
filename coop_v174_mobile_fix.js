@@ -904,13 +904,14 @@
    frame.style.cssText='position:relative;isolation:isolate;min-height:300px;height:min(56dvh,480px);overflow:hidden;border:14px ridge #343135;box-shadow:inset 0 0 60px 27px #07080aaa,0 0 0 2px #0b0a0b,0 24px 60px #000;background:radial-gradient(ellipse at 40% 48%,#5b62637c 0%,#33383b 36%,#121417 82%),linear-gradient(112deg,#161719,#383b40 40%,#101113 73%)';
    const dust=document.createElement('div');dust.style.cssText='position:absolute;inset:0;pointer-events:none;opacity:.37;background:repeating-linear-gradient(109deg,transparent 0 22px,#adb2b208 23px 25px,transparent 26px 68px),radial-gradient(ellipse at 8% 83%,#070808ad,transparent 30%),radial-gradient(ellipse at 90% 12%,#0809099e,transparent 35%);mix-blend-mode:multiply';frame.append(dust);
    const count=Math.max(1,Math.min(4,Math.floor(Number(message.shadowCount)||1)));
-   const coords=[[17,26],[64,17],[40,62],[77,66]];
+   // CH01: each shadow is isolated in a quadrant. Four must read as FOUR on narrow phones.
+   // Count remains server-owned; do not print the numeric clue or alter puzzle answers.
+   const coords=[[24,25],[73,25],[24,74],[73,74]];
    for(let i=0;i<count;i++){
     const spot=document.createElement('span'),[left,top]=coords[i];
-    const height=[74,92,78,95][i],width=[76,67,81,73][i];
     spot.setAttribute('aria-hidden','true');
-    spot.style.cssText='position:absolute;left:'+left+'%;top:'+top+'%;width:'+width+'px;height:'+height+'px;transform:rotate('+[-18,9,22,-12][i]+'deg);border-radius:42% 58% 67% 33% / 51% 33% 67% 49%;background:radial-gradient(ellipse at 49% 49%,#030305 0 29%,#07080ae8 43%,#101114c4 59%,transparent 80%);filter:blur(5px);box-shadow:0 0 29px 12px #0304056b';
-    const smear=document.createElement('span');smear.style.cssText='position:absolute;left:25%;top:68%;width:43%;height:47%;transform:rotate(11deg);border-radius:27% 73% 77% 23%;background:linear-gradient(#050607b8,transparent);filter:blur(3px)';
+    spot.style.cssText='position:absolute;left:'+left+'%;top:'+top+'%;width:clamp(38px,13vw,59px);height:clamp(48px,16vw,71px);transform:translate(-50%,-50%) rotate('+[-18,9,22,-12][i]+'deg);border-radius:42% 58% 67% 33% / 51% 33% 67% 49%;background:radial-gradient(ellipse at 49% 49%,#020305 0 35%,#08090be8 54%,#111216c2 68%,transparent 89%);filter:blur(2px);box-shadow:0 0 10px 3px #03040555';
+    const smear=document.createElement('span');smear.style.cssText='position:absolute;left:26%;top:63%;width:40%;height:35%;transform:rotate(11deg);border-radius:27% 73% 77% 23%;background:linear-gradient(#030405c9,transparent);filter:blur(2px)';
     spot.append(smear);frame.append(spot);
    }
    const glint=document.createElement('div');glint.style.cssText='position:absolute;inset:0;pointer-events:none;background:linear-gradient(107deg,transparent 17%,#efffff14 24%,transparent 29% 66%,#d9e5eb0b 72%,transparent 78%);mix-blend-mode:screen';frame.append(glint);card.append(frame);
