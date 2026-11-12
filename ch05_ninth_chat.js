@@ -88,3 +88,89 @@
  window.WebSocket=NinthChatSocket;
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',replay,{once:true});else replay();
 })();
+
+/* CH.05 final cinematic: G18 -> supplied I SEE YOU audio -> epilogue.
+   Uses the existing server-only finished state; never mutates party membership or puzzles. */
+(()=>{
+ 'use strict';
+ const Base=window.WebSocket;
+ const MARK='hmFinalSeeYou20261112';
+ let started=false,finalized=false,overlay=null;
+ const audioPath='/audio/i_see_you.mp3';
+ const fallbackAudio='https://raw.githubusercontent.com/gb1026gb00-cell/hoemyeong-hospital/dev/coop-v172-preserve-approved-ui/audio/i_see_you.mp3';
+ function node(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e}
+ function init(){
+  if(overlay)return overlay;
+  const style=node('style');style.id=MARK+'Style';
+  style.textContent='#'+MARK+'{position:fixed!important;inset:0!important;z-index:2147483647!important;background:#000!important;display:flex!important;align-items:center;justify-content:center;flex-direction:column;color:#d8d4d4;text-align:center;padding:24px;box-sizing:border-box;font-family:Georgia,"Times New Roman",serif}#'+MARK+' video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}#'+MARK+' .hmEndText{position:relative;z-index:2;max-width:90vw;letter-spacing:.12em;white-space:pre-line;line-height:2;font-size:clamp(13px,3vw,19px)}#'+MARK+' .hmEndTitle{font-size:clamp(32px,8vw,70px);letter-spacing:.17em;color:#d1c5c8;text-shadow:0 0 23px #4a0a1b}#'+MARK+' .hmEndSub{font:13px system-ui,sans-serif;letter-spacing:.5em;margin-top:16px;color:#b4a7b0}#'+MARK+' button{z-index:3;background:#231a25;border:1px solid #827280;color:#f4e8ef;border-radius:7px;padding:12px 18px;font:14px system-ui,sans-serif;min-height:46px;margin-top:18px}';
+  document.head.append(style);
+  overlay=node('div');overlay.id=MARK;overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','회명병원 마지막 장면');
+  document.body.append(overlay);
+  return overlay;
+ }
+ function endTitle(){
+  if(finalized)return;
+  finalized=true;const root=init();root.replaceChildren();
+  root.append(node('div','hmEndText hmEndTitle','回明病院'),node('div','hmEndSub','THE END'));
+  // The ending remains visible. The old CH.01 cooperative panel must never reappear.
+ }
+ function showReturn(){
+  if(finalized)return;
+  const root=init();root.replaceChildren();
+  root.append(node('div','hmEndText','알 수 없음 님이 다시 접속했습니다.\n\n아직 아무도 나가지 않았는데요.'));
+  setTimeout(endTitle,2400);
+ }
+ function playVoice(){
+  if(finalized)return;
+  const root=init();root.replaceChildren();
+  const audio=new Audio(audioPath);
+  audio.preload='auto';audio.volume=1;
+  let done=false,usedFallback=false;
+  const finish=()=>{if(done)return;done=true;showReturn()};
+  audio.addEventListener('ended',finish,{once:true});
+  audio.addEventListener('error',()=>{
+   if(usedFallback){finish();return}
+   usedFallback=true;audio.src=fallbackAudio;tryPlay();
+  });
+  const retry=()=>{
+   if(done)return;
+   root.replaceChildren(node('div','hmEndText','I SEE YOU'));
+   const button=node('button',null,'음성 재생하기');
+   button.onclick=()=>{button.disabled=true;tryPlay()};
+   root.append(button);
+  };
+  function tryPlay(){const p=audio.play();if(p&&p.catch)p.catch(retry)}
+  tryPlay();
+  setTimeout(()=>{if(!done&&!root.querySelector('button'))finish()},9500);
+ }
+ function playG18(){
+  if(started)return;started=true;
+  const root=init();root.replaceChildren();
+  // Avoid simultaneous legacy videos under the final cinematic.
+  document.querySelectorAll('video').forEach(v=>{try{v.pause()}catch(_){}});
+  const video=node('video');video.src='/G18.mp4';video.playsInline=true;video.setAttribute('webkit-playsinline','');video.preload='auto';video.autoplay=true;video.controls=false;
+  let completed=false;
+  function finishVideo(){if(completed)return;completed=true;try{video.pause()}catch(_){}playVoice()}
+  video.addEventListener('ended',finishVideo,{once:true});
+  video.addEventListener('error',finishVideo,{once:true});
+  root.append(video);
+  const p=video.play();
+  if(p&&p.catch)p.catch(()=>{
+   const button=node('button',null,'마지막 영상 재생하기');
+   button.onclick=()=>{button.remove();const next=video.play();if(next&&next.catch)next.catch(()=>{})};
+   root.append(button);
+  });
+ }
+ class FinalSocket extends Base{
+  constructor(...args){
+   super(...args);
+   this.addEventListener('message',event=>{
+    let m;try{m=JSON.parse(event.data)}catch(_){return}
+    if(m.type==='horror_video'&&m.id==='G18')playG18();
+    // If a completed player reconnects, show the persistent ending rather than CH.01.
+    if((m.type==='joined'||m.type==='state')&&m.chapter?.phase==='finished'&&!started&&!finalized)endTitle();
+   });
+  }
+ }
+ window.WebSocket=FinalSocket;
+})();
