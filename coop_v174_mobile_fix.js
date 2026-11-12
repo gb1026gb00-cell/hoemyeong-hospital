@@ -1638,3 +1638,97 @@
  document.addEventListener('hm-v175-started',mountTeamChatButton);
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountTeamChatButton,{once:true});else mountTeamChatButton();
 })();
+
+
+/* iOS cinematic stall recovery 20261112: visual-only, no chapter actions */
+(()=>{
+ 'use strict';
+ // Isolated helper: only activates on iPhone/iPad, never changes puzzle state.
+ const isiOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||
+   (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+ if(!isiOS)return;
+ const states=new Map();
+ const videoSelector='video';
+ let control=null,owner=null;
+ function visible(v){
+  if(!v.isConnected||v.ended||!v.currentSrc||!v.getClientRects().length)return false;
+  let node=v;
+  while(node&&node.nodeType===1){
+   const style=getComputedStyle(node);
+   if(style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0||node.hidden)return false;
+   node=node.parentElement;
+  }
+  return true;
+ }
+ function hide(v){
+  if(owner===v&&control){control.remove();control=null;owner=null}
+ }
+ function show(v,st){
+  if(!visible(v))return;
+  if(control&&owner!==v)hide(owner);
+  owner=v;
+  if(!control){
+   control=document.createElement('button');
+   control.type='button';
+   control.id='hmIOSVideoResume';
+   control.textContent='▶ 영상 이어서 재생';
+   control.setAttribute('aria-label','멈춘 공포 영상을 이어서 재생');
+   control.style.cssText='position:fixed!important;left:50%!important;bottom:max(24px,env(safe-area-inset-bottom))!important;transform:translateX(-50%)!important;z-index:2147483647!important;display:block!important;min-height:52px!important;padding:13px 22px!important;border:1px solid #ad8394!important;border-radius:12px!important;background:#21121fe8!important;color:#fff!important;font:700 15px system-ui!important;box-shadow:0 5px 26px #000!important;touch-action:manipulation!important;white-space:nowrap!important';
+   document.body.append(control);
+  }
+  control.onclick=()=>{
+   if(!visible(v)){hide(v);return}
+   control.disabled=true;
+   control.textContent='영상 재생 중…';
+   const was=v.currentTime;
+   // First try a user-gesture playback without discarding buffered media.
+   const retry=(v.play&&v.play());
+   Promise.resolve(retry).then(()=>{
+    st.lastTime=was;
+    st.lastAdvance=Date.now();
+    st.attempts++;
+    hide(v);
+   }).catch(()=>{
+    // Recreate only after a failed resume. Preserve the current position.
+    const src=v.currentSrc||v.src;
+    if(!src){control.disabled=false;control.textContent='▶ 영상 이어서 재생';return}
+    const target=Number.isFinite(was)?was:0;
+    v.addEventListener('loadedmetadata',()=>{
+     try{if(target>0&&Number.isFinite(v.duration))v.currentTime=Math.min(target,Math.max(0,v.duration-0.15))}catch(_){}
+     Promise.resolve(v.play()).then(()=>{st.lastAdvance=Date.now();hide(v)}).catch(()=>{
+      if(control){control.disabled=false;control.textContent='▶ 영상 다시 재생'}
+     });
+    },{once:true});
+    try{v.load()}catch(_){if(control){control.disabled=false;control.textContent='▶ 영상 다시 재생'}}
+   });
+  };
+ }
+ function observe(v){
+  if(states.has(v))return;
+  const st={started:false,lastTime:0,lastAdvance:Date.now(),attempts:0};
+  states.set(v,st);
+  v.addEventListener('play',()=>{st.started=true;st.lastTime=v.currentTime;st.lastAdvance=Date.now()});
+  v.addEventListener('playing',()=>{st.started=true;st.lastAdvance=Date.now();hide(v)});
+  v.addEventListener('timeupdate',()=>{
+   if(v.currentTime>st.lastTime+0.08||v.currentTime<st.lastTime-0.1){
+    st.lastTime=v.currentTime;st.lastAdvance=Date.now();hide(v);
+   }
+  });
+  v.addEventListener('ended',()=>{hide(v);states.delete(v)});
+  v.addEventListener('emptied',()=>{hide(v);st.lastAdvance=Date.now()});
+ }
+ function scan(){document.querySelectorAll(videoSelector).forEach(observe)}
+ new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});
+ scan();
+ setInterval(()=>{
+  const now=Date.now();
+  for(const [v,st] of states){
+   if(!v.isConnected){hide(v);states.delete(v);continue}
+   if(!st.started||!visible(v)){hide(v);continue}
+   // Only a visibly active video that has stopped advancing for five seconds.
+   // Never skip videos or fire a chapter-completion callback.
+   if(!v.paused&&!v.ended&&now-st.lastAdvance>5000)show(v,st);
+   else if(v.paused||v.ended)hide(v);
+  }
+ },1000);
+})();
