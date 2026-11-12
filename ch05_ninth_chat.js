@@ -48,20 +48,32 @@
   opened=true;css();replay();
   const backdrop=node('div');backdrop.id='hmNinthBackdrop';backdrop.setAttribute('role','dialog');backdrop.setAttribute('aria-modal','true');backdrop.setAttribute('aria-label','회명병원 단체 대화');
   const box=node('section');box.id='hmNinthChat';
-  const header=node('header');const title=node('div');title.append(node('strong',null,'회명병원 · 단체 대화 (9)'),node('small',null,'CH.05 — 제0유물의 제단'));
-  const close=node('button',null,'닫기');close.type='button';const dismiss=()=>{backdrop.remove();opened=false;};close.addEventListener('click',dismiss);
+  const header=node('header');const title=node('div');const memberTitle=node('strong',null,'회명병원 · 단체 대화 (9)');title.append(memberTitle,node('small',null,'CH.05 — 제0유물의 제단'));
+  const close=node('button',null,'닫기');close.type='button';let exitTimer=null;const dismiss=()=>{if(exitTimer!==null)clearTimeout(exitTimer);backdrop.remove();opened=false;};close.addEventListener('click',dismiss);
   header.append(title,close);box.append(header);
-  const list=node('div');list.id='hmNinthMsgs';for(const [who,msg] of messages){
-   if(who==='시스템'){list.append(node('div','hmSystem',msg));continue;}
+  const list=node('div');list.id='hmNinthMsgs';
+  const appendMessage=([who,msg])=>{
+   if(who==='시스템'){list.append(node('div','hmSystem',msg));return;}
    const item=node('div','hmChatMsg'+(who==='알 수 없음'?' hmUnknown':''));
    item.append(node('div','hmChatWho',who),node('div','hmChatBubble',msg));list.append(item);
-  }
+  };
+  // Keep the full conversation visible; reveal the departure last so 9 -> 8 is observable.
+  messages.slice(0,-1).forEach(appendMessage);
   box.append(list);
-  const footer=node('footer');footer.append(node('small',null,'참여 인원 9명'),node('small',null,'그런데… 우린 여덟 명이었는데.'));
+  const footer=node('footer');const memberCount=node('small',null,'참여 인원 9명');footer.append(memberCount,node('small',null,'그런데… 우린 여덟 명이었는데.'));
   box.append(footer);backdrop.append(box);document.body.append(backdrop);close.focus();
   const replayBtn=document.getElementById('hmNinthReplay');if(replayBtn)replayBtn.style.display='none';
   close.addEventListener('click',()=>{if(replayBtn&&phase==='ch06')replayBtn.style.display='block';});
   list.scrollTop=0;
+  exitTimer=setTimeout(()=>{
+   if(!backdrop.isConnected)return;
+   appendMessage(messages[messages.length-1]);
+   memberTitle.textContent='회명병원 · 단체 대화 (8)';
+   memberCount.textContent='참여 인원 8명';
+   if(replayBtn)replayBtn.textContent='단체 대화 (8) · 다시 보기';
+   list.scrollTop=list.scrollHeight;
+   exitTimer=null;
+  },1200);
  }
  class NinthChatSocket extends PreviousSocket{
   constructor(...args){super(...args);ws=this;this.addEventListener('message',ev=>{
